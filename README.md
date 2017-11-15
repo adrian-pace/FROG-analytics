@@ -170,6 +170,9 @@ Show the proportion of synchronous participation of authors in one pad using `di
 Show the same proportion as before but for each paragraph `display_user_participation(pad)`:
 ![](figures/prop_authors_para.png)
 
+Show the same proportion as before but with addition and deletions separated `display_user_participation_paragraphs_with_del(pad)`:
+![](figures/prop_add_del.png)
+
 Show the distribution of `Operation` type in one pad using `display_overall_op_type(pad)`:
 ![](figures/op_type.png)
 

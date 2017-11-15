@@ -204,8 +204,9 @@ def display_user_participation_paragraphs_with_del(pad):
                 if elem_op.operation_type == 'del':
                     prop_authors_del[elem_op.author] += elem_op.length_to_delete  # increment with the corresponding len
             total_count = sum(prop_authors_add.values()) + sum(prop_authors_del.values())
-            prop_authors_add = {k: v / total_count for k, v in prop_authors_add.items()}
-            prop_authors_del = {k: v / total_count for k, v in prop_authors_del.items()}
+            if total_count != 0:
+                prop_authors_add = {k: v / total_count for k, v in prop_authors_add.items()}
+                prop_authors_del = {k: v / total_count for k, v in prop_authors_del.items()}
             prop_authors_paragraphs_add.append(prop_authors_add)
             prop_authors_paragraphs_del.append(prop_authors_del)
 
@@ -213,14 +214,14 @@ def display_user_participation_paragraphs_with_del(pad):
 
     # Transform the final data into a pandas dataframe
     df_add = pd.DataFrame(prop_authors_paragraphs_add, index=paragraph_names)
-    df_add.columns += ' add'
+    df_add.columns += ' write/add'
     df_del = pd.DataFrame(prop_authors_paragraphs_del, index=paragraph_names)
     df_del.columns += ' del'
     df = pd.concat([df_add, df_del], axis=1)
     df = df.sort_index(axis=1)
 
     # Plot the results as a stacked plot bar
-    df.plot.barh(y=df.columns, stacked=True, color=sns.color_palette("Paired"))
+    df.plot.barh(y=df.columns, stacked=True, color=sns.color_palette("Paired", 40))
     plt.gca().invert_yaxis()
     plt.title('Proportion of writings per authors in paragraphs with deletions and additions seperated')
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(author_names))
