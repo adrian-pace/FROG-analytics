@@ -33,6 +33,12 @@ for pad_name in pads:
     print('\nCOLORED TEXT BY OPS')
     pad.display_text_colored_by_ops()
 
+    print('\nSCORES')
+    print('Proportion score:', pad.prop_score())
+    print('Synchronous score:', pad.sync_score()[0])
+    print('Alternating score:',pad.alternating_score())
+
+    display_user_participation(pad)
     # plot the participation proportion per user per paragraphs
     display_user_participation_paragraphs(pad)
     display_user_participation_paragraphs_with_del(pad)

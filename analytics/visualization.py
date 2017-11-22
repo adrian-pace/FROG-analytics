@@ -10,19 +10,8 @@ def display_user_participation(pad):
     :param pad:
     :return: None
     """
-    # Fetch all the authors who participated in the pad
-    authors = pad.get_authors()
-
-    # Initialize the number of letters written by each authors
-    author_lengths = np.zeros(len(authors))
-
-    # increment the participation accordingly
-    for op in pad.operations:
-        author_lengths[authors.index(op.author)] += op.get_length_of_op()
-
-    # Compute the overall participation
-    overall_length = sum(author_lengths)
-    proportions = author_lengths / overall_length
+    # Compute author proportions
+    authors, proportions = pad.author_proportions(considerate_admin=True)
 
     # Transform the array in dataframe
     df = pd.DataFrame({'Participation proportion': proportions,
@@ -89,13 +78,8 @@ def display_proportion_sync_in_pad(pad):
     :param pad:
     :return: None
     """
-    prop_sync = 0
-    prop_async = 0
-    for op in pad.operations:
-        if op.context['synchronous_in_pad']:
-            prop_sync += op.context['proportion_pad']
-        else:
-            prop_async += op.context['proportion_pad']
+    prop_sync, prop_async = pad.sync_score()
+
     df = pd.DataFrame({'sync/async proportion': [prop_sync, prop_async]}, index=['synchronous', 'asynchronous'])
 
     # Plot the results as a pie chart
@@ -146,22 +130,9 @@ def display_user_participation_paragraphs(pad):
     :param pad:
     :return: None
     """
-    #Init variables
-    author_names = pad.get_authors()
-    prop_authors_paragraphs = []
-    paragraph_names = []
-    i = 1
-    for paragraph in pad.paragraphs:
-        # Initialize a dictionary containing participation proportion for each authors
-        prop_authors = {author_name : 0 for author_name in author_names}
-        # Only take into account the real paragraphs (not the new lines)
-        if not paragraph.new_line:
-            # Create the label of the paragraph
-            paragraph_names.append('p' + str(i))
-            i += 1
-            for op in paragraph.operations:
-                prop_authors[op.author] += op.context['proportion_paragraph'] # increment with the corresponding prop
-            prop_authors_paragraphs.append(prop_authors)
+    # Compute the required proportions
+    author_names = pad.authors
+    paragraph_names, prop_authors_paragraphs = pad.prop_paragraphs()
 
     # Transform the final data into a pandas dataframe
     df = pd.DataFrame(prop_authors_paragraphs,
@@ -184,7 +155,7 @@ def display_user_participation_paragraphs_with_del(pad):
     :return: None
     """
     # Init variables
-    author_names = pad.get_authors()
+    author_names = pad.authors
     prop_authors_paragraphs_add = []
     prop_authors_paragraphs_del = []
     paragraph_names = []

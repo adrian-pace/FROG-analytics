@@ -419,3 +419,7 @@ class Paragraph:
 
     def __lt__(self, other):
         return self.abs_position < other.abs_position
+
+    #def get_main_author(self):
+        #for op in self.operations:
+            #op.context[]

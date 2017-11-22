@@ -205,7 +205,7 @@ def build_operation_context(pad, delay_sync, time_to_reset_day, time_to_reset_br
                     # Check if the op is a first one
                     if op_index == 0 or other_start_time >= pad_operations[op_index - 1].timestamp_end + time_to_reset_day:
                         op.context['first_op_day'] = True
-                    if op_index != 0 and other_start_time >= pad_operations[op_index - 1].timestamp_end + time_to_reset_break:
+                    elif op_index != 0 and other_start_time >= pad_operations[op_index - 1].timestamp_end + time_to_reset_break:
                         op.context['first_op_break'] = True
                 op_index += 1
                 if other_op.author != op.author and end_time + delay_sync >= other_start_time >= start_time - delay_sync:

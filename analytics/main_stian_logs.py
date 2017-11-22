@@ -47,7 +47,6 @@ for pad_name in pads:
     #print(text)
     text=text.strip('\n')
     aText = aTextes[pad_name].replace("\\n", "\n").replace('\\""', '"').strip('\n')
-    print(text == aText)
     if text != aText:
         print("TEXT:")
         print(text)
@@ -56,11 +55,22 @@ for pad_name in pads:
         print("With n_elem_ops", len(pad.get_all_elementary_operation()))
 
 
-    #print('\nCOLORED TEXT BY AUTHOR')
-    #pad.display_text_colored_by_authors()
+    print('\nCOLORED TEXT BY AUTHOR')
+    pad.display_text_colored_by_authors()
 
-    #print('\nCOLORED TEXT BY OPS')
-    #pad.display_text_colored_by_ops()
+    print('\nCOLORED TEXT BY OPS')
+    pad.display_text_colored_by_ops()
+
+    display_user_participation_paragraphs_with_del(pad)
+
+    # plot the proportion of synchronous writing per paragraphs
+    display_proportion_sync_in_paragraphs(pad)
+
+    # plot the overall type counts
+    display_overall_op_type(pad)
+
+    # plot the counts of type per users
+    display_types_per_user(pad)
     #
     # print("ops:")
     # for op in pad.operations:

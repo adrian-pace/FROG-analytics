@@ -1,4 +1,5 @@
 from analytics.Operations import ElementaryOperation, Paragraph, Operation
+import numpy as np
 
 
 def get_colors():
@@ -29,6 +30,9 @@ class Pad:
 
         self.operations = []
         """:type: list[Operation]"""
+
+        self.authors = []
+        """:type: list[str]"""
 
     def add_operation(self, operation):
         """
@@ -71,19 +75,6 @@ class Pad:
         # Recover all the elementary ops
         elem_ops_list = self.get_all_elementary_operation()
         return ElementaryOperation.sort_elem_ops(elem_ops_list)
-
-    def get_authors(self):
-        """
-        Get the list of authors who participated in the pad.
-
-        :return: list of authors
-        :rtype: list[str]
-        """
-        authors = []
-        for op in self.operations:
-            if op.author not in authors:
-                authors.append(op.author)
-        return list(authors)
 
     def get_text(self, until_timestamp=None):
         """
@@ -167,7 +158,7 @@ class Pad:
         letters = []
         letters_color = []
         elem_ops_ordered = self.get_elem_ops_ordered()
-        authors = self.get_authors()
+        authors = self.authors
         colors = get_colors()
         for elem_op in elem_ops_ordered:
             idx_elem = elem_op.abs_position
@@ -226,9 +217,9 @@ class Pad:
             """
             for para_i, paragraph in enumerate(self.paragraphs):
                 if (not paragraph.new_line) \
-                    and paragraph.abs_position \
-                        <= elem_op_to_look_for.abs_position \
-                        <= paragraph.abs_position + paragraph.get_length():
+                        and paragraph.abs_position \
+                                <= elem_op_to_look_for.abs_position \
+                                <= paragraph.abs_position + paragraph.get_length():
                     return para_i
             return -1
 
@@ -324,7 +315,7 @@ class Pad:
                     # We are deleting only this paragraph
                     if elem_op.abs_position == para.abs_position \
                             and elem_op.abs_position + elem_op.length_to_delete \
-                                == para.abs_position + para.get_length():
+                                    == para.abs_position + para.get_length():
                         # Add to the list to remove
                         to_remove.append(para_idx)
                         # We will update the indices from here
@@ -353,7 +344,7 @@ class Pad:
                     elif elem_op.abs_position \
                             <= para.abs_position \
                             and elem_op.abs_position + elem_op.length_to_delete \
-                                >= para.abs_position + para.get_length():
+                                    >= para.abs_position + para.get_length():
                         # We remove the whole paragraph
                         to_remove.append(para_idx)
                         # shouldn't be necessary since it will be taken care by the last paragraph we delete.
@@ -459,7 +450,7 @@ class Pad:
                     else:
                         # Look where we should insert it
                         para_idx = 0
-                        while self.paragraphs[para_idx].abs_position\
+                        while self.paragraphs[para_idx].abs_position \
                                 + self.paragraphs[para_idx].length \
                                 < elem_op.abs_position:
                             para_idx += 1
@@ -497,6 +488,12 @@ class Pad:
                     print(elem_op)
                     raise AssertionError
 
+        # Find the list of authors in the pad
+        self.authors
+        for op in self.operations:
+            if op.author not in self.authors:
+                self.authors.append(op.author)
+
     def display_paragraphs(self, verbose=0):
         for para in self.paragraphs:
             print(para.__str__(verbose))
@@ -526,3 +523,114 @@ class Pad:
                 op.type = 'jump'
             else:
                 op.type = 'edit'
+
+    def author_proportions(self, considerate_admin=True):
+        """
+        Compute the proportion of each authors for the entire pad.
+
+        :param considerate_admin: Boolean to determine if we include the admin or not in our computations
+        :return: the list of authors to consider and the resulting proportions in an array
+        :rtype: list[str], np.array[float]
+        """
+
+        # Fetch all the authors who participated in the pad
+        authors = self.authors
+
+        # Delete the admin if needed
+        if not considerate_admin and 'Etherpad_admin' in authors:
+            authors = list(np.delete(authors, authors.index('Etherpad_admin')))
+        # Initialize the number of letters written by each authors
+        author_lengths = np.zeros(len(authors))
+
+        # increment the participation accordingly
+        for op in self.operations:
+            op_author = op.author
+            # Skip the incrementation if needed
+            if considerate_admin or op_author != 'Etherpad_admin':
+                author_lengths[authors.index(op_author)] += op.get_length_of_op()
+
+        # Compute the overall participation
+        overall_length = sum(author_lengths)
+        proportions = author_lengths / overall_length
+        return authors, proportions
+
+    def prop_score(self):
+        """
+        Compute the proportion score using the entropy.
+
+        :return: proportion score between 0 and 1
+        :rtype: float
+        """
+        authors, proportions = self.author_proportions(considerate_admin=False)
+        prop_score=0
+        # Check that we have at least 2 authors different from the admin
+        if len(authors) >= 2:
+            # Compute the entropy with the proportions
+            prop_score = sum(np.log(1/proportions)*proportions)/np.log(len(authors))
+        return prop_score
+
+    def sync_score(self):
+        """
+        Compute the synchronous and asynchronous scores.
+
+        :return: synchronous and asynchronous scores, floats between 0 and 1.
+        :rtype: float
+        """
+        prop_sync = 0
+        prop_async = 0
+        for op in self.operations:
+            if op.context['synchronous_in_pad']:
+                prop_sync += op.context['proportion_pad']
+            else:
+                prop_async += op.context['proportion_pad']
+        return prop_sync, prop_async
+
+    def prop_paragraphs(self):
+        """
+        Compute the proportion of each paragraphs.
+
+        :return: list with the paragraphs names, list with the proportions for each authors for each paragraphs.
+        :rtype: list[str], list[dict(str: float)]
+        """
+        # Init variables
+        author_names = self.authors
+        prop_authors_paragraphs = []
+        paragraph_names = []
+        i = 1
+        for paragraph in self.paragraphs:
+            # Initialize a dictionary containing participation proportion for each authors
+            prop_authors = {author_name: 0 for author_name in author_names}
+            # Only take into account the real paragraphs (not the new lines)
+            if not paragraph.new_line:
+                # Create the label of the paragraph
+                paragraph_names.append('p' + str(i))
+                i += 1
+                for op in paragraph.operations:
+                    prop_authors[op.author] += op.context[
+                        'proportion_paragraph']  # increment with the corresponding prop
+                prop_authors_paragraphs.append(prop_authors)
+        return paragraph_names, prop_authors_paragraphs
+
+
+    def alternating_score(self):
+        """
+        Compute the alternating score that is the number of main author alternations between paragraphs divided by the
+        total number of alternations of paragraphs.
+
+        :return: the alternating score which is a float between 0 and 1.
+        """
+        num_alt = 0
+        main_authors = []
+
+        # Compute the proportions for each paragraphs for each authors
+        _, prop_authors_paragraphs = self.prop_paragraphs()
+        for para in prop_authors_paragraphs:
+            # Add the author who participated the most in the paragraph
+            main_authors.append(max(para.keys(), key=(lambda key: para[key])))
+
+        # Increment the alternation counter only when we change authors
+        for i, author in enumerate(main_authors):
+            if i > 0 and author != main_authors[i-1]:
+                num_alt += 1
+        # Divide the overall counter of alternations by the maximum number of alternations
+        return num_alt/(len(main_authors)-1)
