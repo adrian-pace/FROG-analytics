@@ -1,9 +1,9 @@
 import argparse
-from analytics import parser,operation_builder, visualization
+from analytics import parser, operation_builder, visualization
 import config
 
 cl_parser = argparse.ArgumentParser(description="Run the analytics.")
-cl_parser.add_argument("-p","--path_to_db",
+cl_parser.add_argument("-p", "--path_to_db",
                        help="path to database storing the edits",
                        default=None)
 cl_parser.add_argument("-e", "--editor",
@@ -39,6 +39,11 @@ specific_pad = args.specific_pad
 texts = args.texts
 visualizations = args.visualization
 
+if path_to_db is None and editor != 'collab-react-components':
+    print("No arguments passed, displaying help and exiting:")
+    cl_parser.print_help()
+    cl_parser.exit()
+
 list_of_elem_ops_per_pad = parser.get_elem_ops_per_pad_from_file(path_to_db, editor, specific_pad)
 
 if subset_of_pads is not None:
@@ -58,12 +63,12 @@ if verbosity == 1:
 list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(list_of_elem_ops_per_pad)
 
 pads = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad_sorted,
-                                                                  config.maximum_time_between_elem_ops,
-                                                                  config.delay_sync,
-                                                                  config.time_to_reset_day,
-                                                                  config.time_to_reset_break,
-                                                                  config.length_edit,
-                                                                  config.length_delete)
+                                                        config.maximum_time_between_elem_ops,
+                                                        config.delay_sync,
+                                                        config.time_to_reset_day,
+                                                        config.time_to_reset_break,
+                                                        config.length_edit,
+                                                        config.length_delete)
 
 for pad_name in pads:
     if texts:
