@@ -489,7 +489,6 @@ class Pad:
                     raise AssertionError
 
         # Find the list of authors in the pad
-        self.authors
         for op in self.operations:
             if op.author not in self.authors:
                 self.authors.append(op.author)
@@ -562,11 +561,11 @@ class Pad:
         :rtype: float
         """
         authors, proportions = self.author_proportions(considerate_admin=False)
-        prop_score=0
+        prop_score = 0
         # Check that we have at least 2 authors different from the admin
         if len(authors) >= 2:
             # Compute the entropy with the proportions
-            prop_score = sum(np.log(1/proportions)*proportions)/np.log(len(authors))
+            prop_score = sum(np.log(1 / proportions) * proportions) / np.log(len(authors))
         return prop_score
 
     def sync_score(self):
@@ -611,7 +610,6 @@ class Pad:
                 prop_authors_paragraphs.append(prop_authors)
         return paragraph_names, prop_authors_paragraphs
 
-
     def alternating_score(self):
         """
         Compute the alternating score that is the number of main author alternations between paragraphs divided by the
@@ -630,7 +628,7 @@ class Pad:
 
         # Increment the alternation counter only when we change authors
         for i, author in enumerate(main_authors):
-            if i > 0 and author != main_authors[i-1]:
+            if i > 0 and author != main_authors[i - 1]:
                 num_alt += 1
         # Divide the overall counter of alternations by the maximum number of alternations
-        return num_alt/(len(main_authors)-1)
+        return num_alt / (len(main_authors) - 1)
