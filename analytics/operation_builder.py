@@ -1,7 +1,7 @@
 from analytics.Pad import Pad
 from analytics.Operations import Operation, ElementaryOperation
 from analytics import Operations
-
+import time
 
 def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_between_elem_ops, delay_sync,
                                    time_to_reset_day, time_to_reset_break, length_edit, length_delete):
@@ -23,6 +23,9 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
     :return: a dictionary of pads
     :rtype: dict[str,Pad]
     """
+
+    start = time.time()
+
     pads = dict()
     """:type: dict[str,Pad]"""
     for pad_name in list_of_elem_ops_per_pad:
@@ -104,12 +107,24 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
             pad.add_operation(dic_author_current_operations[remaining_authors])
         pads[pad_name] = pad
 
+    print("operation building time", time.time()-start)
+    start=time.time()
+
+    for pad in pads:
         # create the paragraphs
-        pad.create_paragraphs_from_ops()
+        pads[pad].create_paragraphs_from_ops()
+    print("paragraph construction time", time.time() - start)
+    start = time.time()
+    for pad in pads:
         # classify the operations of the pad
-        pad.classify_operations(length_edit=length_edit,length_delete=length_delete)
+        pads[pad].classify_operations(length_edit=length_edit,length_delete=length_delete)
+    print("Operation classification time", time.time() - start)
+    start = time.time()
+    for pad in pads:
         # find the context of the operation of the pad
-        build_operation_context(pad, delay_sync, time_to_reset_day, time_to_reset_break)
+        build_operation_context(pads[pad], delay_sync, time_to_reset_day, time_to_reset_break)
+    print("Operation context time", time.time() - start)
+    start = time.time()
 
     return pads
 

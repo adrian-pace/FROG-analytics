@@ -3,11 +3,17 @@ from analytics import parser
 import config
 from analytics import Operations
 from analytics.visualization import *
+import time
 
-# path_to_csv = "..\\stian logs\\store.csv"
-# list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_ether_csv(path_to_csv)
 path_to_db = "../stian logs/store.csv"
+
+start=time.time()
+
 list_of_elem_ops_per_pad = parser.get_elem_ops_per_pad_from_ether_csv(path_to_db)
+
+print("parsing:",time.time()-start)
+mid=time.time()
+
 print(list_of_elem_ops_per_pad.keys())
 print(len(list_of_elem_ops_per_pad.keys()))
 
@@ -20,12 +26,15 @@ for line in lines:
         aTextes[pad] = line[line.find(',"{""atext"":{""text"":""') + len(',"{""atext"":{""text"":""'):line.find(
             '"",""attribs"":""')]
 
+print("parsing aTextes (only in dev)", time.time()-mid)
+mid=time.time()
+
 subset_of_keys = list(list_of_elem_ops_per_pad.keys())[:150]
 new_list_of_elem_ops_per_pad = dict()
 for key in subset_of_keys:
     new_list_of_elem_ops_per_pad[key] = list_of_elem_ops_per_pad[key]
 
-list_of_elem_ops_per_pad = new_list_of_elem_ops_per_pad
+#list_of_elem_ops_per_pad = new_list_of_elem_ops_per_pad
 
 #list_of_elem_ops_per_pad = {"386650386650386650386650386650386650": list_of_elem_ops_per_pad["386650386650386650386650386650386650"]}
 
@@ -39,6 +48,10 @@ pads = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad
                                                         config.time_to_reset_break,
                                                         config.length_edit,
                                                         config.length_delete)
+
+print("operation_builder total", time.time()-mid)
+mid=time.time()
+
 print(len(pads))
 for pad_name in pads:
     pad = pads[pad_name]
