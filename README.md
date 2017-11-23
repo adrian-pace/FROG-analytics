@@ -7,14 +7,24 @@ It currently handle two collaborative document editors, [Etherpad](http://etherp
 
 ### Python Environment
 You will need Python3 and the following dependencies.
-- csv()
-- ast()
-- numpy()  
+- csv
+- ast
+- numpy  
+- argparse
+- pymongo (if using collab-react-components editor)
+- matplotlib
+- pandas
+- seaborn
 
 ```
 pip install csv
 pip install ast
 pip install numpy
+pip install argparse
+pip install pymongo
+pip install matplotlib
+pip install pandas
+pip install seaborn
 ```
 
 ### Etherpad
