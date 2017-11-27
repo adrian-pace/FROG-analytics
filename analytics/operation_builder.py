@@ -89,7 +89,7 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
                     last_elem_op.text_to_add = last_elem_op_txt
                     last_elem_op.abs_position = abs_position
                     last_elem_op.current_position= abs_position
-                    last_elem_op.timestamp += (len(elem_op_txts) + 1) / 1000
+                    last_elem_op.timestamp += (len(elem_op_txts) + 1) / number_of_new_elem_ops
                     dic_author_current_operations[elem_op.author] = Operation(elem_op)
 
             else:

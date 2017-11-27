@@ -328,13 +328,13 @@ class Paragraph:
         if elem_op.operation_type=="del":
             for op in self.elem_ops:
                 if elem_op.abs_position <= op.current_position <= elem_op.abs_position + elem_op.length_to_delete:
-                    elem_op.deleted = True
+                    op.deleted = True
         # Update the current position of the following elementary position
         for i in range(elem_op_idx_in_list + 1, len(self.elem_ops)):
             if elem_op.operation_type == "add" \
                     or (elem_op.operation_type == 'del'
                         and elem_op.abs_position + elem_op.length_to_delete
-                            <= self.elem_ops[i].abs_position):
+                            <= self.elem_ops[i].current_position):
                 # We will update the indices after (if they are not the elem_ops being deleted)
                 self.elem_ops[i].current_position += elem_op.get_length_of_op()
         if not (elem_op.belong_to_operation in self.operations):
@@ -413,7 +413,11 @@ class Paragraph:
 
         new_para.elem_ops = first_paragraph.elem_ops
         for op in last_paragraph.elem_ops:
-            op.current_position -= elem_op.length_to_delete
+            # Mark the element as deleted (used in finding where to insert in the paragraph)
+            if elem_op.abs_position <= op.current_position <= elem_op.abs_position + elem_op.length_to_delete:
+                op.deleted = True
+            else:
+                op.current_position -= elem_op.length_to_delete
             new_para.elem_ops.append(op)
 
         new_para.operations = first_paragraph.operations
