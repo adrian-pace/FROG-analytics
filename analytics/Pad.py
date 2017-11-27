@@ -227,7 +227,6 @@ class Pad:
 
         # We will look at each elem_op and assign it to a new/existing paragraph
         for elem_op in self.get_elem_ops_ordered():
-
             # From where we will change the paragraph indices
             # should be infity but this is enough since we can't add more than 2 paragraph
             update_indices_from = len(self.paragraphs) + 3
@@ -282,9 +281,6 @@ class Pad:
                     # We delete the old paragraph
                     del self.paragraphs[para_it_belongs_to]
 
-                    # since we add a new line
-                    para2.abs_position += 1
-
                     # Insert the second paragraph
                     self.paragraphs.insert(para_it_belongs_to, para2)
                     # Insert the new line just before
@@ -296,7 +292,7 @@ class Pad:
 
                 # We need to notify the paragraphs that are after my edit, that their position might have changed
                 for para in self.paragraphs[update_indices_from:]:
-                    para.abs_position += elem_op.get_length_of_op()
+                    para.update_indices(elem_op)
 
             # If it is a deletion
             elif elem_op.operation_type == "del":
@@ -404,12 +400,7 @@ class Pad:
                 # another para. If so we merge the two paragraphs.
                 if (merge1 is not None) and (merge2 is not None) and not (merge1 in to_remove or merge2 in to_remove):
                     # Merged paragraph
-                    merged_paragraph = Paragraph.merge(self.paragraphs[merge1], self.paragraphs[merge2])
-                    # We modify the length of the second part of the merge since its start is deleted
-                    self.paragraphs[merge2].length -= elem_op.abs_position \
-                                                      + elem_op.length_to_delete \
-                                                      - self.paragraphs[merge2].abs_position
-
+                    merged_paragraph = Paragraph.merge(self.paragraphs[merge1], self.paragraphs[merge2],elem_op)
                     # We remove the second paragraph
                     del self.paragraphs[merge2]
                     # We put the merged paragraph where the first paragraph was
@@ -419,7 +410,7 @@ class Pad:
 
                 # We need to notify the paragraphs that are after my edit, that their position might have changed
                 for para in self.paragraphs[update_indices_from:]:
-                    para.abs_position += elem_op.get_length_of_op()
+                    para.update_indices(elem_op)
 
                 # Remove the paragraphs we are supposed to remove
                 for idx in to_remove[::-1]:
@@ -468,7 +459,7 @@ class Pad:
 
                 # We need to notify the paragraphs that are after my edit, that their position might have changed
                 for para in self.paragraphs[update_indices_from:]:
-                    para.abs_position += elem_op.get_length_of_op()
+                    para.update_indices(elem_op)
 
             # Assertions
             # TODO remove for production

@@ -287,6 +287,7 @@ def get_elem_ops_per_pad_from_ether_csv(path_to_csv, pad_name=None):
     list_of_elem_ops_per_pad = dict()
 
     for timestamp,line_dict in sorted_lines:
+        # TODO check if we can do just eval ()
         val_dict = ast.literal_eval(line_dict['value'])
         pad_name_idx = line_dict['key'].find("pad:") + len("pad:")
         pad_name_end_idx = line_dict['key'].find(':revs:', pad_name_idx)

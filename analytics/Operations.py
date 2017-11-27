@@ -79,6 +79,8 @@ class ElementaryOperation:
         self.changeset = changeset
         self.belong_to_operation = belong_to_operation
         self.editor = editor
+        self.current_position = self.abs_position
+        self.deleted=False
 
     def __str__(self):
         return ("Operation:" + str(self.operation_type) +
@@ -137,7 +139,8 @@ class ElementaryOperation:
                                      pad_name=self.pad_name,
                                      revs=self.revs,
                                      changeset=self.changeset,
-                                     belong_to_operation=self.belong_to_operation)
+                                     belong_to_operation=self.belong_to_operation,
+                                     editor=self.editor)
         return new_op
 
 
@@ -271,16 +274,26 @@ class Paragraph:
         """
         if elem_op is not None:
             self.elem_ops = [elem_op]
+            """list[ElementaryOperation]"""
             self.operations = [elem_op.belong_to_operation]
+            """list[Operation]"""
             self.abs_position = elem_op.abs_position
+            """int"""
             self.length = len(elem_op.text_to_add)
+            """int"""
             self.new_line = new_line
+            """bool"""
         else:
             self.elem_ops = paragraph.elem_ops
+            """list[ElementaryOperation]"""
             self.operations = paragraph.operations
+            """list[Operation]"""
             self.abs_position = paragraph.abs_position
+            """int"""
             self.length = paragraph.length
+            """int"""
             self.new_line = paragraph.new_line
+            """bool"""
 
     def add_elem_op(self, elem_op):
         """
@@ -289,9 +302,41 @@ class Paragraph:
         :param elem_op: elementary operation to add
         :type elem_op: ElementaryOperation
         """
+
         # Store the operation if not already done. We need elem_ops to have the para at a certain point in time
         # Whether it's an addition or deletion, we add it to the lists
-        self.elem_ops.append(elem_op)
+
+        def find_position_in_list(elem_ops, elem_op_):
+            """
+            Find the position we should insert the elem_op in
+
+            :param elem_ops: Current list of operation
+            :type elem_ops: list[ElementaryOperation]
+            :param elem_op_: ElementaryOperation we want to add
+            :type elem_op_: ElementaryOperation
+            :return: the index where we should insert
+            :rtype: int
+            """
+            for i, op in enumerate(elem_ops):
+                if not op.deleted and op.current_position >= elem_op_.current_position:
+                    return i
+            return len(elem_ops)
+
+        elem_op_idx_in_list = find_position_in_list(self.elem_ops, elem_op)
+        self.elem_ops.insert(elem_op_idx_in_list, elem_op)
+        # Mark the element as deleted (used in finding where to insert in the paragraph)
+        if elem_op.operation_type=="del":
+            for op in self.elem_ops:
+                if elem_op.abs_position <= op.current_position <= elem_op.abs_position + elem_op.length_to_delete:
+                    elem_op.deleted = True
+        # Update the current position of the following elementary position
+        for i in range(elem_op_idx_in_list + 1, len(self.elem_ops)):
+            if elem_op.operation_type == "add" \
+                    or (elem_op.operation_type == 'del'
+                        and elem_op.abs_position + elem_op.length_to_delete
+                            <= self.elem_ops[i].abs_position):
+                # We will update the indices after (if they are not the elem_ops being deleted)
+                self.elem_ops[i].current_position += elem_op.get_length_of_op()
         if not (elem_op.belong_to_operation in self.operations):
             self.operations.append(elem_op.belong_to_operation)
 
@@ -325,7 +370,6 @@ class Paragraph:
             string += "\nNumber of Operations: " + str(len(self.operations))
         return string
 
-    @DeprecationWarning
     def update_indices(self, elem_op):
         """
         Move the position of the paragraph if a edit happens before it
@@ -334,16 +378,23 @@ class Paragraph:
         :type elem_op: ElementaryOperation
         """
         # Check that we are indeed after the edit. If so we must move our position accordingly
-        if elem_op.operation_type == "add" and elem_op.abs_position < self.abs_position:
+        if elem_op.operation_type == "add" and elem_op.abs_position <= self.abs_position:
             self.abs_position += len(elem_op.text_to_add)
+            for op in self.elem_ops:
+                op.current_position += len(elem_op.text_to_add)
         elif elem_op.operation_type == "del" and elem_op.abs_position + elem_op.length_to_delete <= self.abs_position:
             self.abs_position -= elem_op.length_to_delete
+            for op in self.elem_ops:
+                op.current_position -= elem_op.length_to_delete
+        else:
+            # Shouldn't happen, maybe remove the condition elif or check that we ask the right paragraphs to update
+            raise AssertionError
 
     def copy(self):
         return Paragraph(paragraph=self)
 
     @classmethod
-    def merge(cls, first_paragraph, last_paragraph):
+    def merge(cls, first_paragraph, last_paragraph, elem_op):
         """
         Merge two paragraphs
 
@@ -357,9 +408,20 @@ class Paragraph:
 
         new_para = first_paragraph.copy()
         new_para.abs_position = first_paragraph.abs_position
-        new_para.length = first_paragraph.length + last_paragraph.length
-        new_para.elem_ops = first_paragraph.elem_ops + last_paragraph.elem_ops
-        new_para.operations = first_paragraph.operations + last_paragraph.operations
+        new_para.length = first_paragraph.length + last_paragraph.length \
+                          - (elem_op.abs_position + elem_op.length_to_delete - last_paragraph.abs_position)
+
+        new_para.elem_ops = first_paragraph.elem_ops
+        for op in last_paragraph.elem_ops:
+            op.current_position -= elem_op.length_to_delete
+            new_para.elem_ops.append(op)
+
+        new_para.operations = first_paragraph.operations
+        for op in last_paragraph.operations:
+            if not op in new_para.operations:
+                new_para.operations.append(op)
+
+        # TODO: remove assertions
         assert first_paragraph.new_line is False and last_paragraph.new_line is False
         return new_para
 
@@ -377,25 +439,22 @@ class Paragraph:
 
         para1.elem_ops = []
         para2.elem_ops = []
-        para2.abs_position = position
+        para2.abs_position = position + 1  # Since we add a new line
         para1.operations = []
         para2.operations = []
         para1.length = position - paragraph_to_split.abs_position
         para2.length = paragraph_to_split.abs_position + paragraph_to_split.length - position
 
         for elem_op in paragraph_to_split.elem_ops:
-            length = 0
-            if elem_op.operation_type == "add":
-                length = len(elem_op.text_to_add)
-            elif elem_op.operation_type == "del":
-                length = elem_op.length_to_delete
+            length = elem_op.get_length_of_op()
 
             # TODO review because position moves. Maybe keep track of the effective position ?
-            if elem_op.abs_position + length <= position:
-                para1.elem_ops.append(elem_op)
-                if not (elem_op.belong_to_operation in para1.operations):
-                    para1.operations.append(elem_op.belong_to_operation)
-            elif position <= elem_op.abs_position:
+            # if elem_op.current_position + length <= position:
+            #     para1.elem_ops.append(elem_op)
+            #     if not (elem_op.belong_to_operation in para1.operations):
+            #         para1.operations.append(elem_op.belong_to_operation)
+            if position <= elem_op.current_position:
+                elem_op.current_position += 1  # Because we add the new line
                 para2.elem_ops.append(elem_op)
                 if not (elem_op.belong_to_operation in para2.operations):
                     para2.operations.append(elem_op.belong_to_operation)
@@ -403,9 +462,9 @@ class Paragraph:
                 para1.elem_ops.append(elem_op)
                 if not (elem_op.belong_to_operation in para1.operations):
                     para1.operations.append(elem_op.belong_to_operation)
-                para2.elem_ops.append(elem_op)
-                if not (elem_op.belong_to_operation in para2.operations):
-                    para2.operations.append(elem_op.belong_to_operation)
+                    # para2.elem_ops.append(elem_op)
+                    # if not (elem_op.belong_to_operation in para2.operations):
+                    #     para2.operations.append(elem_op.belong_to_operation)
 
         return para1, para2
 
@@ -420,6 +479,6 @@ class Paragraph:
     def __lt__(self, other):
         return self.abs_position < other.abs_position
 
-    #def get_main_author(self):
-        #for op in self.operations:
-            #op.context[]
+        # def get_main_author(self):
+        # for op in self.operations:
+        # op.context[]
