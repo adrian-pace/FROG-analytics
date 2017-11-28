@@ -92,7 +92,7 @@ for pad_name in pads:
     if visualizations:
         visualization.display_user_participation_paragraphs_with_del(pad)
         # plot the participation proportion per user per paragraphs
-        #visualization.display_user_participation_paragraphs(pad)
+        visualization.display_user_participation_paragraphs(pad)
 
         # plot the proportion of synchronous writing per paragraphs
         visualization.display_proportion_sync_in_paragraphs(pad)
