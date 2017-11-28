@@ -1,3 +1,4 @@
+import operation_builder
 from analytics.operation_builder import build_operations_from_elem_ops
 from analytics.parser import *
 from analytics.visualization import *
@@ -12,14 +13,18 @@ config.path_to_db
 list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_db(path_to_db=path_to_db, editor='etherpad')
 #list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_db(editor='collab-react-components')
 
-maximum_time_between_elem_ops = 7000  # milliseconds
-pads = build_operations_from_elem_ops(list_of_elem_ops_per_pad,
-                                                        maximum_time_between_elem_ops,
-                                                        config.delay_sync,
-                                                        config.time_to_reset_day,
-                                                        config.time_to_reset_break,
-                                                        config.length_edit,
-                                                        config.length_delete)
+pads = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,
+                                                        config.maximum_time_between_elem_ops)
+
+for pad_name in pads:
+    pad=pads[pad_name]
+    # create the paragraphs
+    pad.create_paragraphs_from_ops()
+    # classify the operations of the pad
+    pad.classify_operations(length_edit=config.length_edit,length_delete=config.length_delete)
+    # find the context of the operation of the pad
+    pad.build_operation_context(config.delay_sync, config.time_to_reset_day,config.time_to_reset_break)
+
 
 for pad_name in pads:
     pad = pads[pad_name]

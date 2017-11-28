@@ -63,12 +63,17 @@ if verbosity == 1:
 list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(list_of_elem_ops_per_pad)
 
 pads = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad_sorted,
-                                                        config.maximum_time_between_elem_ops,
-                                                        config.delay_sync,
-                                                        config.time_to_reset_day,
-                                                        config.time_to_reset_break,
-                                                        config.length_edit,
-                                                        config.length_delete)
+                                                        config.maximum_time_between_elem_ops)
+
+for pad_name in pads:
+    pad=pads[pad_name]
+    # create the paragraphs
+    pad.create_paragraphs_from_ops()
+    # classify the operations of the pad
+    pad.classify_operations(length_edit=config.length_edit,length_delete=config.length_delete)
+    # find the context of the operation of the pad
+    pad.build_operation_context(config.delay_sync, config.time_to_reset_day,config.time_to_reset_break)
+
 
 for pad_name in pads:
     pad = pads[pad_name]
