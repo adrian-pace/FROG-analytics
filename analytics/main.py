@@ -34,10 +34,12 @@ for pad_name in pads:
     pad.display_text_colored_by_ops()
 
     print('\nSCORES')
-    print('User proportion per paragraph score', pad.user_paticipation_paragraph_score())
+    print('User proportion per paragraph score', pad.user_participation_paragraph_score())
     print('Proportion score:', pad.prop_score())
     print('Synchronous score:', pad.sync_score()[0])
     print('Alternating score:',pad.alternating_score())
+    print('Break score day:', pad.break_score('day'))
+    print('Break score short:', pad.break_score('short'))
 
     display_user_participation(pad)
     # plot the participation proportion per user per paragraphs

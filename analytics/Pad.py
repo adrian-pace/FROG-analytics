@@ -635,8 +635,12 @@ class Pad:
         # Divide the overall counter of alternations by the maximum number of alternations
         return num_alt / (len(main_authors) - 1)
 
+    def user_participation_paragraph_score(self):
+        """
+        Compute the score of user participation per paragraph.
 
-    def user_paticipation_paragraph_score(self):
+        :return: Score between 0 and 1 being the weighted average (paragraph lengths) of the proportion entropy of users
+        """
         paragraph_participations = []
         _, prop_authors_paragraphs = self.prop_paragraphs()
         paragraph_lengths = []
@@ -654,3 +658,32 @@ class Pad:
         # Compute the weighted average according to paragraph lengths
         overall_score = sum(np.multiply(paragraph_participations, paragraph_lengths))
         return overall_score / sum(paragraph_lengths)
+
+    def break_score(self, break_type):
+        """
+        Compute the breaking score, i.e. the score that tells whether a pad is written only in one time or with
+        multiple accesses.
+
+        :param break_type: string that is either 'short' for short breaks or 'day' for daily ones.
+        :return: The score is the number of breaks over the whole pad divided by the time spent on the pad. Between 0
+        and 1.
+        """
+        # Compute the time spent in s
+        operations = Operation.sort_ops(self.operations)
+        first_timestamp = operations[0].timestamp_start
+        last_timestamp = operations[len(operations)-1].timestamp_end
+        time_spent = (last_timestamp - first_timestamp)/1000   # in s
+
+        # Compute the number of breaks according to the type
+        num_break = 0
+        for op in self.operations:
+            if break_type == 'short':
+                if op.context['first_op_day']:
+                    num_break += 1
+            elif break_type == 'day':
+                if op.context['first_op_break']:
+                    num_break += 1
+
+        # Calculate the final score
+        return num_break/time_spent
+
