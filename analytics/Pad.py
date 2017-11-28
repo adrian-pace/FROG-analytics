@@ -544,6 +544,22 @@ class Pad:
         proportions = author_lengths / overall_length
         return authors, proportions
 
+    def compute_entropy_prop(self, proportions, len_authors):
+        """
+        Compute the proportion score using the entropy and proportions.
+        :param proportions: list of proportions summing up to 1
+        :param len_authors: number of authors collaborating
+        :return: the entropy score between 0 and 1. 0 is return if there are less than two authors
+        """
+        entropy_score = 0
+        # Check that we have at least 2 authors different from the admin
+        if len_authors >= 2:
+            # Change zero values to small values to note divide by zero
+            proportions = np.array([0.000001 if prop == 0 else prop for prop in proportions])
+            # Compute the entropy with the proportions
+            entropy_score = sum(np.log(1 / proportions) * proportions) / np.log(len_authors)
+        return entropy_score
+
     def prop_score(self):
         """
         Compute the proportion score using the entropy.
@@ -552,12 +568,7 @@ class Pad:
         :rtype: float
         """
         authors, proportions = self.author_proportions(considerate_admin=False)
-        prop_score = 0
-        # Check that we have at least 2 authors different from the admin
-        if len(authors) >= 2:
-            # Compute the entropy with the proportions
-            prop_score = sum(np.log(1 / proportions) * proportions) / np.log(len(authors))
-        return prop_score
+        return self.compute_entropy_prop(proportions, len(authors))
 
     def sync_score(self):
         """
@@ -623,3 +634,23 @@ class Pad:
                 num_alt += 1
         # Divide the overall counter of alternations by the maximum number of alternations
         return num_alt / (len(main_authors) - 1)
+
+
+    def user_paticipation_paragraph_score(self):
+        paragraph_participations = []
+        _, prop_authors_paragraphs = self.prop_paragraphs()
+        paragraph_lengths = []
+
+        # Get the length of each paragraphs
+        for para in self.paragraphs:
+            if not para.new_line:
+                paragraph_lengths.append(para.get_length())
+
+        # Compute the entropy of author proportions for each paragraphs
+        for para in prop_authors_paragraphs:
+            author_props = list(para.values())
+            paragraph_participations.append(self.compute_entropy_prop(author_props, len(author_props)))
+
+        # Compute the weighted average according to paragraph lengths
+        overall_score = sum(np.multiply(paragraph_participations, paragraph_lengths))
+        return overall_score / sum(paragraph_lengths)
