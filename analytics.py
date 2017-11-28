@@ -71,8 +71,8 @@ pads = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad
                                                         config.length_delete)
 
 for pad_name in pads:
+    pad = pads[pad_name]
     if texts:
-        pad = pads[pad_name]
         print("PAD:", pad_name)
         text = pad.get_text()
         print("TEXT")
@@ -85,8 +85,9 @@ for pad_name in pads:
         pad.display_text_colored_by_ops()
 
     if visualizations:
+        visualization.display_user_participation_paragraphs_with_del(pad)
         # plot the participation proportion per user per paragraphs
-        visualization.display_user_participation_paragraphs(pad)
+        #visualization.display_user_participation_paragraphs(pad)
 
         # plot the proportion of synchronous writing per paragraphs
         visualization.display_proportion_sync_in_paragraphs(pad)

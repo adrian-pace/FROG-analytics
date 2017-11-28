@@ -25,9 +25,9 @@ new_list_of_elem_ops_per_pad = dict()
 for key in subset_of_keys:
     new_list_of_elem_ops_per_pad[key] = list_of_elem_ops_per_pad[key]
 
-#list_of_elem_ops_per_pad = new_list_of_elem_ops_per_pad
+list_of_elem_ops_per_pad = new_list_of_elem_ops_per_pad
 
-#list_of_elem_ops_per_pad = {"386650386650386650386650386650386650": list_of_elem_ops_per_pad["386650386650386650386650386650386650"]}
+#list_of_elem_ops_per_pad = {"753268753268753268753268753268753268": list_of_elem_ops_per_pad["753268753268753268753268753268753268"]}
 
 list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(list_of_elem_ops_per_pad)
 
@@ -61,6 +61,7 @@ for pad_name in pads:
     print('\nCOLORED TEXT BY OPS')
     pad.display_text_colored_by_ops()
 
+    display_user_participation(pad)
     display_user_participation_paragraphs_with_del(pad)
 
     # plot the proportion of synchronous writing per paragraphs
