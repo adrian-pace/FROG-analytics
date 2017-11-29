@@ -61,23 +61,31 @@ for pad_name in pads:
         print("With n_elem_ops", len(pad.get_all_elementary_operation()))
 
 
-    # print('\nCOLORED TEXT BY AUTHOR')
-    # pad.display_text_colored_by_authors()
-    #
-    # print('\nCOLORED TEXT BY OPS')
-    # pad.display_text_colored_by_ops()
-    #
-    # display_user_participation(pad)
-    # display_user_participation_paragraphs_with_del(pad)
-    #
-    # # plot the proportion of synchronous writing per paragraphs
-    # display_proportion_sync_in_paragraphs(pad)
-    #
-    # # plot the overall type counts
-    # display_overall_op_type(pad)
-    #
-    # # plot the counts of type per users
-    # display_types_per_user(pad)
+    print('\nCOLORED TEXT BY AUTHOR')
+    print(pad.display_text_colored_by_authors())
+
+    #print('\nCOLORED TEXT BY OPS')
+    #print(pad.display_text_colored_by_ops())
+
+    print('\nSCORES')
+    print('User proportion per paragraph score', pad.user_participation_paragraph_score())
+    print('Proportion score:', pad.prop_score())
+    print('Synchronous score:', pad.sync_score()[0])
+    print('Alternating score:', pad.alternating_score())
+    print('Break score day:', pad.break_score('day'))
+    print('Break score short:', pad.break_score('short'))
+
+    display_user_participation(pad)
+    display_user_participation_paragraphs_with_del(pad)
+
+    # plot the proportion of synchronous writing per paragraphs
+    display_proportion_sync_in_paragraphs(pad)
+
+    # plot the overall type counts
+    display_overall_op_type(pad)
+
+    # plot the counts of type per users
+    display_types_per_user(pad)
     #
     # print("ops:")
     # for op in pad.operations:

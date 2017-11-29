@@ -144,10 +144,10 @@ class Pad:
             else:
                 raise AttributeError("Undefined elementary operation")
         # Print letter after letter with the right color
-        print(''.join([color + letter for letter, color in zip(letters, letters_color)]))
+        string_colored = ''.join([color + letter for letter, color in zip(letters, letters_color)])
 
-        # Change color back to original
-        print(colors[0])
+        # Change color back to original at the end and return
+        return string_colored + get_colors()[0]
 
     def get_letters_and_colors_from_authors(self):
         """
@@ -190,10 +190,10 @@ class Pad:
         letters, colors = self.get_letters_and_colors_from_authors()
 
         # Print letter after letter with the right color
-        print(''.join([color + letter for letter, color in zip(letters, colors)]))
+        colored_text = ''.join([color + letter for letter, color in zip(letters, colors)])
 
         # Change color back to original
-        print(colors[0])
+        return colored_text + get_colors()[0]
 
     def display_operations(self):
         """
@@ -224,8 +224,6 @@ class Pad:
                                 <= paragraph.abs_position + paragraph.get_length():
                     return para_i
             return -1
-
-        print(self.pad_name)
 
         # We will look at each elem_op and assign it to a new/existing paragraph
         for elem_op in new_elem_ops_sorted:
@@ -467,6 +465,11 @@ class Pad:
             # TODO remove for production
             # Checking that the paragraph is in order
             assert self.paragraphs == sorted(self.paragraphs)
+            # checking that length is not 0
+            for i in range(0, len(self.paragraphs)):
+                if self.paragraphs[i].length==0:
+                    print(self.pad_name,i,"\n",elem_op)
+                    raise AssertionError
             # Checking that the paragraphs touch each others
             for i in range(1, len(self.paragraphs)):
                 if self.paragraphs[i - 1].abs_position \
@@ -521,34 +524,31 @@ class Pad:
         Build the context of each operation progressively added to the pad. The context is a dictionary containing whether a
          pad is synchronous wih an other author in the pad or in the paragraph and it contains list of authors accordingly.
 
-        :param self:
         :param delay_sync: delay of synchronization between two authors
         :param time_to_reset_day: Number of milliseconds between two ops to indicate the first op of the day, by default 8h
         :param time_to_reset_break: Number of milliseconds to indicate the first op after a break, by default 10min
         :return: None
         """
         # Iterate over all Operation of each Paragraph which is the same as to iterate all iterations of the pad
-        # op_index is the Operation index of the overall Pad
-        op_index = 0
         pad_operations = self.operations
         len_pad = len(self.get_text())
-
         for para in self.paragraphs:
-            len_para = para.get_length()
+            abs_length_para = 0
             para_ops = para.operations
             for op in para_ops:
                 # Initialize the context
-                len_op = op.get_length_of_op()
+                len_op = abs(op.get_length_of_op())
                 op.context['synchronous_in_pad'] = False
                 op.context['synchronous_in_pad_with'] = []
                 op.context['synchronous_in_paragraph'] = False
                 op.context['synchronous_in_paragraph_with'] = []
-                op.context['proportion_pad'] = len_op / len_pad
-                op.context['proportion_paragraph'] = len_op / len_para
                 op.context['first_op_day'] = False
                 op.context['first_op_break'] = False
                 start_time = op.timestamp_start
                 end_time = op.timestamp_end
+
+                # Compute the overall length of the paragraph
+                abs_length_para += abs(op.get_length_of_op())
 
                 # Check in the pad if the other operations are written by someone else at the same time (+ some delay)
                 op_index = 0
@@ -570,6 +570,24 @@ class Pad:
                         if other_op in para_ops:
                             op.context['synchronous_in_paragraph'] = True
                             op.context['synchronous_in_paragraph_with'].append(other_op.author)
+
+                # Compute proportions
+                op.context['proportion_pad'] = len_op / len_pad
+                op.context['proportion_paragraph'] = len_op
+            # Once we computed the absolute length of the paragraph, we compute the proportion (it is positive)
+            for op in para_ops:
+                op.context['proportion_paragraph'] /= abs_length_para
+            # Create an empty context if the operation was not in a paragraph
+            for op in self.operations:
+                if not op.context:
+                    op.context['synchronous_in_pad'] = False
+                    op.context['synchronous_in_pad_with'] = []
+                    op.context['synchronous_in_paragraph'] = False
+                    op.context['synchronous_in_paragraph_with'] = []
+                    op.context['first_op_day'] = False
+                    op.context['first_op_break'] = False
+                    op.context['proportion_pad'] = 0
+                    op.context['proportion_paragraph'] = 0
 
     def author_proportions(self, considerate_admin=True):
         """
@@ -594,7 +612,7 @@ class Pad:
             op_author = op.author
             # Skip the incrementation if needed
             if considerate_admin or op_author != 'Etherpad_admin':
-                author_lengths[authors.index(op_author)] += op.get_length_of_op()
+                author_lengths[authors.index(op_author)] += abs(op.get_length_of_op())
 
         # Compute the overall participation
         overall_length = sum(author_lengths)
@@ -664,8 +682,8 @@ class Pad:
                 paragraph_names.append('p' + str(i))
                 i += 1
                 for op in paragraph.operations:
-                    prop_authors[op.author] += op.context[
-                        'proportion_paragraph']  # increment with the corresponding prop
+                    prop_authors[op.author] += abs(op.context[
+                        'proportion_paragraph'])  # increment with the corresponding prop
                 prop_authors_paragraphs.append(prop_authors)
         return paragraph_names, prop_authors_paragraphs
 
