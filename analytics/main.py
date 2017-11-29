@@ -8,8 +8,6 @@ import config
 # list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_ether_csv(path_to_csv)
 path_to_db = "..\\etherpad\\var\\dirty.db"
 
-config.path_to_db
-
 list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_db(path_to_db=path_to_db, editor='etherpad')
 #list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_db(editor='collab-react-components')
 

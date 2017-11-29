@@ -156,6 +156,8 @@ class Operation:
         :param elem_op: first ElementaryOperation
         :type elem_op: ElementaryOperation
         """
+        self.pushed = False
+        """Whether the operation has already been added to its pad (useful for operation_builder)"""
         self.author = elem_op.author
         """Author of the op"""
         self.position_start_of_op = elem_op.abs_position

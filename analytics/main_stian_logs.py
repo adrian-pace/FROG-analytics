@@ -9,7 +9,7 @@ from analytics.visualization import *
 
 
 path_to_db = "../stian logs/store.csv"
-list_of_elem_ops_per_pad = parser.get_elem_ops_per_pad_from_ether_csv(path_to_db)
+list_of_elem_ops_per_pad = parser.get_elem_ops_per_pad_from_db(path_to_db,'stian_logs')
 print(list_of_elem_ops_per_pad.keys())
 print(len(list_of_elem_ops_per_pad.keys()))
 
