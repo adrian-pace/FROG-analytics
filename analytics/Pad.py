@@ -463,6 +463,11 @@ class Pad:
             # TODO remove for production
             # Checking that the paragraph is in order
             assert self.paragraphs == sorted(self.paragraphs)
+            # checking that length is not 0
+            for i in range(0, len(self.paragraphs)):
+                if self.paragraphs[i].length==0:
+                    print(self.pad_name,i,"\n",elem_op)
+                    raise AssertionError
             # Checking that the paragraphs touch each others
             for i in range(1, len(self.paragraphs)):
                 if self.paragraphs[i - 1].abs_position \
