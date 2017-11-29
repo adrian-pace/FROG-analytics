@@ -9,7 +9,7 @@ from analytics.visualization import *
 
 
 path_to_db = "../stian logs/store.csv"
-list_of_elem_ops_per_pad = parser.get_elem_ops_per_pad_from_ether_csv(path_to_db)
+list_of_elem_ops_per_pad,_ = parser.get_elem_ops_per_pad_from_db(path_to_db,'stian_logs')
 print(list_of_elem_ops_per_pad.keys())
 print(len(list_of_elem_ops_per_pad.keys()))
 
@@ -33,13 +33,13 @@ list_of_elem_ops_per_pad = new_list_of_elem_ops_per_pad
 
 list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(list_of_elem_ops_per_pad)
 
-pads = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad_sorted,
+pads,_,elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad_sorted,
                                                         config.maximum_time_between_elem_ops)
 
 for pad_name in pads:
     pad=pads[pad_name]
     # create the paragraphs
-    pad.create_paragraphs_from_ops()
+    pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
     # classify the operations of the pad
     pad.classify_operations(length_edit=config.length_edit,length_delete=config.length_delete)
     # find the context of the operation of the pad

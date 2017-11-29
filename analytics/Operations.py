@@ -129,9 +129,15 @@ class ElementaryOperation:
         return np.array(sorted_elem_ops)[:, 1]
 
     def copy(self):
+        """
+        Copy the elementary operation if it's an add. Used in operation builder. It doesn't copy a few parameters which
+        are unrelevant at this stage
+        :return: The copy of the ElementaryOperation
+        :rtype: ElementaryOperation
+        """
         new_op = ElementaryOperation(operation_type=self.operation_type,
                                      abs_position=self.abs_position,
-                                     text_to_add=self,
+                                     text_to_add=self.text_to_add,
                                      line_number=self.line_number,
                                      position_inline=self.position_inline,
                                      author=self.author,
@@ -156,6 +162,8 @@ class Operation:
         :param elem_op: first ElementaryOperation
         :type elem_op: ElementaryOperation
         """
+        self.pushed = False
+        """Whether the operation has already been added to its pad (useful for operation_builder)"""
         self.author = elem_op.author
         """Author of the op"""
         self.position_start_of_op = elem_op.abs_position

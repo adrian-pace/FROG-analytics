@@ -40,7 +40,9 @@ class Pad:
 
         :param operation: Operation to add
         """
-        self.operations.append(operation)
+        if not operation.pushed:
+            operation.pushed = True
+            self.operations.append(operation)
 
     def add_operations(self, operations):
         """
@@ -203,9 +205,9 @@ class Pad:
             print(op)
             print()
 
-    def create_paragraphs_from_ops(self):
+    def create_paragraphs_from_ops(self,new_elem_ops_sorted):
         """
-        Build the paragraphs for the pad
+        Build the paragraphs for the pad based on the existing paragraphs and the new elementary operations
 
         """
 
@@ -224,7 +226,7 @@ class Pad:
             return -1
 
         # We will look at each elem_op and assign it to a new/existing paragraph
-        for elem_op in self.get_elem_ops_ordered():
+        for elem_op in new_elem_ops_sorted:
             # From where we will change the paragraph indices
             # should be infity but this is enough since we can't add more than 2 paragraph
             update_indices_from = len(self.paragraphs) + 3
@@ -398,7 +400,7 @@ class Pad:
                 # another para. If so we merge the two paragraphs.
                 if (merge1 is not None) and (merge2 is not None) and not (merge1 in to_remove or merge2 in to_remove):
                     # Merged paragraph
-                    merged_paragraph = Paragraph.merge(self.paragraphs[merge1], self.paragraphs[merge2],elem_op)
+                    merged_paragraph = Paragraph.merge(self.paragraphs[merge1], self.paragraphs[merge2], elem_op)
                     # We remove the second paragraph
                     del self.paragraphs[merge2]
                     # We put the merged paragraph where the first paragraph was
@@ -749,8 +751,8 @@ class Pad:
         # Compute the time spent in s
         operations = Operation.sort_ops(self.operations)
         first_timestamp = operations[0].timestamp_start
-        last_timestamp = operations[len(operations)-1].timestamp_end
-        time_spent = (last_timestamp - first_timestamp)/1000   # in s
+        last_timestamp = operations[len(operations) - 1].timestamp_end
+        time_spent = (last_timestamp - first_timestamp) / 1000  # in s
 
         # Compute the number of breaks according to the type
         num_break = 0
@@ -762,5 +764,4 @@ class Pad:
                 if op.context['first_op_break']:
                     num_break += 1
         # Calculate the final score
-        return num_break/time_spent
-
+        return num_break / time_spent

@@ -3,24 +3,49 @@ from analytics.Operations import Operation, ElementaryOperation
 from analytics import Operations
 
 
-def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_between_elem_ops):
+def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_between_elem_ops,
+                                   dic_author_current_operations_per_pad=None, pads=None):
     """
     Create a Pad for each pad and create the operations for each one.
 
-    :param list_of_elem_ops_per_pad: dictionnary of elementary operation per pad
+    :param list_of_elem_ops_per_pad: dictionary of elementary operation per pad
     :type list_of_elem_ops_per_pad: dict[str,list[ElementaryOperation]]
     :param maximum_time_between_elem_ops: maximum type idle so that it's part of the same op
     :type maximum_time_between_elem_ops: int
-    :return: a dictionary of pads
-    :rtype: dict[str,Pad]
-    """
-    pads = dict()
-    """:type: dict[str,Pad]"""
-    for pad_name in list_of_elem_ops_per_pad:
-        pad = Pad(pad_name)
+    :param dic_author_current_operations_per_pad: The current ongoing operations
+    :type dic_author_current_operations_per_pad: dict[str,dict[str,Operation]]
+     :param pads: The current pads
+    :type pads: dict[str,Pad]
+    :return: a dictionary of pads and the current operation that might changed depending on the next elem_ops, and the
+        list of elem_ops (they might have changed if there were some new lines.
 
-        dic_author_current_operations = dict()
-        """:type:dict[str,Operation]"""
+    :rtype: (dict[str,Pad],dict[str,dict[str,Operation]],dict[str,list[ElementaryOperation]])
+    """
+    elem_ops_treated = dict()
+    """:type: dict[str,list[ElementaryOperation]]"""
+    for pad_name in list_of_elem_ops_per_pad:
+        if pads is not None:
+            if pad_name in pads:
+                pad = pads[pad_name]
+            else:
+                pad = Pad(pad_name)
+        else:
+            pads=dict()
+            """:type:dict[str,Pad]"""
+            pad = Pad(pad_name)
+
+        if dic_author_current_operations_per_pad is not None:
+            if pad_name in dic_author_current_operations_per_pad:
+                dic_author_current_operations = dic_author_current_operations_per_pad[pad_name]
+            else:
+                dic_author_current_operations = dict()
+                """:type:dict[str,Operation]"""
+        else:
+            dic_author_current_operations_per_pad=dict()
+            """:type:dict[str,dict[str,Operation]]"""
+            dic_author_current_operations = dict()
+            """:type:dict[str,Operation]"""
+        elem_ops_treated[pad_name] = []
 
         for elem_op in list_of_elem_ops_per_pad[pad_name]:
             if elem_op.operation_type == "add" and "\n" in elem_op.text_to_add:
@@ -55,6 +80,7 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
                 if first_elem_op_txt != "":
                     first_elem_op = elem_op.copy()
                     first_elem_op.text_to_add = first_elem_op_txt
+                    elem_ops_treated[pad_name].append(first_elem_op)
                     dic_author_current_operations = treat_op(first_elem_op, dic_author_current_operations, pad,
                                                              maximum_time_between_elem_ops)
                     abs_position += len(first_elem_op.text_to_add)
@@ -72,6 +98,7 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
                         new_elem.abs_position = abs_position
                         new_elem.current_position = abs_position
                         new_elem.timestamp += (idx + 1) / number_of_new_elem_ops
+                        elem_ops_treated[pad_name].append(new_elem)
                         pad.add_operation(Operation(new_elem))
                         abs_position += len(new_elem.text_to_add)
 
@@ -79,11 +106,13 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
                     last_elem_op = elem_op.copy()
                     last_elem_op.text_to_add = last_elem_op_txt
                     last_elem_op.abs_position = abs_position
-                    last_elem_op.current_position= abs_position
+                    last_elem_op.current_position = abs_position
                     last_elem_op.timestamp += (len(elem_op_txts) + 1) / number_of_new_elem_ops
+                    elem_ops_treated[pad_name].append(last_elem_op)
                     dic_author_current_operations[elem_op.author] = Operation(elem_op)
 
             else:
+                elem_ops_treated[pad_name].append(elem_op)
                 dic_author_current_operations = treat_op(elem_op, dic_author_current_operations, pad,
                                                          maximum_time_between_elem_ops)
 
@@ -96,10 +125,9 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
         for remaining_authors in dic_author_current_operations:
             pad.add_operation(dic_author_current_operations[remaining_authors])
         pads[pad_name] = pad
+        dic_author_current_operations_per_pad[pad_name] = dic_author_current_operations
 
-
-
-    return pads
+    return pads, dic_author_current_operations_per_pad, elem_ops_treated
 
 
 def treat_op(elem_op, dic_author_current_operations, pad, maximum_time_between_elem_ops):
@@ -127,11 +155,11 @@ def treat_op(elem_op, dic_author_current_operations, pad, maximum_time_between_e
         if new_time - current_op.timestamp_end < maximum_time_between_elem_ops:
             # Time between the last ElementaryOperation of the Operation and our current ElementaryOperation is
             # smaller than maximum_time_between_elem_ops
-            if current_op.position_start_of_op\
+            if current_op.position_start_of_op \
                     - abs(elem_op.get_length_of_op()) \
                     <= new_position \
                     <= current_op.position_start_of_op \
-                    + abs(current_op.get_length_of_op()):
+                            + abs(current_op.get_length_of_op()):
                 # Checking that the position of the elementary op is more or less inside the Operation bounds
                 current_op.add_elem_op(elem_op)
                 return dic_author_current_operations
