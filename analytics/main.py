@@ -8,16 +8,16 @@ import config
 # list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_ether_csv(path_to_csv)
 path_to_db = "..\\etherpad\\var\\dirty.db"
 
-list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_db(path_to_db=path_to_db, editor='etherpad')
-#list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_db(editor='collab-react-components')
+list_of_elem_ops_per_pad,_ = get_elem_ops_per_pad_from_db(path_to_db=path_to_db, editor='etherpad')
+#list_of_elem_ops_per_pad,_ = get_elem_ops_per_pad_from_db(editor='collab-react-components')
 
-pads = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,
+pads,_,elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,
                                                         config.maximum_time_between_elem_ops)
 
 for pad_name in pads:
     pad=pads[pad_name]
     # create the paragraphs
-    pad.create_paragraphs_from_ops()
+    pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
     # classify the operations of the pad
     pad.classify_operations(length_edit=config.length_edit,length_delete=config.length_delete)
     # find the context of the operation of the pad

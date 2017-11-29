@@ -253,52 +253,52 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
         sorted_lines = []
         with open(path_to_db, encoding="utf8") as f:
             lines = csv.DictReader(f)
-        # We need them sorted
-        for i, line_dict in enumerate(lines[index_from:]):
-            # We look at relevant log lines
-            if (pad_name is not None and 'pad:' + pad_name in line_dict['key']) \
-                    or (pad_name is None and 'pad:' in line_dict['key']):
-                line_dict['value'] = line_dict['value'].replace("false", "False").replace("null", "None")
-                if 'revs' in line_dict['key']:
-                    val_dict = ast.literal_eval(line_dict['value'])
-                    timestamp = val_dict['meta']['timestamp']
-                    sorted_lines.append((int(timestamp), line_dict))
-        sorted_lines = sorted(sorted_lines, key=lambda tup: tup[0])
+            # We need them sorted
+            for i, line_dict in enumerate(lines):
+                # We look at relevant log lines
+                if (pad_name is not None and 'pad:' + pad_name in line_dict['key']) \
+                        or (pad_name is None and 'pad:' in line_dict['key']):
+                    line_dict['value'] = line_dict['value'].replace("false", "False").replace("null", "None")
+                    if 'revs' in line_dict['key']:
+                        val_dict = ast.literal_eval(line_dict['value'])
+                        timestamp = val_dict['meta']['timestamp']
+                        sorted_lines.append((int(timestamp), line_dict))
+            sorted_lines = sorted(sorted_lines, key=lambda tup: tup[0])
 
-        # Sometimes, we will get multiple elem_ops when we parse the changeset. We need to give them different
-        # timestamps. So we add an offset to the timestamp of each elem_op to differentiate them. We keep track of this
-        # offset to apply it to the following ops
-        timestamp_offset = 0
-        list_of_elem_ops_per_pad = dict()
+            # Sometimes, we will get multiple elem_ops when we parse the changeset. We need to give them different
+            # timestamps. So we add an offset to the timestamp of each elem_op to differentiate them. We keep track of this
+            # offset to apply it to the following ops
+            timestamp_offset = 0
+            list_of_elem_ops_per_pad = dict()
 
-        for timestamp, line_dict in sorted_lines:
-            # TODO check if we can do just eval ()
-            val_dict = ast.literal_eval(line_dict['value'])
-            pad_name_idx = line_dict['key'].find("pad:") + len("pad:")
-            pad_name_end_idx = line_dict['key'].find(':revs:', pad_name_idx)
-            pad_name = line_dict['key'][pad_name_idx:pad_name_end_idx]
-            revs = int(line_dict['key'][pad_name_end_idx + len('revs:') + 1:])
+            for timestamp, line_dict in sorted_lines[index_from:]:
+                # TODO check if we can do just eval ()
+                val_dict = ast.literal_eval(line_dict['value'])
+                pad_name_idx = line_dict['key'].find("pad:") + len("pad:")
+                pad_name_end_idx = line_dict['key'].find(':revs:', pad_name_idx)
+                pad_name = line_dict['key'][pad_name_idx:pad_name_end_idx]
+                revs = int(line_dict['key'][pad_name_end_idx + len('revs:') + 1:])
 
-            changeset = val_dict['changeset']
+                changeset = val_dict['changeset']
 
-            author_name = val_dict['meta']['author']
-            if not (pad_name in list_of_elem_ops_per_pad.keys()):
-                list_of_elem_ops_per_pad[pad_name] = []
+                author_name = val_dict['meta']['author']
+                if not (pad_name in list_of_elem_ops_per_pad.keys()):
+                    list_of_elem_ops_per_pad[pad_name] = []
 
-            elem_ops = parse_changeset_etherpad(changeset)
-            for i, elem_op in enumerate(elem_ops):
-                if author_name == '':
-                    # if it's the line generated automatically by etherpad
-                    elem_op.author = 'Etherpad_admin'
-                else:
-                    elem_op.author = author_name
-                elem_op.timestamp = timestamp + timestamp_offset
-                timestamp_offset += 1
-                elem_op.revs = revs
-                elem_op.pad_name = pad_name
+                elem_ops = parse_changeset_etherpad(changeset)
+                for i, elem_op in enumerate(elem_ops):
+                    if author_name == '':
+                        # if it's the line generated automatically by etherpad
+                        elem_op.author = 'Etherpad_admin'
+                    else:
+                        elem_op.author = author_name
+                    elem_op.timestamp = timestamp + timestamp_offset
+                    timestamp_offset += 1
+                    elem_op.revs = revs
+                    elem_op.pad_name = pad_name
 
-                list_of_elem_ops_per_pad[pad_name].append(elem_op)
-        index_from = len(lines)
+                    list_of_elem_ops_per_pad[pad_name].append(elem_op)
+            index_from = len(sorted_lines)
     else:
         raise ValueError("Undefined editor")
 
