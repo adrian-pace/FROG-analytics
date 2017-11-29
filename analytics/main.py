@@ -33,10 +33,10 @@ for pad_name in pads:
     print(pad.get_text())
 
     print('\nCOLORED TEXT BY AUTHOR')
-    pad.display_text_colored_by_authors()
+    print(pad.display_text_colored_by_authors())
 
     print('\nCOLORED TEXT BY OPS')
-    pad.display_text_colored_by_ops()
+    print(pad.display_text_colored_by_ops())
 
     print('\nSCORES')
     print('User proportion per paragraph score', pad.user_participation_paragraph_score())

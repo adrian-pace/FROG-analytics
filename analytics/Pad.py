@@ -142,10 +142,10 @@ class Pad:
             else:
                 raise AttributeError("Undefined elementary operation")
         # Print letter after letter with the right color
-        print(''.join([color + letter for letter, color in zip(letters, letters_color)]))
+        string_colored = ''.join([color + letter for letter, color in zip(letters, letters_color)])
 
-        # Change color back to original
-        print(colors[0])
+        # Change color back to original at the end and return
+        return string_colored + get_colors()[0]
 
     def get_letters_and_colors_from_authors(self):
         """
@@ -188,10 +188,10 @@ class Pad:
         letters, colors = self.get_letters_and_colors_from_authors()
 
         # Print letter after letter with the right color
-        print(''.join([color + letter for letter, color in zip(letters, colors)]))
+        colored_text = ''.join([color + letter for letter, color in zip(letters, colors)])
 
         # Change color back to original
-        print(colors[0])
+        return colored_text + get_colors()[0]
 
     def display_operations(self):
         """
