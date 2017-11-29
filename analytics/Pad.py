@@ -223,8 +223,6 @@ class Pad:
                     return para_i
             return -1
 
-        print(self.pad_name)
-
         # We will look at each elem_op and assign it to a new/existing paragraph
         for elem_op in self.get_elem_ops_ordered():
             # From where we will change the paragraph indices
@@ -527,7 +525,6 @@ class Pad:
         # Iterate over all Operation of each Paragraph which is the same as to iterate all iterations of the pad
         pad_operations = self.operations
         len_pad = len(self.get_text())
-
         for para in self.paragraphs:
             abs_length_para = 0
             para_ops = para.operations
@@ -573,6 +570,17 @@ class Pad:
             # Once we computed the absolute length of the paragraph, we compute the proportion (it is positive)
             for op in para_ops:
                 op.context['proportion_paragraph'] /= abs_length_para
+            # Create an empty context if the operation was not in a paragraph
+            for op in self.operations:
+                if not op.context:
+                    op.context['synchronous_in_pad'] = False
+                    op.context['synchronous_in_pad_with'] = []
+                    op.context['synchronous_in_paragraph'] = False
+                    op.context['synchronous_in_paragraph_with'] = []
+                    op.context['first_op_day'] = False
+                    op.context['first_op_break'] = False
+                    op.context['proportion_pad'] = 0
+                    op.context['proportion_paragraph'] = 0
 
     def author_proportions(self, considerate_admin=True):
         """
@@ -597,7 +605,7 @@ class Pad:
             op_author = op.author
             # Skip the incrementation if needed
             if considerate_admin or op_author != 'Etherpad_admin':
-                author_lengths[authors.index(op_author)] += op.get_length_of_op()
+                author_lengths[authors.index(op_author)] += abs(op.get_length_of_op())
 
         # Compute the overall participation
         overall_length = sum(author_lengths)
