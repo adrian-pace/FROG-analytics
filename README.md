@@ -1,6 +1,6 @@
 # FROG-analytics
 
-Learning analytics algorithms and visualizations for collaborative writings.
+Analytics algorithms and visualizations for collaborative writings.
 It currently handle two collaborative document editors, [Etherpad](http://etherpad.org/) and [Collab-react-components](https://github.com/chili-epfl/collab-react-components).
 
 ## Setup
