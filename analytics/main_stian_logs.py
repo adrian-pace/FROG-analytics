@@ -27,9 +27,9 @@ new_list_of_elem_ops_per_pad = dict()
 for key in subset_of_keys:
     new_list_of_elem_ops_per_pad[key] = list_of_elem_ops_per_pad[key]
 
-#list_of_elem_ops_per_pad = new_list_of_elem_ops_per_pad
+list_of_elem_ops_per_pad = new_list_of_elem_ops_per_pad
 
-list_of_elem_ops_per_pad = {"753268753268753268753268753268753268": list_of_elem_ops_per_pad["753268753268753268753268753268753268"]}
+#list_of_elem_ops_per_pad = {"181048181048181048181048181048181048": list_of_elem_ops_per_pad["181048181048181048181048181048181048"]}
 
 list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(list_of_elem_ops_per_pad)
 

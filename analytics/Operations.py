@@ -360,6 +360,12 @@ class Paragraph:
     def get_length(self):
         return self.length
 
+    def get_abs_length(self):
+        abs_length = 0
+        for op in self.operations:
+            abs_length += abs(op.get_length_of_op())
+        return abs_length
+
     def __str__(self, verbose=0):
         string = "from: " + str(self.abs_position) + "\nto: " + str(self.abs_position + self.length)
         if verbose > 0:

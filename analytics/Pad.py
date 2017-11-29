@@ -525,62 +525,63 @@ class Pad:
         # Iterate over all Operation of each Paragraph which is the same as to iterate all iterations of the pad
         pad_operations = self.operations
         len_pad = len(self.get_text())
+        for op in pad_operations:
+            # Initialize the context
+            len_op = abs(op.get_length_of_op())
+            op.context['proportion_pad'] = len_op / len_pad
+            # An operation is originally 100% of a new paragraph
+            op.context['proportion_paragraph'] = 1
+            op.context['synchronous_in_pad'] = False
+            op.context['synchronous_in_pad_with'] = []
+            op.context['synchronous_in_paragraph'] = False
+            op.context['synchronous_in_paragraph_with'] = []
+            op.context['first_op_day'] = False
+            op.context['first_op_break'] = False
+            start_time = op.timestamp_start
+            end_time = op.timestamp_end
+
+            # Check in the pad if the other operations are written by someone else at the same time (+ some delay)
+            op_index = 0
+            for other_op in pad_operations:
+                other_start_time = other_op.timestamp_start
+                # Control if this is the current operation to do some processing on it
+                if other_op == op:
+                    # Check if the op is a first one
+                    if op_index == 0 or other_start_time >= pad_operations[
+                                op_index - 1].timestamp_end + time_to_reset_day:
+                        op.context['first_op_day'] = True
+                    elif op_index != 0 and other_start_time >= pad_operations[
+                                op_index - 1].timestamp_end + time_to_reset_break:
+                        op.context['first_op_break'] = True
+                op_index += 1
+
+                if other_op.author != op.author and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
+                    op.context['synchronous_in_pad'] = True
+                    op.context['synchronous_in_pad_with'].append(other_op.author)
         for para in self.paragraphs:
             abs_length_para = 0
             para_ops = para.operations
             for op in para_ops:
-                # Initialize the context
+                # Initialize the variables
                 len_op = abs(op.get_length_of_op())
-                op.context['synchronous_in_pad'] = False
-                op.context['synchronous_in_pad_with'] = []
-                op.context['synchronous_in_paragraph'] = False
-                op.context['synchronous_in_paragraph_with'] = []
-                op.context['first_op_day'] = False
-                op.context['first_op_break'] = False
                 start_time = op.timestamp_start
                 end_time = op.timestamp_end
 
                 # Compute the overall length of the paragraph
                 abs_length_para += abs(op.get_length_of_op())
 
-                # Check in the pad if the other operations are written by someone else at the same time (+ some delay)
-                op_index = 0
-                for other_op in pad_operations:
+                for other_op in para_ops:
                     other_start_time = other_op.timestamp_start
-                    # Control if this is the current operation to do some processing on it
-                    if other_op == op:
-                        # Check if the op is a first one
-                        if op_index == 0 or other_start_time >= pad_operations[
-                                    op_index - 1].timestamp_end + time_to_reset_day:
-                            op.context['first_op_day'] = True
-                        elif op_index != 0 and other_start_time >= pad_operations[
-                                    op_index - 1].timestamp_end + time_to_reset_break:
-                            op.context['first_op_break'] = True
-                    op_index += 1
                     if other_op.author != op.author and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
-                        op.context['synchronous_in_pad'] = True
-                        op.context['synchronous_in_pad_with'].append(other_op.author)
-                        if other_op in para_ops:
-                            op.context['synchronous_in_paragraph'] = True
-                            op.context['synchronous_in_paragraph_with'].append(other_op.author)
+                        op.context['synchronous_in_paragraph'] = True
+                        op.context['synchronous_in_paragraph_with'].append(other_op.author)
 
-                # Compute proportions
-                op.context['proportion_pad'] = len_op / len_pad
                 op.context['proportion_paragraph'] = len_op
             # Once we computed the absolute length of the paragraph, we compute the proportion (it is positive)
             for op in para_ops:
                 op.context['proportion_paragraph'] /= abs_length_para
-            # Create an empty context if the operation was not in a paragraph
-            for op in self.operations:
-                if not op.context:
-                    op.context['synchronous_in_pad'] = False
-                    op.context['synchronous_in_pad_with'] = []
-                    op.context['synchronous_in_paragraph'] = False
-                    op.context['synchronous_in_paragraph_with'] = []
-                    op.context['first_op_day'] = False
-                    op.context['first_op_break'] = False
-                    op.context['proportion_pad'] = 0
-                    op.context['proportion_paragraph'] = 0
+
+
 
     def author_proportions(self, considerate_admin=True):
         """
@@ -685,7 +686,7 @@ class Pad:
         Compute the alternating score that is the number of main author alternations between paragraphs divided by the
         total number of alternations of paragraphs.
 
-        :return: the alternating score which is a float between 0 and 1.
+        :return: the alternating score which is a float between 0 and 1. Return 0 if there is less than 2 paragraph
         """
         num_alt = 0
         main_authors = []
@@ -701,7 +702,11 @@ class Pad:
             if i > 0 and author != main_authors[i - 1]:
                 num_alt += 1
         # Divide the overall counter of alternations by the maximum number of alternations
-        return num_alt / (len(main_authors) - 1)
+        if len(main_authors) > 1:
+            return num_alt / (len(main_authors) - 1)
+        # If there is only one paragraph, there is no alternation: we return score null
+        else:
+            return 0
 
     def user_participation_paragraph_score(self):
         """
@@ -716,7 +721,7 @@ class Pad:
         # Get the length of each paragraphs
         for para in self.paragraphs:
             if not para.new_line:
-                paragraph_lengths.append(para.get_length())
+                paragraph_lengths.append(para.get_abs_length())
 
         # Compute the entropy of author proportions for each paragraphs
         for para in prop_authors_paragraphs:
@@ -751,7 +756,6 @@ class Pad:
             elif break_type == 'day':
                 if op.context['first_op_break']:
                     num_break += 1
-
         # Calculate the final score
         return num_break/time_spent
 
