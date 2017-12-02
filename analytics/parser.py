@@ -175,7 +175,7 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
 
     :param index_from:
     :param pad_name:
-    :param editor: 'etherpad' or 'collab-react-components'
+    :param editor: 'etherpad' or 'collab-react-components' or 'stian_logs'
     :param path_to_db: path to the db file containing the operations
     :return: list of ElementaryOperation
     :rtype: dict[str,list[ElementaryOperation]]
@@ -230,6 +230,7 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
         o_docs = db['o_collab_data_documents']
         o_docs_find = o_docs.find()
         for item in o_docs_find[index_from:]:
+            print(item)
             if 'create' not in item.keys():
                 pad_name = item['d']
                 timestamp = item['m']['ts']
@@ -248,7 +249,7 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
                         list_of_elem_ops_per_pad[pad_name] = [elem_op]
                     else:
                         list_of_elem_ops_per_pad[pad_name].append(elem_op)
-        index_from = len(o_docs_find)
+            index_from += 1
     elif editor == 'stian_logs':
         sorted_lines = []
         with open(path_to_db, encoding="utf8") as f:
@@ -302,4 +303,4 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
     else:
         raise ValueError("Undefined editor")
 
-    return list_of_elem_ops_per_pad,index_from
+    return list_of_elem_ops_per_pad, index_from

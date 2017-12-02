@@ -14,14 +14,14 @@ dic_author_current_operations_per_pad = dict()
 pads = dict()
 while True:
     new_list_of_elem_ops_per_pad, index_from = parser.get_elem_ops_per_pad_from_db(path_to_db,
-                                                                                   'etherpad',
+                                                                                   'collab-react-components',
                                                                                    index_from=index_from)
     if len(new_list_of_elem_ops_per_pad) != 0:
         new_list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(new_list_of_elem_ops_per_pad)
         pads, dic_author_current_operations_per_pad, elem_ops_treated = operation_builder.build_operations_from_elem_ops(
             new_list_of_elem_ops_per_pad_sorted, config.maximum_time_between_elem_ops,
             dic_author_current_operations_per_pad, pads)
-        for pad_name in pads:
+        for pad_name in elem_ops_treated:
             pad = pads[pad_name]
             # create the paragraphs
             pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
@@ -33,12 +33,12 @@ while True:
         for pad_name in pads:
             pad = pads[pad_name]
             print("PAD:", pad_name)
-            #text = pad.get_text()
-            #print(text)
+            text = pad.get_text()
+            print(text)
             print('\nCOLORED TEXT BY AUTHOR')
-            #pad.display_text_colored_by_authors()
+            print(pad.display_text_colored_by_authors())
 
             print('\nCOLORED TEXT BY OPS')
-            pad.display_text_colored_by_ops()
+            print(pad.display_text_colored_by_ops())
 
     #time.sleep(0.1)
