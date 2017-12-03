@@ -169,25 +169,25 @@ This dictionary contains whether the `Operation` is written synchronously with a
 > Note: The implementation of the visu methods can be found in `visualization.py`
 
 Show the text with the different authors using `display_text_colored_by_authors()`, here is an example with the admin and two other authors:
-![](figures/authors.JPG)
+![](readme_figures/authors.JPG)
 
 Show the same text with `Operations` of the pad with different colors using `display_text_colored_by_ops()`:
-![](figures/operations.JPG)
+![](readme_figures/operations.JPG)
 
 Show the proportion of synchronous participation of authors in one pad using `display_proportion_sync_in_paragraphs(pad)`:
-![](figures/prop_auth.png)
+![](readme_figures/prop_auth.png)
 
 Show the same proportion as before but for each paragraph `display_user_participation(pad)`:
-![](figures/prop_authors_para.png)
+![](readme_figures/prop_authors_para.png)
 
 Show the same proportion as before but with addition and deletions separated `display_user_participation_paragraphs_with_del(pad)`:
-![](figures/prop_add_del.png)
+![](readme_figures/prop_add_del.png)
 
 Show the distribution of `Operation` type in one pad using `display_overall_op_type(pad)`:
-![](figures/op_type.png)
+![](readme_figures/op_type.png)
 
 Show the same as above but according to authors using `display_types_per_user(pad)`:
-![](figures/op_type_user.png)
+![](readme_figures/op_type_user.png)
 
 
 ### Future work
