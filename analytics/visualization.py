@@ -5,10 +5,11 @@ import seaborn as sns
 import os
 
 
-def display_user_participation(pad):
+def display_user_participation(pad, save_location):
     """
     Display a pie chart representing the participation according to the length of each authors
 
+    :param save_location: Where to store the figure
     :param pad:
     :return: None
     """
@@ -22,70 +23,75 @@ def display_user_participation(pad):
     df.index = df['Authors']
 
     # Plot the results as a pie chart
-    plt.figure()
+    plt.figure(figsize=(16, 16))
     df.plot.pie(y='Participation proportion', autopct='%1.0f%%')
     plt.title('Proportion of participation by authors')
-    if not os.path.isdir('../figures/'+pad.pad_name):
-        os.makedirs('../figures/'+pad.pad_name)
-    plt.savefig('../figures/%s/%s_user_participation' % (pad.pad_name, pad.pad_name))
+    if not os.path.isdir(save_location + '/' + pad.pad_name):
+        os.makedirs(save_location + '/' + pad.pad_name)
+    plt.savefig(save_location + '/%s/%s_user_participation.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
 
 
-def display_overall_op_type(pad):
+def display_overall_op_type(pad, save_location, jump=False):
     """
     Plot the type counts of all operations of the pad.
 
+    :param save_location:
     :param pad:
     :return: None
     """
     # Initialize the bins and fill them
-    types = ['write', 'edit', 'delete', 'paste', 'jump']
+    types = ['write', 'edit', 'delete', 'paste']
     type_counts = np.zeros(len(types))
     for op in pad.operations:
-        type_counts[types.index(op.type)] += 1
+        if jump or op.type != 'jump':
+            type_counts[types.index(op.type)] += 1
 
-    # Transform the array in dataframe
+    # Transform the array in DataFrame
     df = pd.DataFrame({'Type Counts': type_counts,
                        'Types': types
                        })
     df.index = df['Types']
 
-    # Plot the results as a seaborn barplot
-    plt.figure()
+    # Plot the results as a Seaborn barplot
+    plt.figure(figsize=(16, 16))
     sns.barplot(x='Types', y='Type Counts', data=df)
     plt.title('Type repartition of operations of the pad')
-    if not os.path.isdir('../figures/'+pad.pad_name):
-        os.makedirs('../figures/'+pad.pad_name)
-    plt.savefig('../figures/%s/%s_overall_op_type' % (pad.pad_name, pad.pad_name))
+    if not os.path.isdir(save_location + '/' + pad.pad_name):
+        os.makedirs(save_location + '/' + pad.pad_name)
+    plt.savefig(save_location + '/%s/%s_overall_op_type.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
 
 
-def display_types_per_user(pad):
+def display_types_per_user(pad, save_location, jump=False):
     """
     Plot the type counts of all operations of the pad for all users separately.
 
+    :param jump:
+    :param save_location:
     :param pad:
     :return: None
     """
-    # Initialize the bins and fill them
-    types = ['write', 'edit', 'delete', 'paste', 'jump']
 
-    # Create dataframe and fill it
+    # Create DataFrame and fill it
     df = pd.DataFrame(columns=('Operations', 'Types', 'Authors'))
     for i, op in enumerate(pad.operations):
         df.loc[i] = [op, op.type, op.author]
+    if not jump:
+        df = df[df['Types'] != 'jump']
 
     # Plot the results as a seaborn countplot
-    plt.figure()
+    plt.figure(figsize=(16, 16))
     sns.countplot(x='Types', hue="Authors", data=df)
     plt.title('Type repartition of operations of the pad per user')
-    if not os.path.isdir('../figures/'+pad.pad_name):
-        os.makedirs('../figures/'+pad.pad_name)
-    plt.savefig('../figures/%s/%s_types_per_user' % (pad.pad_name, pad.pad_name))
+    if not os.path.isdir(save_location + '/' + pad.pad_name):
+        os.makedirs(save_location + '/' + pad.pad_name)
+    plt.savefig(save_location + '/%s/%s_types_per_user.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
 
 
-def display_proportion_sync_in_pad(pad):
+def display_proportion_sync_in_pad(pad, save_location):
     """
     Display in a pie chart the proportion of synchronous writing in the entire pad
 
+    :param save_location:
     :param pad:
     :return: None
     """
@@ -94,18 +100,19 @@ def display_proportion_sync_in_pad(pad):
     df = pd.DataFrame({'sync/async proportion': [prop_sync, prop_async]}, index=['synchronous', 'asynchronous'])
 
     # Plot the results as a pie chart
-    plt.figure()
+    plt.figure(figsize=(16, 16))
     df.plot.pie(y='sync/async proportion', autopct='%1.0f%%', color=['yellow', 'grey'])
     plt.title('Proportion of {a}synchronous writing in the pad')
-    if not os.path.isdir('../figures/'+pad.pad_name):
-        os.makedirs('../figures/'+pad.pad_name)
-    plt.savefig('../figures/%s/%s_sync_prop_pad' % (pad.pad_name, pad.pad_name))
+    if not os.path.isdir(save_location + '/' + pad.pad_name):
+        os.makedirs(save_location + '/' + pad.pad_name)
+    plt.savefig(save_location + '/%s/%s_sync_prop_pad.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
 
 
-def display_proportion_sync_in_paragraphs(pad):
+def display_proportion_sync_in_paragraphs(pad, save_location):
     """
     Display in a barplot the proportion of synchronous writing in all the paragraphs (not the jump lines)
 
+    :param save_location:
     :param pad:
     :return: None
     """
@@ -130,20 +137,21 @@ def display_proportion_sync_in_paragraphs(pad):
                       index=paragraph_names)
 
     # Plot the results as a pie chart
-    plt.figure()
+    plt.figure(figsize=(16, 16))
     df.plot.barh(y=['sync proportion', 'async proportion'], stacked=True, color=['yellow', 'grey'])
     plt.gca().invert_yaxis()
     plt.title('Proportion of {a}synchronous writing in paragraphs')
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=2)
-    if not os.path.isdir('../figures/'+pad.pad_name):
-        os.makedirs('../figures/'+pad.pad_name)
-    plt.savefig('../figures/%s/%s_sync_prop_para' % (pad.pad_name, pad.pad_name))
+    if not os.path.isdir(save_location + '/' + pad.pad_name):
+        os.makedirs(save_location + '/' + pad.pad_name)
+    plt.savefig(save_location + '/%s/%s_sync_prop_para.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
 
 
-def display_user_participation_paragraphs(pad):
+def display_user_participation_paragraphs(pad, save_location):
     """
     Display in a barplot the proportion of author writing in all the paragraphs (not the jump lines)
 
+    :param save_location:
     :param pad:
     :return: None
     """
@@ -156,21 +164,22 @@ def display_user_participation_paragraphs(pad):
                       index=paragraph_names)
 
     # Plot the results as a stacked plot bar
-    plt.figure()
+    plt.figure(figsize=(16, 16))
     df.plot.barh(y=author_names, stacked=True)
     plt.gca().invert_yaxis()
     plt.title('Proportion of absolute writings (overall additions) per authors in paragraphs')
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(author_names))
-    if not os.path.isdir('../figures/'+pad.pad_name):
-        os.makedirs('../figures/'+pad.pad_name)
-    plt.savefig('../figures/%s/%s_user_abs_participation_para' % (pad.pad_name, pad.pad_name))
+    if not os.path.isdir(save_location + '/' + pad.pad_name):
+        os.makedirs(save_location + '/' + pad.pad_name)
+    plt.savefig(save_location + '/%s/%s_user_abs_participation_para.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
 
 
-def display_user_participation_paragraphs_with_del(pad):
+def display_user_participation_paragraphs_with_del(pad, save_location):
     """
     Display in a barplot the proportion of author writing in all the paragraphs (not the jump lines) with the del
     operations
 
+    :param save_location:
     :param pad:
     :return: None
     """
@@ -201,7 +210,7 @@ def display_user_participation_paragraphs_with_del(pad):
             prop_authors_paragraphs_add.append(prop_authors_add)
             prop_authors_paragraphs_del.append(prop_authors_del)
 
-    # Transform the final data into a pandas dataframe
+    # Transform the final data into a pandas DataFrame
     df_add = pd.DataFrame(prop_authors_paragraphs_add, index=paragraph_names)
     df_add.columns += ' write/add'
     df_del = pd.DataFrame(prop_authors_paragraphs_del, index=paragraph_names)
@@ -210,11 +219,11 @@ def display_user_participation_paragraphs_with_del(pad):
     df = df.sort_index(axis=1)
 
     # Plot the results as a stacked plot bar
-    plt.figure()
+    plt.figure(figsize=(16, 16))
     df.plot.barh(y=df.columns, stacked=True, color=sns.color_palette("Paired", 40))
     plt.gca().invert_yaxis()
     plt.title('Proportion of writings per authors in paragraphs with deletions and additions seperated')
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(author_names))
-    if not os.path.isdir('../figures/'+pad.pad_name):
-        os.makedirs('../figures/'+pad.pad_name)
-    plt.savefig('../figures/%s/%s_user_participation_para' % (pad.pad_name, pad.pad_name))
+    if not os.path.isdir(save_location + '/' + pad.pad_name):
+        os.makedirs(save_location + '/' + pad.pad_name)
+    plt.savefig(save_location + '/%s/%s_user_participation_para.png' % (pad.pad_name, pad.pad_name), bbox_inches='tight')

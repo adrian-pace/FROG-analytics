@@ -205,7 +205,7 @@ class Pad:
             print(op)
             print()
 
-    def create_paragraphs_from_ops(self,new_elem_ops_sorted):
+    def create_paragraphs_from_ops(self, new_elem_ops_sorted):
         """
         Build the paragraphs for the pad based on the existing paragraphs and the new elementary operations
 
@@ -220,15 +220,15 @@ class Pad:
             for para_i, paragraph in enumerate(self.paragraphs):
                 if (not paragraph.new_line) \
                         and paragraph.abs_position \
-                                <= elem_op_to_look_for.abs_position \
-                                <= paragraph.abs_position + paragraph.get_length():
+                        <= elem_op_to_look_for.abs_position \
+                        <= paragraph.abs_position + paragraph.get_length():
                     return para_i
             return -1
 
         # We will look at each elem_op and assign it to a new/existing paragraph
         for elem_op in new_elem_ops_sorted:
             # From where we will change the paragraph indices
-            # should be infity but this is enough since we can't add more than 2 paragraph
+            # should be infinity but this is enough since we can't add more than 2 paragraph
             update_indices_from = len(self.paragraphs) + 3
 
             # If it is a new line, we will create a new paragraph and insert it at the right place
@@ -311,7 +311,7 @@ class Pad:
                     # We are deleting only this paragraph
                     if elem_op.abs_position == para.abs_position \
                             and elem_op.abs_position + elem_op.length_to_delete \
-                                    == para.abs_position + para.get_length():
+                            == para.abs_position + para.get_length():
                         # Add to the list to remove
                         to_remove.append(para_idx)
                         # We will update the indices from here
@@ -340,7 +340,7 @@ class Pad:
                     elif elem_op.abs_position \
                             <= para.abs_position \
                             and elem_op.abs_position + elem_op.length_to_delete \
-                                    >= para.abs_position + para.get_length():
+                            >= para.abs_position + para.get_length():
                         # We remove the whole paragraph
                         to_remove.append(para_idx)
                         # shouldn't be necessary since it will be taken care by the last paragraph we delete.
@@ -467,8 +467,8 @@ class Pad:
             assert self.paragraphs == sorted(self.paragraphs)
             # checking that length is not 0
             for i in range(0, len(self.paragraphs)):
-                if self.paragraphs[i].length==0:
-                    print(self.pad_name,i,"\n",elem_op)
+                if self.paragraphs[i].length == 0:
+                    print(self.pad_name, i, "\n", elem_op)
                     raise AssertionError
             # Checking that the paragraphs touch each others
             for i in range(1, len(self.paragraphs)):
@@ -521,11 +521,13 @@ class Pad:
 
     def build_operation_context(self, delay_sync, time_to_reset_day, time_to_reset_break):
         """
-        Build the context of each operation progressively added to the pad. The context is a dictionary containing whether a
-         pad is synchronous wih an other author in the pad or in the paragraph and it contains list of authors accordingly.
+        Build the context of each operation progressively added to the pad. The context is a dictionary containing
+        whether a pad is synchronous wih an other author in the pad or in the paragraph and it contains list of
+        authors accordingly.
 
         :param delay_sync: delay of synchronization between two authors
-        :param time_to_reset_day: Number of milliseconds between two ops to indicate the first op of the day, by default 8h
+        :param time_to_reset_day: Number of milliseconds between two ops to indicate the first op of the day, by default
+                8h
         :param time_to_reset_break: Number of milliseconds to indicate the first op after a break, by default 10min
         :return: None
         """
@@ -562,7 +564,8 @@ class Pad:
                         op.context['first_op_break'] = True
                 op_index += 1
 
-                if other_op.author != op.author and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
+                if other_op.author != op.author\
+                        and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
                     op.context['synchronous_in_pad'] = True
                     op.context['synchronous_in_pad_with'].append(other_op.author)
         for para in self.paragraphs:
@@ -579,7 +582,8 @@ class Pad:
 
                 for other_op in para_ops:
                     other_start_time = other_op.timestamp_start
-                    if other_op.author != op.author and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
+                    if other_op.author != op.author \
+                            and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
                         op.context['synchronous_in_paragraph'] = True
                         op.context['synchronous_in_paragraph_with'].append(other_op.author)
 
@@ -587,8 +591,6 @@ class Pad:
             # Once we computed the absolute length of the paragraph, we compute the proportion (it is positive)
             for op in para_ops:
                 op.context['proportion_paragraph'] /= abs_length_para
-
-
 
     def author_proportions(self, considerate_admin=True):
         """
@@ -620,7 +622,8 @@ class Pad:
         proportions = author_lengths / overall_length
         return authors, proportions
 
-    def compute_entropy_prop(self, proportions, len_authors):
+    @staticmethod
+    def compute_entropy_prop(proportions, len_authors):
         """
         Compute the proportion score using the entropy and proportions.
         :param proportions: list of proportions summing up to 1
@@ -651,7 +654,7 @@ class Pad:
         Compute the synchronous and asynchronous scores.
 
         :return: synchronous and asynchronous scores, floats between 0 and 1.
-        :rtype: float
+        :rtype: (float,float)
         """
         prop_sync = 0
         prop_async = 0
@@ -684,7 +687,7 @@ class Pad:
                 i += 1
                 for op in paragraph.operations:
                     prop_authors[op.author] += abs(op.context[
-                        'proportion_paragraph'])  # increment with the corresponding prop
+                                                       'proportion_paragraph'])  # increment with the corresponding prop
                 prop_authors_paragraphs.append(prop_authors)
         return paragraph_names, prop_authors_paragraphs
 

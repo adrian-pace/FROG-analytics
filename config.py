@@ -6,3 +6,4 @@ time_to_reset_day = int(288e5)  # time to reinitialize the first op of the day (
 time_to_reset_break = 600000  # time to reset first op after a break (10min)
 length_edit = 10  # Threshold in length to differentiate a Write type from an Edit or an edit from a Deletion.
 length_delete = 10  # Threshold in length to consider the op as a deletion
+figs_save_location = './figures'
