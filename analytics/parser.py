@@ -1,3 +1,4 @@
+import sqlite3
 from analytics.Operations import ElementaryOperation
 import csv
 import ast
@@ -5,8 +6,8 @@ import ast
 
 def parse_changeset_etherpad(changeset):
     """
-    Parse a changeset of type etherpad into a list of elementary operations. There will be missing the author, timestamp...
-    http://policypad.readthedocs.io/en/latest/changesets.html
+    Parse a changeset of type etherpad into a list of elementary operations. There will be missing the author,
+    timestamp... http://policypad.readthedocs.io/en/latest/changesets.html
 
     :param changeset: string to parse
     :type changeset: str
@@ -65,6 +66,7 @@ def parse_changeset_etherpad(changeset):
 
                 next_symbol_position = find_next_symbol_idx(changeset, symbol_idx + 1)
                 # We care about  N (size of the addition) since we will date N chars from the databank.
+                # noinspection PyPep8Naming
                 N = int(changeset[symbol_idx + 1:next_symbol_position], 36)
                 data_bank = changeset[changeset.find('$') + 1:]
                 text_to_add = data_bank[used_databank:used_databank + N]
@@ -104,7 +106,8 @@ def parse_changeset_etherpad(changeset):
             idx = next_symbol_position
         elif changeset[idx] == '+':
             next_symbol_position = find_next_symbol_idx(changeset, idx + 1)
-            # We care about N (size of the addition). We only take N chars from the databank (not counting the already used ones)
+            # We care about N (size of the addition). We only take N chars from the databank (not counting the
+            # already used ones)
             N = int(changeset[idx + 1:next_symbol_position], 36)
             data_bank = changeset[changeset.find('$') + 1:]
             text_to_add = data_bank[used_databank:used_databank + N]
@@ -140,7 +143,7 @@ def parse_op_collab_react(op_array):
     Parse a op in OT type into a list of elementary operations . There will be missing the author, timestamp...
     https://github.com/ottypes/text
 
-   
+
     :param op_array: string to parse
     :return : List of elem_ops contained in op
     :rtype: list[ElementaryOperation]
@@ -167,6 +170,33 @@ def parse_op_collab_react(op_array):
                                                 length_to_delete=length_to_delete,
                                                 changeset=op))
     return elem_ops
+
+
+def extract_elem_ops_etherpad(line_dict, timestamp_offset, editor):
+    pad_name_idx = line_dict['key'].find("pad:") + len("pad:")
+    pad_name_end_idx = line_dict['key'].find(':revs:', pad_name_idx)
+    pad_name = line_dict['key'][pad_name_idx:pad_name_end_idx]
+    revs = int(line_dict['key'][pad_name_end_idx + len('revs:') + 1:])
+    changeset = line_dict['val']['changeset']
+    author_name = line_dict['val']['meta']['author']
+    timestamp = line_dict['val']['meta']['timestamp']
+
+    elem_ops = parse_changeset_etherpad(changeset)
+    elem_ops_result = []
+    for i, elem_op in enumerate(elem_ops):
+        if author_name == '':
+            # if it's the line generated automatically by etherpad
+            elem_op.author = 'Etherpad_admin'
+        else:
+            elem_op.author = author_name
+        elem_op.timestamp = timestamp + timestamp_offset
+        timestamp_offset += 1
+        elem_op.revs = revs
+        elem_op.pad_name = pad_name
+        elem_op.editor = editor
+
+        elem_ops_result.append(elem_op)
+    return pad_name, elem_ops_result, timestamp_offset
 
 
 def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, index_from=0):
@@ -197,31 +227,34 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
                 line_changed = line.replace("false", "False").replace("null", "None")
                 line_dict = dict(eval(line_changed))
                 if 'revs' in line_dict['key']:
-                    pad_name_idx = line_dict['key'].find("pad:") + len("pad:")
-                    pad_name_end_idx = line_dict['key'].find(':revs:', pad_name_idx)
-                    pad_name = line_dict['key'][pad_name_idx:pad_name_end_idx]
-                    revs = int(line_dict['key'][pad_name_end_idx + len('revs:') + 1:])
-                    changeset = line_dict['val']['changeset']
-                    author_name = line_dict['val']['meta']['author']
-                    timestamp = line_dict['val']['meta']['timestamp']
+                    pad_name, elem_ops, timestamp_offset = extract_elem_ops_etherpad(line_dict,
+                                                                                     timestamp_offset,
+                                                                                     editor)
+
                     if not (pad_name in list_of_elem_ops_per_pad.keys()):
                         list_of_elem_ops_per_pad[pad_name] = []
+                    list_of_elem_ops_per_pad[pad_name] += elem_ops
+            index_from += 1
 
-                    elem_ops = parse_changeset_etherpad(changeset)
-                    for i, elem_op in enumerate(elem_ops):
-                        if author_name == '':
-                            # if it's the line generated automatically by etherpad
-                            elem_op.author = 'Etherpad_admin'
-                        else:
-                            elem_op.author = author_name
-                        elem_op.timestamp = timestamp + timestamp_offset
-                        timestamp_offset += 1
-                        elem_op.revs = revs
-                        elem_op.pad_name = pad_name
-                        elem_op.editor = editor
+    elif editor == 'etherpadSQLite3':
+        conn = sqlite3.connect(path_to_db)
+        c = conn.cursor()
+        c.execute("SELECT * FROM store;")
+        entries = c.fetchall()
+        conn.close()
+        timestamp_offset = 0
+        for entry in entries[index_from:]:
+            if "pad:" in entry[0] and "revs" in entry[0]:
+                data = eval(entry[1].replace("false", "False").replace("null", "None"))
+                line_dict = dict()
+                line_dict['key'] = entry[0]
+                line_dict['val'] = data
 
-                        list_of_elem_ops_per_pad[pad_name].append(elem_op)
-        index_from = len(lines)
+                pad_name, elem_ops, timestamp_offset = extract_elem_ops_etherpad(line_dict, timestamp_offset, editor)
+                if not (pad_name in list_of_elem_ops_per_pad.keys()):
+                    list_of_elem_ops_per_pad[pad_name] = []
+                list_of_elem_ops_per_pad[pad_name] += elem_ops
+            index_from += 1
 
     elif editor == 'collab-react-components':
         from pymongo import MongoClient
@@ -267,8 +300,8 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
             sorted_lines = sorted(sorted_lines, key=lambda tup: tup[0])
 
             # Sometimes, we will get multiple elem_ops when we parse the changeset. We need to give them different
-            # timestamps. So we add an offset to the timestamp of each elem_op to differentiate them. We keep track of this
-            # offset to apply it to the following ops
+            # timestamps. So we add an offset to the timestamp of each elem_op to differentiate them. We keep track
+            # of this offset to apply it to the following ops
             timestamp_offset = 0
             list_of_elem_ops_per_pad = dict()
 
@@ -302,5 +335,10 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
             index_from = len(sorted_lines)
     else:
         raise ValueError("Undefined editor")
+
+    # TODO remove Assertions for release
+    for pad_name in list_of_elem_ops_per_pad:
+        assert list_of_elem_ops_per_pad[pad_name] == sorted(list_of_elem_ops_per_pad[pad_name],
+                                                            key=(lambda x: x.timestamp))
 
     return list_of_elem_ops_per_pad, index_from
