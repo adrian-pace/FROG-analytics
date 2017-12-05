@@ -29,7 +29,7 @@ for key in subset_of_keys:
 
 list_of_elem_ops_per_pad = new_list_of_elem_ops_per_pad
 
-#list_of_elem_ops_per_pad = {"181048181048181048181048181048181048": list_of_elem_ops_per_pad["181048181048181048181048181048181048"]}
+#list_of_elem_ops_per_pad = {"753268753268753268753268753268753268": list_of_elem_ops_per_pad["753268753268753268753268753268753268"]}
 
 list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(list_of_elem_ops_per_pad)
 
@@ -74,18 +74,26 @@ for pad_name in pads:
     print('Alternating score:', pad.alternating_score())
     print('Break score day:', pad.break_score('day'))
     print('Break score short:', pad.break_score('short'))
+    print('Overall write type score:', pad.type_overall_score('write'))
+    print('Overall paste type score:', pad.type_overall_score('paste'))
+    print('Overall delete type score:', pad.type_overall_score('delete'))
+    print('Overall edit type score:', pad.type_overall_score('edit'))
+    print('User write score:', pad.user_type_score('write'))
+    print('User paste score:', pad.user_type_score('paste'))
+    print('User delete score:', pad.user_type_score('delete'))
+    print('User edit score:', pad.user_type_score('edit'))
 
-    display_user_participation(pad)
-    display_user_participation_paragraphs_with_del(pad)
+    display_user_participation(pad, config.figs_save_location)
+    display_user_participation_paragraphs_with_del(pad, config.figs_save_location)
 
     # plot the proportion of synchronous writing per paragraphs
-    display_proportion_sync_in_paragraphs(pad)
+    display_proportion_sync_in_paragraphs(pad, config.figs_save_location)
 
     # plot the overall type counts
-    display_overall_op_type(pad)
+    display_overall_op_type(pad, config.figs_save_location)
 
     # plot the counts of type per users
-    display_types_per_user(pad)
+    display_types_per_user(pad, config.figs_save_location)
     #
     # print("ops:")
     # for op in pad.operations:

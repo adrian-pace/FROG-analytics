@@ -1,4 +1,4 @@
-import operation_builder
+from analytics import operation_builder
 from analytics.operation_builder import build_operations_from_elem_ops
 from analytics.parser import *
 from analytics.visualization import *
@@ -42,6 +42,14 @@ for pad_name in pads:
     print('Alternating score:', pad.alternating_score())
     print('Break score day:', pad.break_score('day'))
     print('Break score short:', pad.break_score('short'))
+    print('Overall write type score:', pad.type_overall_score('write'))
+    print('Overall paste type score:', pad.type_overall_score('paste'))
+    print('Overall delete type score:', pad.type_overall_score('delete'))
+    print('Overall edit type score:', pad.type_overall_score('edit'))
+    print('User write score:',pad.user_type_score('write'))
+    print('User paste score:', pad.user_type_score('paste'))
+    print('User delete score:', pad.user_type_score('delete'))
+    print('User edit score:', pad.user_type_score('edit'))
 
     display_user_participation(pad, config.figs_save_location)
     # plot the participation proportion per user per paragraphs
@@ -57,8 +65,8 @@ for pad_name in pads:
     # plot the counts of type per users
     display_types_per_user(pad, config.figs_save_location)
 
-    # print('OPERATIONS')
-    #   pad.display_operations()
+    #print('OPERATIONS')
+    #pad.display_operations()
 
     # print("PARAGRAPHS:")
     #   pad.display_paragraphs(verbose=1)

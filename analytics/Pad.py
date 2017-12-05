@@ -761,10 +761,61 @@ class Pad:
         num_break = 0
         for op in self.operations:
             if break_type == 'short':
-                if op.context['first_op_day']:
-                    num_break += 1
-            elif break_type == 'day':
                 if op.context['first_op_break']:
                     num_break += 1
+            elif break_type == 'day':
+                if op.context['first_op_day']:
+                    num_break += 1
         # Calculate the final score
-        return num_break / time_spent
+        if time_spent >= 1:
+            return num_break / time_spent
+        else:
+            # If less than 1s is spent on the pad, the score is zero
+            return 0
+
+    def type_overall_score(self, op_type):
+        """
+        Compute proportion of one type: write, delete, edit or paste over the whole pad.
+
+        :param op_type: the operation type 'write', 'delete', 'edit' or 'paste'.
+        :return: the proportion of the operation type
+        """
+        type_count = 0
+        op_count = 0
+        # Count the number of operations
+        for op in self.operations:
+            if op.type != 'jump':
+                op_count += 1
+                if op.type == op_type:
+                    type_count += 1
+
+        # Calculate the overall proportion
+        return type_count/op_count
+
+    def user_type_score(self, op_type):
+        types = ['write', 'edit', 'delete', 'paste']
+        users = self.authors[:]
+        # Remove the admin
+        if 'Etherpad_admin' in users: users.remove('Etherpad_admin')
+        count_type = np.zeros((len(users), len(types)))
+        for op in self.operations:
+            if op.type != 'jump' and op.author != 'Etherpad_admin':
+                user_idx = users.index(op.author)
+                type_idx = types.index(op.type)
+                count_type[user_idx, type_idx] += 1
+        # Normalize the counter of op types per user
+        norm_type = np.nan_to_num(count_type/count_type.sum(axis=1)[:,None])
+
+        # Normalize the proportion of users per types
+        norm_user = np.nan_to_num(norm_type/norm_type.sum(axis=0))
+
+        # Compute the entropy for all types
+        type_scores = []
+        for type_props in norm_user.T:
+            type_scores.append(self.compute_entropy_prop(type_props, len(users)))
+        return type_scores[types.index(op_type)]
+
+
+
+
+

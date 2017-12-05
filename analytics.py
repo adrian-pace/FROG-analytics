@@ -44,7 +44,7 @@ if path_to_db is None and editor != 'collab-react-components':
     cl_parser.print_help()
     cl_parser.exit()
 
-list_of_elem_ops_per_pad = parser.get_elem_ops_per_pad_from_file(path_to_db, editor, specific_pad)
+list_of_elem_ops_per_pad = parser.get_elem_ops_per_pad_from_db(path_to_db, editor, specific_pad)
 
 if subset_of_pads is not None:
     subset_of_keys = list(list_of_elem_ops_per_pad.keys())[:subset_of_pads]
