@@ -101,7 +101,7 @@ def display_proportion_sync_in_pad(pad, save_location):
 
     # Plot the results as a pie chart
     plt.figure(figsize=(16, 16))
-    df.plot.pie(y='sync/async proportion', autopct='%1.0f%%', color=['yellow', 'grey'])
+    df.plot.pie(y='sync/async proportion', autopct='%1.0f%%', colors=['yellow', 'grey'])
     plt.title('Proportion of {a}synchronous writing in the pad')
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
