@@ -283,6 +283,7 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
                     else:
                         list_of_elem_ops_per_pad[pad_name].append(elem_op)
             index_from += 1
+        client.close()
     elif editor == 'stian_logs':
         sorted_lines = []
         with open(path_to_db, encoding="utf8") as f:

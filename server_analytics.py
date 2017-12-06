@@ -1,6 +1,7 @@
 import config
 from analytics import operation_builder
 from analytics import parser
+import time
 
 # path_to_csv = "..\\stian logs\\store.csv"
 # list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_ether_csv(path_to_csv)
@@ -53,4 +54,4 @@ while True:
             print('User delete score:', pad.user_type_score('delete'))
             print('User edit score:', pad.user_type_score('edit'))
 
-    #time.sleep(0.1)
+    time.sleep(0.5)
