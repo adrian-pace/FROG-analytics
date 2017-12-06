@@ -14,7 +14,7 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
     :type maximum_time_between_elem_ops: int
     :param dic_author_current_operations_per_pad: The current ongoing operations
     :type dic_author_current_operations_per_pad: dict[str,dict[str,Operation]]
-     :param pads: The current pads
+    :param pads: The current pads
     :type pads: dict[str,Pad]
     :return: a dictionary of pads and the current operation that might changed depending on the next elem_ops, and the
         list of elem_ops (they might have changed if there were some new lines.
@@ -30,7 +30,7 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
             else:
                 pad = Pad(pad_name)
         else:
-            pads=dict()
+            pads = dict()
             """:type:dict[str,Pad]"""
             pad = Pad(pad_name)
 
@@ -41,7 +41,7 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
                 dic_author_current_operations = dict()
                 """:type:dict[str,Operation]"""
         else:
-            dic_author_current_operations_per_pad=dict()
+            dic_author_current_operations_per_pad = dict()
             """:type:dict[str,dict[str,Operation]]"""
             dic_author_current_operations = dict()
             """:type:dict[str,Operation]"""
@@ -159,7 +159,7 @@ def treat_op(elem_op, dic_author_current_operations, pad, maximum_time_between_e
                     - abs(elem_op.get_length_of_op()) \
                     <= new_position \
                     <= current_op.position_start_of_op \
-                            + abs(current_op.get_length_of_op()):
+                    + abs(current_op.get_length_of_op()):
                 # Checking that the position of the elementary op is more or less inside the Operation bounds
                 current_op.add_elem_op(elem_op)
                 return dic_author_current_operations

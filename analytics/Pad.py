@@ -53,20 +53,7 @@ class Pad:
         for op in operations:
             self.add_operation(op)
 
-    def get_all_elementary_operation(self):
-        """
-        get all the elementary operation of the pad
-
-        :return: the list of elem_ops
-        :rtype: list[ElementaryOperation]
-        """
-        elem_ops = []
-        for op in self.operations:
-            for elem_op in op.elem_ops:
-                elem_ops.append(elem_op)
-        return elem_ops
-
-    def get_elem_ops_ordered(self):
+    def get_elem_ops(self, sorted_):
         """
         Get the list of ElementaryOperation from all the Operation. The result is ordered by timestamp. Good for
         building a representation of the text. Note that each ElementaryOperation know to which Operation it belongs
@@ -75,8 +62,14 @@ class Pad:
         :rtype: list[ElementaryOperation]
         """
         # Recover all the elementary ops
-        elem_ops_list = self.get_all_elementary_operation()
-        return ElementaryOperation.sort_elem_ops(elem_ops_list)
+        elem_ops = []
+        for op in self.operations:
+            for elem_op in op.elem_ops:
+                elem_ops.append(elem_op)
+        if sorted_:
+            return ElementaryOperation.sort_elem_ops(elem_ops)
+        else:
+            return elem_ops
 
     def get_text(self, until_timestamp=None):
         """
@@ -86,7 +79,7 @@ class Pad:
         :return: the text written so far on the pad
         :rtype: str
         """
-        elem_ops_ordered = self.get_elem_ops_ordered()
+        elem_ops_ordered = self.get_elem_ops(sorted_=True)
         text = ""
         for elem_id, elem_op in enumerate(elem_ops_ordered):
             if until_timestamp is not None and elem_op.timestamp > until_timestamp:
@@ -115,7 +108,7 @@ class Pad:
         letters = []
         letters_color = []
         idx_color = 0
-        elem_ops_ordered = self.get_elem_ops_ordered()
+        elem_ops_ordered = self.get_elem_ops(sorted_=True)
         op_to_color = {}
         colors = get_colors()
         for idx, elem_op in enumerate(elem_ops_ordered):
@@ -159,7 +152,7 @@ class Pad:
         """
         letters = []
         letters_color = []
-        elem_ops_ordered = self.get_elem_ops_ordered()
+        elem_ops_ordered = self.get_elem_ops(sorted_=True)
         authors = self.authors
         colors = get_colors()
         for elem_op in elem_ops_ordered:
@@ -347,7 +340,7 @@ class Pad:
                         update_indices_from = para_idx + 1
 
                         # If we are a new line and before us was text and we are currently not merging (this means we
-                        #  are the first op considering merging), we might be merging with the paragraph jsut before.
+                        #  are the first op considering merging), we might be merging with the paragraph just before.
                         # This is usually when the current paragraph is the start of the deletion
                         if 0 < para_idx \
                                 and para.new_line \
@@ -564,7 +557,7 @@ class Pad:
                         op.context['first_op_break'] = True
                 op_index += 1
 
-                if other_op.author != op.author\
+                if other_op.author != op.author \
                         and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
                     op.context['synchronous_in_pad'] = True
                     op.context['synchronous_in_pad_with'].append(other_op.author)
@@ -790,7 +783,7 @@ class Pad:
                     type_count += 1
 
         # Calculate the overall proportion
-        return type_count/op_count
+        return type_count / op_count
 
     def user_type_score(self, op_type):
         types = ['write', 'edit', 'delete', 'paste']
@@ -804,10 +797,10 @@ class Pad:
                 type_idx = types.index(op.type)
                 count_type[user_idx, type_idx] += 1
         # Normalize the counter of op types per user
-        norm_type = np.nan_to_num(count_type/count_type.sum(axis=1)[:,None])
+        norm_type = np.nan_to_num(count_type / count_type.sum(axis=1)[:, None])
 
         # Normalize the proportion of users per types
-        norm_user = np.nan_to_num(norm_type/norm_type.sum(axis=0))
+        norm_user = np.nan_to_num(norm_type / norm_type.sum(axis=0))
 
         # Compute the entropy for all types
         type_scores = []
@@ -815,7 +808,17 @@ class Pad:
             type_scores.append(self.compute_entropy_prop(type_props, len(users)))
         return type_scores[types.index(op_type)]
 
+    def pad_at_timestamp(self, timestamp_threshold):
+        """
+        Return the pad at a certain timestamp. It will contain all the operations that started before the timestamp
+        
+        :param timestamp_threshold: timestamp until which we take the operations
+        :type timestamp_threshold: int
+        :return: The new pad
+        :rtype: Pad
+        """
 
-
-
-
+        new_pad = Pad(self.pad_name)
+        for op in self.operations:
+            if op.timestamp_start <= timestamp_threshold:
+                new_pad.add_operation(op)

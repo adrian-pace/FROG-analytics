@@ -28,7 +28,7 @@ def display_user_participation(pad, save_location):
     plt.title('Proportion of participation by authors')
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
-    plt.savefig(save_location + '/%s/%s_user_participation.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
+    plt.savefig(save_location + '/%s/%s_user_participation.png' % (pad.pad_name, pad.pad_name), bbox_inches='tight')
 
 
 def display_overall_op_type(pad, save_location, jump=False):
@@ -58,7 +58,7 @@ def display_overall_op_type(pad, save_location, jump=False):
     plt.title('Type repartition of operations of the pad')
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
-    plt.savefig(save_location + '/%s/%s_overall_op_type.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
+    plt.savefig(save_location + '/%s/%s_overall_op_type.png' % (pad.pad_name, pad.pad_name), bbox_inches='tight')
 
 
 def display_types_per_user(pad, save_location, jump=False):
@@ -84,7 +84,7 @@ def display_types_per_user(pad, save_location, jump=False):
     plt.title('Type repartition of operations of the pad per user')
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
-    plt.savefig(save_location + '/%s/%s_types_per_user.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
+    plt.savefig(save_location + '/%s/%s_types_per_user.png' % (pad.pad_name, pad.pad_name), bbox_inches='tight')
 
 
 def display_proportion_sync_in_pad(pad, save_location):
@@ -105,7 +105,7 @@ def display_proportion_sync_in_pad(pad, save_location):
     plt.title('Proportion of {a}synchronous writing in the pad')
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
-    plt.savefig(save_location + '/%s/%s_sync_prop_pad.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
+    plt.savefig(save_location + '/%s/%s_sync_prop_pad.png' % (pad.pad_name, pad.pad_name), bbox_inches='tight')
 
 
 def display_proportion_sync_in_paragraphs(pad, save_location):
@@ -144,7 +144,7 @@ def display_proportion_sync_in_paragraphs(pad, save_location):
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=2)
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
-    plt.savefig(save_location + '/%s/%s_sync_prop_para.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
+    plt.savefig(save_location + '/%s/%s_sync_prop_para.png' % (pad.pad_name, pad.pad_name), bbox_inches='tight')
 
 
 def display_user_participation_paragraphs(pad, save_location):
@@ -171,7 +171,8 @@ def display_user_participation_paragraphs(pad, save_location):
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(author_names))
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
-    plt.savefig(save_location + '/%s/%s_user_abs_participation_para.png' % (pad.pad_name, pad.pad_name),bbox_inches='tight')
+    plt.savefig(save_location + '/%s/%s_user_abs_participation_para.png' % (pad.pad_name, pad.pad_name),
+                bbox_inches='tight')
 
 
 def display_user_participation_paragraphs_with_del(pad, save_location):
@@ -226,4 +227,19 @@ def display_user_participation_paragraphs_with_del(pad, save_location):
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(author_names))
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
-    plt.savefig(save_location + '/%s/%s_user_participation_para.png' % (pad.pad_name, pad.pad_name), bbox_inches='tight')
+    plt.savefig(save_location + '/%s/%s_user_participation_para.png' % (pad.pad_name, pad.pad_name),
+                bbox_inches='tight')
+
+
+def display_box_plot(list_to_plot, titles, save_location=None):
+    # TODO save fig
+    # TODO remove assertion
+    assert (len(list_to_plot) == len(titles))
+    # f, axs = plt.subplots(1, len(list_to_plot), sharey = True,figsize =(16,16))
+    # for ax_idx, ax in enumerate(axs):
+    df = pd.DataFrame()
+    for col_idx, col in enumerate(titles):
+        df[col] = list_to_plot[col_idx]
+    f, ax = plt.subplots(figsize=(16, 16))
+    sns.boxplot(data=df, ax=ax)
+    f.show()

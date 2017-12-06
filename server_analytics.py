@@ -1,10 +1,6 @@
-import time
-
+import config
 from analytics import operation_builder
 from analytics import parser
-import config
-from analytics import Operations
-from analytics.visualization import *
 
 # path_to_csv = "..\\stian logs\\store.csv"
 # list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_ether_csv(path_to_csv)
@@ -40,5 +36,21 @@ while True:
 
             print('\nCOLORED TEXT BY OPS')
             print(pad.display_text_colored_by_ops())
+
+            print('\nSCORES')
+            print('User proportion per paragraph score', pad.user_participation_paragraph_score())
+            print('Proportion score:', pad.prop_score())
+            print('Synchronous score:', pad.sync_score()[0])
+            print('Alternating score:', pad.alternating_score())
+            print('Break score day:', pad.break_score('day'))
+            print('Break score short:', pad.break_score('short'))
+            print('Overall write type score:', pad.type_overall_score('write'))
+            print('Overall paste type score:', pad.type_overall_score('paste'))
+            print('Overall delete type score:', pad.type_overall_score('delete'))
+            print('Overall edit type score:', pad.type_overall_score('edit'))
+            print('User write score:', pad.user_type_score('write'))
+            print('User paste score:', pad.user_type_score('paste'))
+            print('User delete score:', pad.user_type_score('delete'))
+            print('User edit score:', pad.user_type_score('edit'))
 
     #time.sleep(0.1)

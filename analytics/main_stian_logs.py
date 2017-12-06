@@ -9,7 +9,7 @@ from analytics.visualization import *
 
 
 path_to_db = "../stian logs/store.csv"
-list_of_elem_ops_per_pad,_ = parser.get_elem_ops_per_pad_from_db(path_to_db,'stian_logs')
+list_of_elem_ops_per_pad, _ = parser.get_elem_ops_per_pad_from_db(path_to_db, 'stian_logs')
 print(list_of_elem_ops_per_pad.keys())
 print(len(list_of_elem_ops_per_pad.keys()))
 
@@ -29,43 +29,42 @@ for key in subset_of_keys:
 
 list_of_elem_ops_per_pad = new_list_of_elem_ops_per_pad
 
-#list_of_elem_ops_per_pad = {"753268753268753268753268753268753268": list_of_elem_ops_per_pad["753268753268753268753268753268753268"]}
+# list_of_elem_ops_per_pad = {"753268753268753268753268753268753268": list_of_elem_ops_per_pad["753268753268753268753268753268753268"]}
 
 list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(list_of_elem_ops_per_pad)
 
-pads,_,elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad_sorted,
-                                                        config.maximum_time_between_elem_ops)
+pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad_sorted,
+                                                                             config.maximum_time_between_elem_ops)
 
 for pad_name in pads:
-    pad=pads[pad_name]
+    pad = pads[pad_name]
     # create the paragraphs
     pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
     # classify the operations of the pad
-    pad.classify_operations(length_edit=config.length_edit,length_delete=config.length_delete)
+    pad.classify_operations(length_edit=config.length_edit, length_delete=config.length_delete)
     # find the context of the operation of the pad
-    pad.build_operation_context(config.delay_sync, config.time_to_reset_day,config.time_to_reset_break)
+    pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
 
 print(len(pads))
 for pad_name in pads:
     pad = pads[pad_name]
     print("PAD:", pad_name)
     text = pad.get_text()
-    #print(text)
-    text=text.strip('\n')
+    # print(text)
+    text = text.strip('\n')
     aText = aTextes[pad_name].replace("\\n", "\n").replace('\\""', '"').strip('\n')
     if text != aText:
         print("TEXT:")
         print(text)
         print("aText:")
         print(aText)
-        print("With n_elem_ops", len(pad.get_all_elementary_operation()))
-
+        print("With n_elem_ops", len(pad.get_elem_ops(sorted_=False)))
 
     print('\nCOLORED TEXT BY AUTHOR')
     print(pad.display_text_colored_by_authors())
 
-    #print('\nCOLORED TEXT BY OPS')
-    #print(pad.display_text_colored_by_ops())
+    # print('\nCOLORED TEXT BY OPS')
+    # print(pad.display_text_colored_by_ops())
 
     print('\nSCORES')
     print('User proportion per paragraph score', pad.user_participation_paragraph_score())
@@ -115,16 +114,16 @@ for pad_name in pads:
 
 
     # plot the participation proportion per user per paragraphs
-    #display_user_participation_paragraphs(pad)
+    # display_user_participation_paragraphs(pad)
 
     # plot the proportion of synchronous writing per paragraphs
-    #display_proportion_sync_in_paragraphs(pad)
+    # display_proportion_sync_in_paragraphs(pad)
 
     # plot the overall type counts
-    #display_overall_op_type(pad)
+    # display_overall_op_type(pad)
 
     # plot the counts of type per users
-    #display_types_per_user(pad)
+    # display_types_per_user(pad)
 
     # print('OPERATIONS')
     # pad.display_operations()

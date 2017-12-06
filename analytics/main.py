@@ -46,7 +46,7 @@ for pad_name in pads:
     print('Overall paste type score:', pad.type_overall_score('paste'))
     print('Overall delete type score:', pad.type_overall_score('delete'))
     print('Overall edit type score:', pad.type_overall_score('edit'))
-    print('User write score:',pad.user_type_score('write'))
+    print('User write score:', pad.user_type_score('write'))
     print('User paste score:', pad.user_type_score('paste'))
     print('User delete score:', pad.user_type_score('delete'))
     print('User edit score:', pad.user_type_score('edit'))
@@ -65,8 +65,8 @@ for pad_name in pads:
     # plot the counts of type per users
     display_types_per_user(pad, config.figs_save_location)
 
-    #print('OPERATIONS')
-    #pad.display_operations()
+    # print('OPERATIONS')
+    # pad.display_operations()
 
     # print("PARAGRAPHS:")
     #   pad.display_paragraphs(verbose=1)
