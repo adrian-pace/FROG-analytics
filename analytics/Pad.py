@@ -222,6 +222,13 @@ class Pad:
         for elem_op in new_elem_ops_sorted:
             # From where we will change the paragraph indices
             # should be infinity but this is enough since we can't add more than 2 paragraph
+
+
+            if elem_op.operation_type == "add" and elem_op.abs_position==14540:
+                print('ta mere')
+            last_elem_op = elem_op
+
+
             update_indices_from = len(self.paragraphs) + 3
 
             # If it is a new line, we will create a new paragraph and insert it at the right place
@@ -232,6 +239,7 @@ class Pad:
                 # If it is supposed to be in a paragraph which is a new line or at the end of paragraph
                 if para_it_belongs_to == -1:
 
+                    print(len(self.paragraphs) - 1)
                     # Is it an op at the beginning ?
                     if elem_op.abs_position == 0:
                         self.paragraphs.insert(0, Paragraph(elem_op, new_line=True))
@@ -821,6 +829,10 @@ class Pad:
         """
 
         new_pad = Pad(self.pad_name)
-        for op in self.operations:
-            if op.timestamp_start <= timestamp_threshold:
-                new_pad.add_operation(op)
+        elem_ops = []
+        for elem_op in self.get_elem_ops(True):
+            if elem_op.timestamp <= timestamp_threshold:
+                if not elem_op.belong_to_operation in new_pad.operations:
+                    new_pad.operations.append(elem_op.belong_to_operation)
+                    elem_ops.append(elem_op)
+        return new_pad,elem_ops

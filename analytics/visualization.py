@@ -229,6 +229,7 @@ def display_user_participation_paragraphs_with_del(pad, save_location):
         os.makedirs(save_location + '/' + pad.pad_name)
     plt.savefig(save_location + '/%s/%s_user_participation_para.png' % (pad.pad_name, pad.pad_name),
                 bbox_inches='tight')
+    plt.close('all')
 
 
 def display_box_plot(list_to_plot, titles, save_location=None):
