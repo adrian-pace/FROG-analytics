@@ -1,8 +1,11 @@
+from pprint import pprint
 from flask import Flask, jsonify
 from flask import request as flask_request
 import threading
 from multiprocessing import Queue
 import time
+from analytics import parser, operation_builder
+import config
 
 app = Flask(__name__)
 
@@ -37,49 +40,53 @@ class AnalyticThread(threading.Thread):
                 pads, dic_author_current_operations_per_pad, elem_ops_treated = operation_builder.build_operations_from_elem_ops(
                     new_list_of_elem_ops_per_pad_sorted, config.maximum_time_between_elem_ops,
                     dic_author_current_operations_per_pad, pads)
+                # TODO All the parsing and operation building is done on pads we don't want !
                 for pad_name in elem_ops_treated:
-                    pad = pads[pad_name]
-                    # create the paragraphs
-                    pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
-                    # classify the operations of the pad
-                    pad.classify_operations(length_edit=config.length_edit, length_delete=config.length_delete)
-                    # find the context of the operation of the pad
-                    pad.build_operation_context(config.delay_sync, config.time_to_reset_day,
-                                                config.time_to_reset_break)
+                    if pad_name in self.pad_names:
+                        pad = pads[pad_name]
+                        # create the paragraphs
+                        pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
+                        # classify the operations of the pad
+                        pad.classify_operations(length_edit=config.length_edit, length_delete=config.length_delete)
+                        # find the context of the operation of the pad
+                        pad.build_operation_context(config.delay_sync, config.time_to_reset_day,
+                                                    config.time_to_reset_break)
 
                 answer = dict()
-                for pad_name in pads:
-                    pad = pads[pad_name]
-                    answer_per_pad = dict()
-                    answer_per_pad['text'] = pad.get_text()
-                    answer_per_pad['text_colored_by_authors'] = pad.display_text_colored_by_authors()
-                    answer_per_pad['text_colored_by_ops'] = pad.display_text_colored_by_ops()
-                    answer_per_pad['User proportion per paragraph score'] = pad.user_participation_paragraph_score()
-                    answer_per_pad['Proportion score:'] = pad.prop_score()
-                    answer_per_pad['Synchronous score:'] = pad.sync_score()[0]
-                    answer_per_pad['Alternating score:'] = pad.alternating_score()
-                    answer_per_pad['Break score day:'] = pad.break_score('day')
-                    answer_per_pad['Break score short:'] = pad.break_score('short')
-                    answer_per_pad['Overall write type score:'] = pad.type_overall_score('write')
-                    answer_per_pad['Overall paste type score:'] = pad.type_overall_score('paste')
-                    answer_per_pad['Overall delete type score:'] = pad.type_overall_score('delete')
-                    answer_per_pad['Overall edit type score:'] = pad.type_overall_score('edit')
-                    answer_per_pad['User write score:'] = pad.user_type_score('write')
-                    answer_per_pad['User paste score:'] = pad.user_type_score('paste')
-                    answer_per_pad['User delete score:'] = pad.user_type_score('delete')
-                    answer_per_pad['User edit score:'] = pad.user_type_score('edit')
-                    answer[pad_name] = answer_per_pad
-
+                for pad_name in elem_ops_treated:
+                    if pad_name in self.pad_names:
+                        pad = pads[pad_name]
+                        answer_per_pad = dict()
+                        answer_per_pad['User proportion per paragraph score'] = pad.user_participation_paragraph_score()
+                        answer_per_pad['Proportion score:'] = pad.prop_score()
+                        answer_per_pad['Synchronous score:'] = pad.sync_score()[0]
+                        answer_per_pad['Alternating score:'] = pad.alternating_score()
+                        answer_per_pad['Break score day:'] = pad.break_score('day')
+                        answer_per_pad['Break score short:'] = pad.break_score('short')
+                        answer_per_pad['Overall write type score:'] = pad.type_overall_score('write')
+                        answer_per_pad['Overall paste type score:'] = pad.type_overall_score('paste')
+                        answer_per_pad['Overall delete type score:'] = pad.type_overall_score('delete')
+                        answer_per_pad['Overall edit type score:'] = pad.type_overall_score('edit')
+                        answer_per_pad['User write score:'] = pad.user_type_score('write')
+                        answer_per_pad['User paste score:'] = pad.user_type_score('paste')
+                        answer_per_pad['User delete score:'] = pad.user_type_score('delete')
+                        answer_per_pad['User edit score:'] = pad.user_type_score('edit')
+                        pprint(answer_per_pad)
+                        answer_per_pad['text'] = pad.get_text()
+                        answer_per_pad['text_colored_by_authors'] = pad.display_text_colored_by_authors()
+                        answer_per_pad['text_colored_by_ops'] = pad.display_text_colored_by_ops()
+                        print(answer_per_pad['text'])
+                        answer[pad_name] = answer_per_pad
             time.sleep(0.5)
-
-            print(self.pad_names)
-            time.sleep(2)
             queueLock.acquire()
             if workQueue.full():
-                workQueue.get()
-            workQueue.put(counter)
+                queuer = workQueue.get()
+                for pad_name in answer:
+                    queuer[pad_name] = answer[pad_name]
+                workQueue.put(queuer)
+            else:
+                workQueue.put(answer)
             queueLock.release()
-            counter += 1
         print('exiting', self.name)
 
 
