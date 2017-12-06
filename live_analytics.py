@@ -3,14 +3,11 @@ from analytics import operation_builder
 from analytics import parser
 import time
 
-# path_to_csv = "..\\stian logs\\store.csv"
-# list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_ether_csv(path_to_csv)
-path_to_db = "etherpad/var/dirty.db"
 index_from = 0
 dic_author_current_operations_per_pad = dict()
 pads = dict()
 while True:
-    new_list_of_elem_ops_per_pad, index_from = parser.get_elem_ops_per_pad_from_db(path_to_db,
+    new_list_of_elem_ops_per_pad, index_from = parser.get_elem_ops_per_pad_from_db(None,
                                                                                    'collab-react-components',
                                                                                    index_from=index_from)
     if len(new_list_of_elem_ops_per_pad) != 0:

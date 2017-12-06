@@ -263,7 +263,6 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
         o_docs = db['o_collab_data_documents']
         o_docs_find = o_docs.find()
         for item in o_docs_find[index_from:]:
-            print(item)
             if 'create' not in item.keys():
                 pad_name = item['d']
                 timestamp = item['m']['ts']
@@ -285,7 +284,8 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
             index_from += 1
         client.close()
         # Shouldn't be necessary
-        list_of_elem_ops_per_pad[pad_name] = sorted(list_of_elem_ops_per_pad[pad_name], key=(lambda x: x.timestamp))
+        for pad_name in list_of_elem_ops_per_pad:
+            list_of_elem_ops_per_pad[pad_name] = sorted(list_of_elem_ops_per_pad[pad_name], key=(lambda x: x.timestamp))
     elif editor == 'stian_logs':
         sorted_lines = []
         with open(path_to_db, encoding="utf8") as f:
