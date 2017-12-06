@@ -804,10 +804,12 @@ class Pad:
                 type_idx = types.index(op.type)
                 count_type[user_idx, type_idx] += 1
         # Normalize the counter of op types per user
-        norm_type = np.nan_to_num(count_type/count_type.sum(axis=1)[:,None])
+        total_type = count_type.sum(axis=1)[:,None]
+        norm_type = np.divide(count_type, total_type, out=np.zeros_like(count_type), where=total_type != 0)
 
         # Normalize the proportion of users per types
-        norm_user = np.nan_to_num(norm_type/norm_type.sum(axis=0))
+        total_user = norm_type.sum(axis=0)
+        norm_user = np.divide(norm_type, total_user, out=np.zeros_like(norm_type), where=total_user != 0)
 
         # Compute the entropy for all types
         type_scores = []
