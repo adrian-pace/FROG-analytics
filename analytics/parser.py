@@ -284,6 +284,8 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
                         list_of_elem_ops_per_pad[pad_name].append(elem_op)
             index_from += 1
         client.close()
+        # Shouldn't be necessary
+        list_of_elem_ops_per_pad[pad_name] = sorted(list_of_elem_ops_per_pad[pad_name], key=(lambda x: x.timestamp))
     elif editor == 'stian_logs':
         sorted_lines = []
         with open(path_to_db, encoding="utf8") as f:

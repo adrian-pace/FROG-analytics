@@ -52,7 +52,6 @@ if subset_of_pads is not None:
     for key in subset_of_keys:
         new_list_of_elem_ops_per_pad[key] = list_of_elem_ops_per_pad[key]
     list_of_elem_ops_per_pad = new_list_of_elem_ops_per_pad
-
 elif specific_pad is not None:
     list_of_elem_ops_per_pad = {specific_pad: list_of_elem_ops_per_pad[specific_pad]}
 
@@ -62,18 +61,17 @@ if verbosity == 1:
 
 list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(list_of_elem_ops_per_pad)
 
-pads = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad_sorted,
-                                                        config.maximum_time_between_elem_ops)
+pads, _, _ = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad_sorted,
+                                                              config.maximum_time_between_elem_ops)
 
 for pad_name in pads:
-    pad=pads[pad_name]
+    pad = pads[pad_name]
     # create the paragraphs
-    pad.create_paragraphs_from_ops()
+    pad.create_paragraphs_from_ops(pad.get_elem_ops(True))
     # classify the operations of the pad
-    pad.classify_operations(length_edit=config.length_edit,length_delete=config.length_delete)
+    pad.classify_operations(length_edit=config.length_edit, length_delete=config.length_delete)
     # find the context of the operation of the pad
-    pad.build_operation_context(config.delay_sync, config.time_to_reset_day,config.time_to_reset_break)
-
+    pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
 
 for pad_name in pads:
     pad = pads[pad_name]
