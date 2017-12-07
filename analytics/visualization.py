@@ -213,10 +213,20 @@ def display_user_participation_paragraphs_with_del(pad, save_location):
 
     # Transform the final data into a pandas DataFrame
     df_add = pd.DataFrame(prop_authors_paragraphs_add, index=paragraph_names)
-    df_add.columns += ' write/add'
+    # Rename each column by adding write/del in each col to sort them
+    col_add = df_add.columns
+    col_add = [col_name + ' write/add' for col_name in col_add]
+    df_add.rename(columns=dict(zip(df_add.columns, col_add)), inplace=True)
+
     df_del = pd.DataFrame(prop_authors_paragraphs_del, index=paragraph_names)
-    df_del.columns += ' del'
+    # Rename each column by adding write/del in each col to sort them
+    col_del = df_del.columns
+    col_del = [col_name + ' del' for col_name in col_del]
+    df_del.rename(columns=dict(zip(df_del.columns, col_del)), inplace=True)
+
+    # Concatenate the resulting two dataframes
     df = pd.concat([df_add, df_del], axis=1)
+    # Sort them alphabetically to alternate between add and del
     df = df.sort_index(axis=1)
 
     # Plot the results as a stacked plot bar

@@ -107,6 +107,7 @@ for pad_name in pads:
 
     # plot the proportion of synchronous writing per paragraphs
     display_proportion_sync_in_paragraphs(pad, config.figs_save_location)
+    display_proportion_sync_in_pad(pad, config.figs_save_location)
 
     # plot the overall type counts
     display_overall_op_type(pad, config.figs_save_location)

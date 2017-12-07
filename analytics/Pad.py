@@ -215,8 +215,8 @@ class Pad:
             for para_i, paragraph in enumerate(self.paragraphs):
                 if (not paragraph.new_line) \
                         and paragraph.abs_position \
-                        <= elem_op_to_look_for.abs_position \
-                        <= paragraph.abs_position + paragraph.get_length():
+                                <= elem_op_to_look_for.abs_position \
+                                <= paragraph.abs_position + paragraph.get_length():
                     return para_i
             return -1
 
@@ -309,7 +309,7 @@ class Pad:
                     # We are deleting only this paragraph
                     if elem_op.abs_position == para.abs_position \
                             and elem_op.abs_position + elem_op.length_to_delete \
-                            == para.abs_position + para.get_length():
+                                    == para.abs_position + para.get_length():
                         # Add to the list to remove
                         to_remove.append(para_idx)
                         # We will update the indices from here
@@ -338,7 +338,7 @@ class Pad:
                     elif elem_op.abs_position \
                             <= para.abs_position \
                             and elem_op.abs_position + elem_op.length_to_delete \
-                            >= para.abs_position + para.get_length():
+                                    >= para.abs_position + para.get_length():
                         # We remove the whole paragraph
                         to_remove.append(para_idx)
                         # shouldn't be necessary since it will be taken care by the last paragraph we delete.
@@ -562,10 +562,11 @@ class Pad:
                         op.context['first_op_break'] = True
                 op_index += 1
 
-                if other_op.author != op.author \
+                if other_op.author != op.author and other_op.author != 'Etherpad_admin' and op.author != 'Etherpad_admin' \
                         and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
                     op.context['synchronous_in_pad'] = True
-                    op.context['synchronous_in_pad_with'].append(other_op.author)
+                    if other_op.author not in op.context['synchronous_in_pad_with']:
+                        op.context['synchronous_in_pad_with'].append(other_op.author)
         for para in self.paragraphs:
             abs_length_para = 0
             para_ops = para.operations
@@ -580,10 +581,11 @@ class Pad:
 
                 for other_op in para_ops:
                     other_start_time = other_op.timestamp_start
-                    if other_op.author != op.author \
+                    if other_op.author != op.author and other_op.author != 'Etherpad_admin' and op.author != 'Etherpad_admin' \
                             and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
                         op.context['synchronous_in_paragraph'] = True
-                        op.context['synchronous_in_paragraph_with'].append(other_op.author)
+                        if other_op.author not in op.context['synchronous_in_paragraph_with']:
+                            op.context['synchronous_in_paragraph_with'].append(other_op.author)
 
                 op.context['proportion_paragraph'] = len_op
             # Once we computed the absolute length of the paragraph, we compute the proportion (it is positive)
@@ -655,11 +657,13 @@ class Pad:
         """
         prop_sync = 0
         prop_async = 0
+        len_pad_no_admin = sum(
+            [abs(op.get_length_of_op()) if op.author != 'Etherpad_admin' else 0 for op in self.operations])
         for op in self.operations:
             if op.context['synchronous_in_pad']:
-                prop_sync += op.context['proportion_pad']
-            else:
-                prop_async += op.context['proportion_pad']
+                prop_sync += abs(op.get_length_of_op())/len_pad_no_admin
+            elif op.author != 'Etherpad_admin':
+                prop_async += abs(op.get_length_of_op())/len_pad_no_admin
         return prop_sync, prop_async
 
     def prop_paragraphs(self):
@@ -814,7 +818,7 @@ class Pad:
                 type_idx = types.index(op.type)
                 count_type[user_idx, type_idx] += 1
         # Normalize the counter of op types per user
-        total_type = count_type.sum(axis=1)[:,None]
+        total_type = count_type.sum(axis=1)[:, None]
         norm_type = np.divide(count_type, total_type, out=np.zeros_like(count_type), where=total_type != 0)
 
         # Normalize the proportion of users per types
@@ -846,4 +850,4 @@ class Pad:
                 elem_ops.append(elem_op)
         pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops({self.pad_name: elem_ops},
                                                                                      config.maximum_time_between_elem_ops)
-        return pads[self.pad_name],elem_ops_treated[self.pad_name]
+        return pads[self.pad_name], elem_ops_treated[self.pad_name]
