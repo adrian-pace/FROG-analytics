@@ -1,0 +1,15 @@
+Cluster
+Patterns, compare pads with similar 
+correlation between metrics, PCa?
+
+
+are there more difference between time or between groups
+how metrics evolve during time PER PAD
+see the average break between elem operations to find optimal delay between ops
+explain choices for parameters
+plot the length of the op to find the optimal edit size
+plot the length of the op to find the optimal depending on the edit size
+
+send example data
+Parse data from frog
+server setup

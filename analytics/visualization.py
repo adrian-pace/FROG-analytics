@@ -232,15 +232,35 @@ def display_user_participation_paragraphs_with_del(pad, save_location):
     plt.close('all')
 
 
-def display_box_plot(list_to_plot, titles, save_location=None):
-    # TODO save fig
-    # TODO remove assertion
-    assert (len(list_to_plot) == len(titles))
-    # f, axs = plt.subplots(1, len(list_to_plot), sharey = True,figsize =(16,16))
-    # for ax_idx, ax in enumerate(axs):
-    df = pd.DataFrame()
-    for col_idx, col in enumerate(titles):
-        df[col] = list_to_plot[col_idx]
-    f, ax = plt.subplots(figsize=(16, 16))
-    sns.boxplot(data=df, ax=ax)
-    f.show()
+def display_boxplot_split(df, metric, save_location=None):
+    """
+    Create boxplots on the different point of time according to one metric
+
+    :param df: dataframe with all results of metrics
+    :param metric: metric to analyze
+    :param: save_location: location saved
+    :return:
+    """
+    plt.subplots(figsize=(15, 6))
+    sns.boxplot(x='time', y=metric, data=df)
+    plt.title('Distribution of ' + metric + ' at different point in time of all pads')
+    plt.savefig(save_location + '/metrics/boxplot_%s.png' % metric,
+                bbox_inches='tight')
+    plt.close('all')
+
+
+def display_barplot_split(df, metric, pad_name, save_location=None):
+    """
+    Plot the distribution over time of a metric of one pad.
+
+    :param df: dataframe with the results of one pad
+    :param metric: string corresponding to one metric column of the dataframe
+    :param save_location: saving location
+    :return:
+    """
+    plt.subplots(figsize=(15, 6))
+    sns.barplot(x='time', y=metric, data=df)
+    plt.title('Distribution of ' + metric + ' at different point in time of the pad '+pad_name)
+    plt.savefig(save_location + '/%s/evolution_%s.png' % (pad_name, metric),
+                bbox_inches='tight')
+    plt.close('all')

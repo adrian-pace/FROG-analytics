@@ -1,5 +1,7 @@
 from analytics.Operations import ElementaryOperation, Paragraph, Operation
 import numpy as np
+from analytics import operation_builder
+import config
 
 
 def get_colors():
@@ -224,10 +226,6 @@ class Pad:
             # should be infinity but this is enough since we can't add more than 2 paragraph
 
 
-            if elem_op.operation_type == "add" and elem_op.abs_position==14540:
-                print('ta mere')
-            last_elem_op = elem_op
-
 
             update_indices_from = len(self.paragraphs) + 3
 
@@ -239,7 +237,6 @@ class Pad:
                 # If it is supposed to be in a paragraph which is a new line or at the end of paragraph
                 if para_it_belongs_to == -1:
 
-                    print(len(self.paragraphs) - 1)
                     # Is it an op at the beginning ?
                     if elem_op.abs_position == 0:
                         self.paragraphs.insert(0, Paragraph(elem_op, new_line=True))
@@ -485,7 +482,7 @@ class Pad:
                     print(elem_op)
                     raise AssertionError
 
-        # Find the list of authors in the pad
+        # Find the  list of authors in the pad
         for op in self.operations:
             if op.author not in self.authors:
                 self.authors.append(op.author)
@@ -534,7 +531,7 @@ class Pad:
         """
         # Iterate over all Operation of each Paragraph which is the same as to iterate all iterations of the pad
         pad_operations = self.operations
-        len_pad = len(self.get_text())
+        len_pad = sum([abs(op.get_length_of_op()) for op in pad_operations])
         for op in pad_operations:
             # Initialize the context
             len_op = abs(op.get_length_of_op())
@@ -610,7 +607,6 @@ class Pad:
             authors = list(np.delete(authors, authors.index('Etherpad_admin')))
         # Initialize the number of letters written by each authors
         author_lengths = np.zeros(len(authors))
-
         # increment the participation accordingly
         for op in self.operations:
             op_author = op.author
@@ -741,7 +737,11 @@ class Pad:
 
         # Compute the weighted average according to paragraph lengths
         overall_score = sum(np.multiply(paragraph_participations, paragraph_lengths))
-        return overall_score / sum(paragraph_lengths)
+        if sum(paragraph_lengths) != 0:
+            return overall_score / sum(paragraph_lengths)
+        else:
+            # If no paragraph, we choose to return a score of zero
+            return 0
 
     def break_score(self, break_type):
         """
@@ -794,6 +794,15 @@ class Pad:
         return type_count / op_count
 
     def user_type_score(self, op_type):
+        """
+        Compute the entropy for an operation type on all users except the admin. It creates a matrix of dimension
+        (num_user x num_types) counting the number of different operations per user. It normalizes the counts according
+        to the rows and then normalize the proportions according to the columns to compute a valid entropy for each
+        entropy.
+
+        :param op_type: string being the operation type 'write', 'delete', 'edit', 'paste'.
+        :return:the entropy score for one type over all users.
+        """
         types = ['write', 'edit', 'delete', 'paste']
         users = self.authors[:]
         # Remove the admin
@@ -834,5 +843,7 @@ class Pad:
             if elem_op.timestamp <= timestamp_threshold:
                 if not elem_op.belong_to_operation in new_pad.operations:
                     new_pad.operations.append(elem_op.belong_to_operation)
-                    elem_ops.append(elem_op)
-        return new_pad,elem_ops
+                elem_ops.append(elem_op)
+        pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops({self.pad_name: elem_ops},
+                                                                                     config.maximum_time_between_elem_ops)
+        return pads[self.pad_name],elem_ops_treated[self.pad_name]
