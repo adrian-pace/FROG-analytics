@@ -15,6 +15,9 @@ You will need Python3 and the following dependencies.
 - matplotlib
 - pandas
 - seaborn
+- sqlite3
+- time
+- flask
 
 ```
 pip install csv
@@ -25,6 +28,9 @@ pip install pymongo
 pip install matplotlib
 pip install pandas
 pip install seaborn
+pip install sqlite3
+pip install time
+pip install flask
 ```
 
 ### Etherpad
@@ -152,16 +158,11 @@ This will display the visualizations and colored texts for the first 10 pads.
 
 ### Architecture
 A list of `Pad` each corresponding to an edited document is articulated in the following way. It is defined by a list of `Operation` which are themselves defined by a list of `ElementaryOperation`.  
-- `ElementaryOperation` is of the same granularity as the writing events of the editor. They encapsulate various information on this event such as when it occurred, where, what is the operation (addition or deletion)... They are defined in the class `ElementaryOperation` in `Operation.py`. They are extracted from the various editors with `Parser.py` which contains methods to parse `dirty.db` from Etherpad and the mongo database from the Collab-React-Components.
-- `Operation` is a list of `ElementaryOperation` executed over a determined time without interruption or moving somewhere
-else in the pad. For now the two `ElementaryOperation` types are `del` and `add`. Its implementation can be found in
-`Operation.py`. They are constructed with the methods in `operation_builder.py`
+- `ElementaryOperation` is of the same granularity as the writing events of the editor. They encapsulate various information on this event such as when it occurred, where, what is the operation (addition or deletion)... They are defined in the class `ElementaryOperation` in `Operation.py`. For now the two `ElementaryOperation` types are `del` and `add`. They are extracted from the various editors with `Parser.py` which contains methods to parse `dirty.db` or  a sqlite database from Etherpad,  the mongo database from the Collab-React-Components or the mongo database from FROG.
+- `Operation` is a list of `ElementaryOperation` executed over a determined time without interruption or moving somewhere else in the pad. Its implementation can be found in `Operation.py`. They are constructed with the methods in `operation_builder.py`.
 - `Paragraph` are the collection of `Operation` and of their `ElementaryOperation` that are in the same line. They are used to build the context of an operation which is detailed in the section Usage.
-- Each `Operation` of a `Pad` can be classified to a Write, Edit, Delete, Copy/Paste or Jump (if the user adds a new line)
-depending on the length of the operation. There are various parameters that can be tweaked to change this classification taking place in `operation_builder.py`. The parameters are located in the `config.py` file.
-- Each `Operation` has a `context` parameter that can be computed using `operation_builder.py`.
-This dictionary contains whether the `Operation` is written synchronously with an other author in the `Pad` or in the
-`Paragraph`, how prominent is this author in the `Pad` or `Paragraph` and whether this is the first `Operation` of the day or after a small break.
+- Each `Operation` of a `Pad` can be classified to a Write, Edit, Delete, Copy/Paste or Jump (if the user adds a new line) depending on the length of the operation. There are various parameters that can be tweaked to change this classification taking place in `operation_builder.py`. The parameters are located in the `config.py` file.
+- Each `Operation` has a `context` parameter that is computed using `operation_builder.py`. It contains information on whether the `Operation` is written synchronously with an other author in the `Pad` or in the `Paragraph`, how prominent is this author in the `Pad` or `Paragraph` and whether this is the first `Operation` of the day or after a small break.
 -  `main_stian_logs_py` and `main.py` contains a program used in development to test new features on the logs of Stian.
 
 
