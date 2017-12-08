@@ -1,3 +1,4 @@
+import requests
 from pprint import pprint
 from flask import Flask, jsonify
 from flask import request as flask_request
@@ -10,15 +11,17 @@ import config
 app = Flask(__name__)
 
 analytics_started = False
-myThread = None
+analytic_thread = None
+updates_thread = None
 queueLock = threading.Lock()
 workQueue = Queue(1)
 last_answer = None
 
 
 class AnalyticThread(threading.Thread):
-    def __init__(self, name, pad_names, regex, workQueue, queueLock):
+    def __init__(self, name, pad_names, regex, workQueue, queueLock, update_delay):
         threading.Thread.__init__(self)
+        self.update_delay = update_delay
         self.regex = regex
         self.name = name
         self.pad_names = pad_names
@@ -36,7 +39,7 @@ class AnalyticThread(threading.Thread):
         pads = dict()
         while analytics_started:
             new_list_of_elem_ops_per_pad, revs_mongo = parser.get_elem_ops_per_pad_from_db(None,
-                                                                                           'collab-react-components',
+                                                                                           'FROG',
                                                                                            revs_mongo=revs_mongo,
                                                                                            regex=self.regex)
             if len(new_list_of_elem_ops_per_pad) != 0:
@@ -80,23 +83,44 @@ class AnalyticThread(threading.Thread):
                     answer_per_pad['text_colored_by_ops'] = pad.display_text_colored_by_ops()
                     print(answer_per_pad['text'])
                     answer[pad_name] = answer_per_pad
-            time.sleep(0.5)
-            queueLock.acquire()
-            if workQueue.full():
-                queuer = workQueue.get()
+            time.sleep(self.update_delay)
+            self.queueLock.acquire()
+            if self.workQueue.full():
+                queuer = self.workQueue.get()
                 for pad_name in answer:
                     queuer[pad_name] = answer[pad_name]
-                workQueue.put(queuer)
+                self.workQueue.put(queuer)
             else:
-                workQueue.put(answer)
-            queueLock.release()
+                self.workQueue.put(answer)
+            self.queueLock.release()
         print('exiting', self.name)
 
 
+class UpdatesThread(threading.Thread):
+    def __init__(self, thread_name, url, update_delay, workQueue, queueLock):
+        threading.Thread.__init__(self)
+        self.update_delay = update_delay
+        self.url = url
+        self.thread_name = thread_name
+        self.workQueue = workQueue
+        self.queueLock = queueLock
+
+    def run(self):
+        global last_answer
+        while analytics_started:
+            if not self.workQueue.empty():
+                self.queueLock.acquire()
+                last_answer = workQueue.get()
+                self.queueLock.release()
+                requests.post(url=self.url, json=last_answer)
+            time.sleep(self.update_delay)
+
+
 @app.route('/', methods=['GET', 'POST'])
-def receiving_data():
+def receiving_requests():
     global analytics_started
-    global myThread
+    global analytic_thread
+    global updates_thread
     global queueLock
     global workQueue
     global last_answer
@@ -111,16 +135,24 @@ def receiving_data():
         else:
             regex = None
         if analytics_started:
-            print("Exiting analytics thread with old pad names")
+            print("Exiting analytics threads with old pad names")
             analytics_started = False
-            myThread.join()
-            print("Analytics stopped with old pad names")
+            analytic_thread.join()
+            # TODO uncomment
+            #updates_thread.join()
+            print("Analytics threads stopped with old pad names")
         workQueue = Queue(1)
         queueLock = threading.Lock()
-        myThread = AnalyticThread("Analytics_thread", pad_names, regex, workQueue, queueLock)
+        analytic_thread = AnalyticThread("Analytics thread", pad_names, regex, workQueue, queueLock,config.update_delay)
+        updates_thread = UpdatesThread("Updates thread", config.update_post_url, config.update_delay, workQueue,
+                                       queueLock)
         analytics_started = True
-        myThread.start()
+        analytic_thread.start()
+        # TODO uncomment
+        #updates_thread.start()
         return "Analytics started", 200
+
+    # TODO remove
     elif flask_request.method == 'GET':
         if workQueue.empty() and last_answer is None:
             return 'Data Not yet available', 503
@@ -129,3 +161,4 @@ def receiving_data():
             last_answer = workQueue.get()
             queueLock.release()
         return jsonify(last_answer), 200
+

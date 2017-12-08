@@ -16,3 +16,6 @@ mongodb_port = None
 mongodb_port = 30000
 mongodb_database_name = 'sharedb'
 mongodb_collection_name = 'o_rz'
+
+update_post_url = 'http://localhost/updates'
+update_delay = 1
