@@ -1,5 +1,7 @@
 from analytics.Operations import ElementaryOperation, Paragraph, Operation
 import numpy as np
+from analytics import operation_builder
+import config
 
 
 def get_colors():
@@ -213,8 +215,8 @@ class Pad:
             for para_i, paragraph in enumerate(self.paragraphs):
                 if (not paragraph.new_line) \
                         and paragraph.abs_position \
-                        <= elem_op_to_look_for.abs_position \
-                        <= paragraph.abs_position + paragraph.get_length():
+                                <= elem_op_to_look_for.abs_position \
+                                <= paragraph.abs_position + paragraph.get_length():
                     return para_i
             return -1
 
@@ -222,6 +224,9 @@ class Pad:
         for elem_op in new_elem_ops_sorted:
             # From where we will change the paragraph indices
             # should be infinity but this is enough since we can't add more than 2 paragraph
+
+
+
             update_indices_from = len(self.paragraphs) + 3
 
             # If it is a new line, we will create a new paragraph and insert it at the right place
@@ -304,7 +309,7 @@ class Pad:
                     # We are deleting only this paragraph
                     if elem_op.abs_position == para.abs_position \
                             and elem_op.abs_position + elem_op.length_to_delete \
-                            == para.abs_position + para.get_length():
+                                    == para.abs_position + para.get_length():
                         # Add to the list to remove
                         to_remove.append(para_idx)
                         # We will update the indices from here
@@ -333,7 +338,7 @@ class Pad:
                     elif elem_op.abs_position \
                             <= para.abs_position \
                             and elem_op.abs_position + elem_op.length_to_delete \
-                            >= para.abs_position + para.get_length():
+                                    >= para.abs_position + para.get_length():
                         # We remove the whole paragraph
                         to_remove.append(para_idx)
                         # shouldn't be necessary since it will be taken care by the last paragraph we delete.
@@ -477,7 +482,7 @@ class Pad:
                     print(elem_op)
                     raise AssertionError
 
-        # Find the list of authors in the pad
+        # Find the  list of authors in the pad
         for op in self.operations:
             if op.author not in self.authors:
                 self.authors.append(op.author)
@@ -526,7 +531,7 @@ class Pad:
         """
         # Iterate over all Operation of each Paragraph which is the same as to iterate all iterations of the pad
         pad_operations = self.operations
-        len_pad = len(self.get_text())
+        len_pad = sum([abs(op.get_length_of_op()) for op in pad_operations])
         for op in pad_operations:
             # Initialize the context
             len_op = abs(op.get_length_of_op())
@@ -557,10 +562,11 @@ class Pad:
                         op.context['first_op_break'] = True
                 op_index += 1
 
-                if other_op.author != op.author \
+                if other_op.author != op.author and other_op.author != 'Etherpad_admin' and op.author != 'Etherpad_admin' \
                         and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
                     op.context['synchronous_in_pad'] = True
-                    op.context['synchronous_in_pad_with'].append(other_op.author)
+                    if other_op.author not in op.context['synchronous_in_pad_with']:
+                        op.context['synchronous_in_pad_with'].append(other_op.author)
         for para in self.paragraphs:
             abs_length_para = 0
             para_ops = para.operations
@@ -575,10 +581,11 @@ class Pad:
 
                 for other_op in para_ops:
                     other_start_time = other_op.timestamp_start
-                    if other_op.author != op.author \
+                    if other_op.author != op.author and other_op.author != 'Etherpad_admin' and op.author != 'Etherpad_admin' \
                             and end_time + delay_sync >= other_start_time >= start_time - delay_sync:
                         op.context['synchronous_in_paragraph'] = True
-                        op.context['synchronous_in_paragraph_with'].append(other_op.author)
+                        if other_op.author not in op.context['synchronous_in_paragraph_with']:
+                            op.context['synchronous_in_paragraph_with'].append(other_op.author)
 
                 op.context['proportion_paragraph'] = len_op
             # Once we computed the absolute length of the paragraph, we compute the proportion (it is positive)
@@ -602,7 +609,6 @@ class Pad:
             authors = list(np.delete(authors, authors.index('Etherpad_admin')))
         # Initialize the number of letters written by each authors
         author_lengths = np.zeros(len(authors))
-
         # increment the participation accordingly
         for op in self.operations:
             op_author = op.author
@@ -651,11 +657,13 @@ class Pad:
         """
         prop_sync = 0
         prop_async = 0
+        len_pad_no_admin = sum(
+            [abs(op.get_length_of_op()) if op.author != 'Etherpad_admin' else 0 for op in self.operations])
         for op in self.operations:
             if op.context['synchronous_in_pad']:
-                prop_sync += op.context['proportion_pad']
-            else:
-                prop_async += op.context['proportion_pad']
+                prop_sync += abs(op.get_length_of_op())/len_pad_no_admin
+            elif op.author != 'Etherpad_admin':
+                prop_async += abs(op.get_length_of_op())/len_pad_no_admin
         return prop_sync, prop_async
 
     def prop_paragraphs(self):
@@ -733,7 +741,11 @@ class Pad:
 
         # Compute the weighted average according to paragraph lengths
         overall_score = sum(np.multiply(paragraph_participations, paragraph_lengths))
-        return overall_score / sum(paragraph_lengths)
+        if sum(paragraph_lengths) != 0:
+            return overall_score / sum(paragraph_lengths)
+        else:
+            # If no paragraph, we choose to return a score of zero
+            return 0
 
     def break_score(self, break_type):
         """
@@ -786,6 +798,15 @@ class Pad:
         return type_count / op_count
 
     def user_type_score(self, op_type):
+        """
+        Compute the entropy for an operation type on all users except the admin. It creates a matrix of dimension
+        (num_user x num_types) counting the number of different operations per user. It normalizes the counts according
+        to the rows and then normalize the proportions according to the columns to compute a valid entropy for each
+        entropy.
+
+        :param op_type: string being the operation type 'write', 'delete', 'edit', 'paste'.
+        :return:the entropy score for one type over all users.
+        """
         types = ['write', 'edit', 'delete', 'paste']
         users = self.authors[:]
         # Remove the admin
@@ -797,7 +818,7 @@ class Pad:
                 type_idx = types.index(op.type)
                 count_type[user_idx, type_idx] += 1
         # Normalize the counter of op types per user
-        total_type = count_type.sum(axis=1)[:,None]
+        total_type = count_type.sum(axis=1)[:, None]
         norm_type = np.divide(count_type, total_type, out=np.zeros_like(count_type), where=total_type != 0)
 
         # Normalize the proportion of users per types
@@ -821,6 +842,12 @@ class Pad:
         """
 
         new_pad = Pad(self.pad_name)
-        for op in self.operations:
-            if op.timestamp_start <= timestamp_threshold:
-                new_pad.add_operation(op)
+        elem_ops = []
+        for elem_op in self.get_elem_ops(True):
+            if elem_op.timestamp <= timestamp_threshold:
+                if not elem_op.belong_to_operation in new_pad.operations:
+                    new_pad.operations.append(elem_op.belong_to_operation)
+                elem_ops.append(elem_op)
+        pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops({self.pad_name: elem_ops},
+                                                                                     config.maximum_time_between_elem_ops)
+        return pads[self.pad_name], elem_ops_treated[self.pad_name]

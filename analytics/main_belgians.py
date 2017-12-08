@@ -107,23 +107,10 @@ for pad_name in pads:
 
     # plot the proportion of synchronous writing per paragraphs
     display_proportion_sync_in_paragraphs(pad, config.figs_save_location)
+    display_proportion_sync_in_pad(pad, config.figs_save_location)
 
     # plot the overall type counts
     display_overall_op_type(pad, config.figs_save_location)
 
     # plot the counts of type per users
     display_types_per_user(pad, config.figs_save_location)
-
-display_box_plot([user_participation_paragraph_score_list], ['user_participation_paragraph_score_list'])
-display_box_plot([prop_score_list], ['prop_score_list'])
-display_box_plot([sync_score_list], ['sync_score_list'])
-display_box_plot([alternating_score_list], ['alternating_score_list'])
-display_box_plot([break_score_day_list, break_score_short_list], ['break_score_day_list', 'break_score_short_list'])
-display_box_plot([type_overall_score_write_list, type_overall_score_delete_list, type_overall_score_edit_list,
-                  type_overall_score_paste_list],
-                 ['type_overall_score_write_list', 'type_overall_score_delete_list', 'type_overall_score_edit_list',
-                  'type_overall_score_paste_list'])
-display_box_plot(
-    [user_type_score_delete_list, user_type_score_edit_list, user_type_score_write_list, user_type_score_paste_list],
-    ['user_type_score_delete_list', 'ser_type_score_edit_list', 'user_type_score_write_list',
-     'user_type_score_paste_list'])
