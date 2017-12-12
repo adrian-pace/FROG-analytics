@@ -8,4 +8,5 @@ app = Flask(__name__)
 @app.route('/', methods=['POST'])
 def receiving_requests():
     if flask_request.method == 'POST':
-        print(flask_request.get_json())
+        pprint(flask_request.get_json())
+    return "All good", 200
