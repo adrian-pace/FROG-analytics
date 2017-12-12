@@ -149,7 +149,7 @@ def receiving_requests():
         analytics_started = True
         analytic_thread.start()
         # TODO uncomment
-        #updates_thread.start()
+        updates_thread.start()
         return "Analytics started", 200
 
     # TODO remove
@@ -161,4 +161,3 @@ def receiving_requests():
             last_answer = workQueue.get()
             queueLock.release()
         return jsonify(last_answer), 200
-
