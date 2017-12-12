@@ -7,3 +7,15 @@ time_to_reset_break = 600000  # time to reset first op after a break (10min)
 length_edit = 15  # Threshold in length to differentiate a Write type from an Edit or an edit from a Deletion.
 length_delete = 15  # Threshold in length to consider the op as a deletion
 figs_save_location = './figures'
+
+# Mongo configuration
+mongodb_port = None
+# mongodb_database_name = 'my-collaborative-app'
+# mongodb_collection_name = 'o_collab_data_documents'
+
+mongodb_port = 30000
+mongodb_database_name = 'sharedb'
+mongodb_collection_name = 'o_rz'
+
+update_post_url = 'http://35.190.169.230:5000/'
+update_delay = 1

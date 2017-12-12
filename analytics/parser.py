@@ -1,7 +1,11 @@
 import sqlite3
+import config
 from analytics.Operations import ElementaryOperation
 import csv
 import ast
+from pymongo import MongoClient
+
+MONGODB_PORT = None
 
 
 def parse_changeset_etherpad(changeset):
@@ -138,12 +142,13 @@ def parse_changeset_etherpad(changeset):
             idx = find_next_symbol_idx(changeset, idx + 1)
 
 
-def parse_op_collab_react(op_array):
+def parse_op_collab_react(op_array, editor):
     """
     Parse a op in OT type into a list of elementary operations . There will be missing the author, timestamp...
     https://github.com/ottypes/text
 
 
+    :param editor: FROG or collab-react-components
     :param op_array: string to parse
     :return : List of elem_ops contained in op
     :rtype: list[ElementaryOperation]
@@ -153,15 +158,15 @@ def parse_op_collab_react(op_array):
     elem_ops = []
     """:type: list[ElementaryOperation]"""
     for op in op_array:
-        assert len(op['p']) == 1
-        position = op['p'][0]
-        if 'si' in op.keys():
-            # Inserting some letters
-            text_to_add = op['si']
-            elem_ops.append(ElementaryOperation(operation_type="add",
-                                                abs_position=position,
-                                                text_to_add=text_to_add,
-                                                changeset=op))
+        print(op)
+        if editor == 'collab-react-components':
+            assert len(op['p']) == 1
+            position = op['p'][0]  # Collab
+        else:
+            assert len(op['p']) == 2
+            assert op['p'][0] == 'text'
+            position = op['p'][1]  # Collab
+
         if 'sd' in op.keys():
             # Deleting some letters
             length_to_delete = len(op['sd'])
@@ -169,6 +174,14 @@ def parse_op_collab_react(op_array):
                                                 abs_position=position,
                                                 length_to_delete=length_to_delete,
                                                 changeset=op))
+        if 'si' in op.keys():
+            # Inserting some letters
+            text_to_add = op['si']
+            elem_ops.append(ElementaryOperation(operation_type="add",
+                                                abs_position=position,
+                                                text_to_add=text_to_add,
+                                                changeset=op))
+
     return elem_ops
 
 
@@ -199,11 +212,11 @@ def extract_elem_ops_etherpad(line_dict, timestamp_offset, editor):
     return pad_name, elem_ops_result, timestamp_offset
 
 
-def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, index_from=0):
+def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, index_from_lines=0, revs_mongo=None, regex=None):
     """
     Get the list of ElementaryOperation parsed from the db file
 
-    :param index_from:
+    :param index_from_lines:
     :param pad_name:
     :param editor: 'etherpad' or 'collab-react-components' or 'stian_logs'
     :param path_to_db: path to the db file containing the operations
@@ -221,7 +234,7 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
         # timestamps. So we add an offset to the timestamp of each elem_op to differentiate them. We keep track of this
         # offset to apply it to the following ops
         timestamp_offset = 0
-        for line in lines[index_from:]:
+        for line in lines[index_from_lines:]:
             # We look at relevant log lines
             if '{"key":"pad:' in line:
                 line_changed = line.replace("false", "False").replace("null", "None")
@@ -234,7 +247,7 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
                     if not (pad_name in list_of_elem_ops_per_pad.keys()):
                         list_of_elem_ops_per_pad[pad_name] = []
                     list_of_elem_ops_per_pad[pad_name] += elem_ops
-            index_from += 1
+            index_from_lines += 1
 
     elif editor == 'etherpadSQLite3':
         conn = sqlite3.connect(path_to_db)
@@ -243,7 +256,7 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
         entries = c.fetchall()
         conn.close()
         timestamp_offset = 0
-        for entry in entries[index_from:]:
+        for entry in entries[index_from_lines:]:
             if "pad:" in entry[0] and "revs" in entry[0]:
                 data = eval(entry[1].replace("false", "False").replace("null", "None"))
                 line_dict = dict()
@@ -254,22 +267,39 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
                 if not (pad_name in list_of_elem_ops_per_pad.keys()):
                     list_of_elem_ops_per_pad[pad_name] = []
                 list_of_elem_ops_per_pad[pad_name] += elem_ops
-            index_from += 1
+            index_from_lines += 1
 
-    elif editor == 'collab-react-components':
-        from pymongo import MongoClient
-        client = MongoClient()
-        db = client['my-collaborative-app']
-        o_docs = db['o_collab_data_documents']
-        o_docs_find = o_docs.find()
-        for item in o_docs_find[index_from:]:
+    elif editor == 'collab-react-components' or editor == 'FROG':
+        client = MongoClient(port=config.mongodb_port)
+        db = client[config.mongodb_database_name]
+        o_docs = db[config.mongodb_collection_name]
+        if revs_mongo is not None and len(revs_mongo) != 0:
+            list_or = []
+            for pad_name in revs_mongo:
+                list_or.append({'d': pad_name, 'v': {'$gt': revs_mongo[pad_name]}})
+            if regex:
+                list_or.append({'$and': [
+                    {'d': {'$regex': regex}},
+                    {'d': {'$not': {'$in': list(revs_mongo.keys())}}}]})
+            query = {'$or': list_or}
+        else:
+            if regex:
+                query = {'d': {'$regex': regex}}
+            else:
+                query = {}
+            revs_mongo = dict()
+
+        print(query)
+        o_docs_find = o_docs.find(query)
+        for item in o_docs_find:
+            print(item)
             if 'create' not in item.keys():
                 pad_name = item['d']
                 timestamp = item['m']['ts']
                 op = item['op']
                 revs = item['v']
                 author_name = item['src']
-                elem_ops = parse_op_collab_react(op)
+                elem_ops = parse_op_collab_react(op, editor)
                 for elem_op in elem_ops:
                     elem_op.author = author_name
                     elem_op.timestamp = timestamp
@@ -281,11 +311,19 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
                         list_of_elem_ops_per_pad[pad_name] = [elem_op]
                     else:
                         list_of_elem_ops_per_pad[pad_name].append(elem_op)
-            index_from += 1
+
         client.close()
         # Shouldn't be necessary
         for pad_name in list_of_elem_ops_per_pad:
             list_of_elem_ops_per_pad[pad_name] = sorted(list_of_elem_ops_per_pad[pad_name], key=(lambda x: x.timestamp))
+            revs_mongo[pad_name] = max(map((lambda x: x.revs), list_of_elem_ops_per_pad[pad_name]))
+
+        # TODO remove Assertions for release
+        for pad_name in list_of_elem_ops_per_pad:
+            assert list_of_elem_ops_per_pad[pad_name] == sorted(list_of_elem_ops_per_pad[pad_name],
+                                                                key=(lambda x: x.timestamp))
+
+        return list_of_elem_ops_per_pad, revs_mongo
     elif editor == 'stian_logs':
         sorted_lines = []
         with open(path_to_db, encoding="utf8") as f:
@@ -293,8 +331,7 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
             # We need them sorted
             for i, line_dict in enumerate(lines):
                 # We look at relevant log lines
-                if (pad_name is not None and 'pad:' + pad_name in line_dict['key']) \
-                        or (pad_name is None and 'pad:' in line_dict['key']):
+                if 'pad:' in line_dict['key']:
                     line_dict['value'] = line_dict['value'].replace("false", "False").replace("null", "None")
                     if 'revs' in line_dict['key']:
                         val_dict = ast.literal_eval(line_dict['value'])
@@ -308,7 +345,7 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
             timestamp_offset = 0
             list_of_elem_ops_per_pad = dict()
 
-            for timestamp, line_dict in sorted_lines[index_from:]:
+            for timestamp, line_dict in sorted_lines[index_from_lines:]:
                 # TODO check if we can do just eval ()
                 val_dict = ast.literal_eval(line_dict['value'])
                 pad_name_idx = line_dict['key'].find("pad:") + len("pad:")
@@ -335,7 +372,7 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
                     elem_op.pad_name = pad_name
 
                     list_of_elem_ops_per_pad[pad_name].append(elem_op)
-            index_from = len(sorted_lines)
+            index_from_lines = len(sorted_lines)
     else:
         raise ValueError("Undefined editor")
 
@@ -344,4 +381,4 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, pad_name=None, in
         assert list_of_elem_ops_per_pad[pad_name] == sorted(list_of_elem_ops_per_pad[pad_name],
                                                             key=(lambda x: x.timestamp))
 
-    return list_of_elem_ops_per_pad, index_from
+    return list_of_elem_ops_per_pad, index_from_lines
