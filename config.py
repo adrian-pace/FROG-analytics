@@ -17,5 +17,5 @@ mongodb_port = 30000
 mongodb_database_name = 'sharedb'
 mongodb_collection_name = 'o_rz'
 
-update_post_url = 'http://35.190.169.230:5000/'
+update_post_url = 'http://35.227.37.143:5000/'
 update_delay = 1
