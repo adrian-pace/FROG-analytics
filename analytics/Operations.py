@@ -162,6 +162,7 @@ class Operation:
         :param elem_op: first ElementaryOperation
         :type elem_op: ElementaryOperation
         """
+        # Whether this operation has already been added to a pad (useful for the operation_builder
         self.pushed = False
         """Whether the operation has already been added to its pad (useful for operation_builder)"""
         self.author = elem_op.author
@@ -201,7 +202,7 @@ class Operation:
         elem_op.belong_to_operation = self
         self.elem_ops.append(elem_op)
 
-        # If we delete something, we move the position of the op to the left
+        # If we delete something left of us, we move the position of the op to the left
         if elem_op.abs_position < self.position_start_of_op:
             self.position_start_of_op = elem_op.abs_position
 

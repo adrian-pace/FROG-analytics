@@ -1,19 +1,21 @@
+# Main file to display metrics and visualization from the etherpad dirty database
 from analytics import operation_builder
 from analytics.operation_builder import build_operations_from_elem_ops
 from analytics.parser import *
 from analytics.visualization import *
 import config
 
-# path_to_csv = "..\\stian logs\\store.csv"
-# list_of_elem_ops_per_pad = get_elem_ops_per_pad_from_ether_csv(path_to_csv)
+
 path_to_db = "..\\etherpad\\var\\dirty.db"
 
+# We get all the elementary operation from the db.
 list_of_elem_ops_per_pad, _ = get_elem_ops_per_pad_from_db(path_to_db=path_to_db, editor='etherpad')
-# list_of_elem_ops_per_pad,_ = get_elem_ops_per_pad_from_db(editor='collab-react-components')
 
+# we build the operations from the elementary operations
 pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,
                                                                              config.maximum_time_between_elem_ops)
 
+# For each pad we create the paragraph, classify the ops and build the operation context
 for pad_name in pads:
     pad = pads[pad_name]
     # create the paragraphs
@@ -23,6 +25,7 @@ for pad_name in pads:
     # find the context of the operation of the pad
     pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
 
+# For each pad we calculate the metrics and display them. We also save the visualizations.
 for pad_name in pads:
     pad = pads[pad_name]
     print("PAD:", pad_name)

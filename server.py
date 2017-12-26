@@ -143,8 +143,8 @@ def receiving_requests():
             print("Analytics threads stopped with old pad names")
         workQueue = Queue(1)
         queueLock = threading.Lock()
-        analytic_thread = AnalyticThread("Analytics thread", pad_names, regex, workQueue, queueLock,config.update_delay)
-        updates_thread = UpdatesThread("Updates thread", config.update_post_url, config.update_delay, workQueue,
+        analytic_thread = AnalyticThread("Analytics thread", pad_names, regex, workQueue, queueLock, config.server_update_delay)
+        updates_thread = UpdatesThread("Updates thread", config.update_post_url, config.send_update_delay, workQueue,
                                        queueLock)
         analytics_started = True
         analytic_thread.start()

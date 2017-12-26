@@ -1,3 +1,4 @@
+# main file studying the evolution of the metrics on the belgian experiment pads
 import config
 from analytics import operation_builder
 from analytics.parser import *
@@ -9,15 +10,21 @@ import os
 list_of_elem_ops_per_pad = dict()
 elemOpsCounter = 0
 root_of_dbs = "../belgian_experiment/"
+# Os walk among all the directories containing all the pads.
 for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
     for filename in filenames:
         if ".db" in filename:
             path_to_db = os.path.join(dirpath, filename)
+            # Fetching the new operations
             list_of_elem_ops_per_main, _ = get_elem_ops_per_pad_from_db(path_to_db=path_to_db, editor='etherpadSQLite3')
+            # the pad extracted from each file always have the same name so we give them a new name based on their path
             pad_name = path_to_db[len(root_of_dbs):path_to_db.find("data") - 1]
+            # We check that there is only one pad per file as there should be (one pad per session)
             assert len(list_of_elem_ops_per_main.keys()) == 1
+            # we rename it
             list_of_elem_ops_per_pad[pad_name] = list_of_elem_ops_per_main['main']
 
+# We create the operation from the list of elementary operations
 pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,
                                                                              config.maximum_time_between_elem_ops)
 
@@ -50,6 +57,9 @@ for pad_name in pads:
     user_type_score_edit_list = []
     user_type_score_write_list = []
     user_type_score_paste_list = []
+
+    # we will study the evolution of the metrics over time per pad. So we split the pad in different pads all
+    # corresponding to a different point in time
     for num_th, threshold in enumerate(thresholds[1:]):
         # Create the names for the splits
         split_name = str(num_th+1)+'/'+str(num_splits)
@@ -70,6 +80,7 @@ for pad_name in pads:
         print('\nCOLORED TEXT BY AUTHOR')
         print(new_pad.display_text_colored_by_authors())
 
+        # Get all the metrics
         user_participation_paragraph_score = new_pad.user_participation_paragraph_score()
         user_participation_paragraph_score_list.append(user_participation_paragraph_score)
         prop_score = new_pad.prop_score()
@@ -99,7 +110,7 @@ for pad_name in pads:
         user_type_score_edit = new_pad.user_type_score('edit')
         user_type_score_edit_list.append(user_type_score_edit)
 
-    # Fill the dataframe
+    # Fill the dataframe for this pad with all its scores
     df_pad = pd.DataFrame()
     df_pad['pad_name'] = [pad_name]*num_splits
     df_pad['time'] = splits_name

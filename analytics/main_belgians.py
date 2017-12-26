@@ -1,3 +1,4 @@
+# Main file to display the metrics and visualizations from the belgian experiment pads
 import config
 from analytics import operation_builder
 from analytics.parser import *
@@ -7,18 +8,24 @@ import os
 list_of_elem_ops_per_pad = dict()
 elemOpsCounter = 0
 root_of_dbs = "../belgian_experiment/"
+# Walk among all the files containing the pads.
 for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
     for filename in filenames:
         if ".db" in filename:
             path_to_db = os.path.join(dirpath, filename)
+            # Fetching the new operations
             list_of_elem_ops_per_main, _ = get_elem_ops_per_pad_from_db(path_to_db=path_to_db, editor='etherpadSQLite3')
+            # the pad extracted from each file always have the same name so we give them a new name based on their path
             pad_name = path_to_db[len(root_of_dbs):path_to_db.find("data") - 1]
+            # We check that there is only one pad per file as there should be (one pad per session)
             assert len(list_of_elem_ops_per_main.keys()) == 1
+            # we rename it
             list_of_elem_ops_per_pad[pad_name] = list_of_elem_ops_per_main['main']
 
+# We create the operation from the list of elementary operations
 pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,
                                                                              config.maximum_time_between_elem_ops)
-
+# For each pad we create its paragraphs, classify its operations and create their context
 for pad_name in pads:
     elemOpsCounter += len(elem_ops_treated[pad_name])
     pad = pads[pad_name]
@@ -46,6 +53,7 @@ user_type_score_edit_list = []
 user_type_score_write_list = []
 user_type_score_paste_list = []
 
+# We calcuate the metrics
 for pad_name in pads:
     pad = pads[pad_name]
     user_participation_paragraph_score = pad.user_participation_paragraph_score()
@@ -100,6 +108,8 @@ for pad_name in pads:
     with open("texts/" + pad_name + ".txt", "w+", encoding='utf-8') as f:
         f.write(to_print)
 
+    # TODO save them at different places
+    # We save the visualizations (each time they overwrite the previous)
     display_user_participation(pad, config.figs_save_location)
     # plot the participation proportion per user per paragraphs
     display_user_participation_paragraphs(pad, config.figs_save_location)
