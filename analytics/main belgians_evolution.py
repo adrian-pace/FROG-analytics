@@ -6,6 +6,8 @@ from analytics.visualization import *
 import numpy as np
 import pandas as pd
 import os
+import math
+from sklearn.cluster import KMeans
 
 list_of_elem_ops_per_pad = dict()
 elemOpsCounter = 0
@@ -28,6 +30,30 @@ for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
 pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,
                                                                              config.maximum_time_between_elem_ops)
 
+
+def find_start(pad):
+    """
+    Find the index of the Operation where writers start the pad.
+
+    :return:
+    """
+    elem_ops = pad.get_elem_ops(sorted_=True)
+    delays = []
+    first = True
+    for i, elem_op in enumerate(elem_ops):
+        if not first:
+            delays.append(elem_ops[i].timestamp - elem_ops[i - 1].timestamp)
+        first = False
+
+    delays = np.array(delays).reshape((-1,1))
+    print(delays)
+    kmeans = KMeans(2)
+    kmeans.fit(delays)
+    labels = np.array(kmeans.labels_)
+    print(labels)
+    return elem_ops[np.where(labels>0)[0][0]+1].timestamp
+
+
 # Initialize the dataframe storing all results
 df = pd.DataFrame()
 
@@ -40,8 +66,12 @@ for pad_name in pads:
     end_time = max(timestamps)
 
     # Initialize the metric scores for this pad
-    num_splits = 30
+    num_splits = 32
+    zoom_proportion = 14/15
+    # the essay writing started 90min before the last op
+    start_time = end_time - 6e+6
     thresholds = np.linspace(start_time, end_time, num_splits+1)
+    start_thresholds = np.linspace(thresholds[math.ceil(num_splits*zoom_proportion)], end_time, num_splits+1)
     splits_name = []
     user_participation_paragraph_score_list = []
     prop_score_list = []

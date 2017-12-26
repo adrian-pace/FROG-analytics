@@ -219,7 +219,7 @@ class Operation:
 
     def get_length_of_op(self):
         """
-        Return the number of characters added (can be negative in case of deletions
+        Return the number of characters added (can be negative in case of deletions)
 
         :return: the N of chars
         :rtype: int

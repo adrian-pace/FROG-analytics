@@ -1,6 +1,6 @@
 path_to_db = "etherpad\\var\\dirty.db"  # Path to database
 editor = 'etherpad'  # Style of the database
-maximum_time_between_elem_ops = 7000  # milliseconds
+maximum_time_between_elem_ops = 1000  # milliseconds
 delay_sync = 180000  # delay to differentiate if two ops are in sync in ms (3min)
 time_to_reset_day = int(288e5)  # time to reinitialize the first op of the day (8h)
 time_to_reset_break = 600000  # time to reset first op after a break (10min)

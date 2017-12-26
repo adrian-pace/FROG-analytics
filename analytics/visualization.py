@@ -51,7 +51,7 @@ def display_overall_op_type(pad, save_location, jump=False):
                        'Types': types
                        })
     df.index = df['Types']
-
+    print(df)
     # Plot the results as a Seaborn barplot
     plt.figure(figsize=(16, 16))
     sns.barplot(x='Types', y='Type Counts', data=df)
@@ -252,9 +252,9 @@ def display_boxplot_split(df, metric, save_location=None):
     :return:
     """
     plt.subplots(figsize=(15, 6))
-    sns.boxplot(x='time', y=metric, data=df)
+    sns.boxplot(x='time', y=metric, data=df, color="royalblue")
     plt.title('Distribution of ' + metric + ' at different point in time of all pads')
-    plt.savefig(save_location + '/metrics/boxplot_%s.png' % metric,
+    plt.savefig(save_location + '/metrics/boxplot_zoomed_%s.png' % metric,
                 bbox_inches='tight')
     plt.close('all')
 
@@ -269,8 +269,8 @@ def display_barplot_split(df, metric, pad_name, save_location=None):
     :return:
     """
     plt.subplots(figsize=(15, 6))
-    sns.barplot(x='time', y=metric, data=df)
+    sns.barplot(x='time', y=metric, data=df, color='seagreen')
     plt.title('Distribution of ' + metric + ' at different point in time of the pad '+pad_name)
-    plt.savefig(save_location + '/%s/evolution_%s.png' % (pad_name, metric),
+    plt.savefig(save_location + '/%s/evolution_zoomed_%s.png' % (pad_name, metric),
                 bbox_inches='tight')
     plt.close('all')

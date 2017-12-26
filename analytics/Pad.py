@@ -587,7 +587,10 @@ class Pad:
                 op.context['proportion_paragraph'] = len_op
             # Once we computed the absolute length of the paragraph, we compute the proportion (it is positive)
             for op in para_ops:
-                op.context['proportion_paragraph'] /= abs_length_para
+                if abs_length_para != 0:
+                    op.context['proportion_paragraph'] /= abs_length_para
+                else:
+                    op.context['proportion_paragraph'] = 0
 
     def author_proportions(self, considerate_admin=True):
         """
