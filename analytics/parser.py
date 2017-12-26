@@ -186,6 +186,15 @@ def parse_op_collab_react(op_array, editor):
 
 
 def extract_elem_ops_etherpad(line_dict, timestamp_offset, editor):
+	"""
+	extract the ElementaryOperation from a line in etherpad format
+	
+	:param line_dict: line we want to extrat the ElementaryOperation from
+	:param timestamp_offset: offset we want to add to the timestamps. This is because sometimes we generate multiple elementary operations from a single line and we want to keep their order by changing a little bit the timestamp of the elem_op. This change is repercuted on all the following ElementaryOperation.
+	:return: the list of ElementaryOperation
+	"""
+	
+	# Parsing
     pad_name_idx = line_dict['key'].find("pad:") + len("pad:")
     pad_name_end_idx = line_dict['key'].find(':revs:', pad_name_idx)
     pad_name = line_dict['key'][pad_name_idx:pad_name_end_idx]
@@ -243,19 +252,22 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, index_from_lines=
                     pad_name, elem_ops, timestamp_offset = extract_elem_ops_etherpad(line_dict,
                                                                                      timestamp_offset,
                                                                                      editor)
-
                     if not (pad_name in list_of_elem_ops_per_pad.keys()):
                         list_of_elem_ops_per_pad[pad_name] = []
                     list_of_elem_ops_per_pad[pad_name] += elem_ops
             index_from_lines += 1
 
     elif editor == 'etherpadSQLite3':
+		# TODO: add the sorted algorithm
+		# Connect to the db file.
         conn = sqlite3.connect(path_to_db)
         c = conn.cursor()
         c.execute("SELECT * FROM store;")
+		# Fetch all the entries.
         entries = c.fetchall()
         conn.close()
         timestamp_offset = 0
+		# For each entry, parse it and extrat the elem_op
         for entry in entries[index_from_lines:]:
             if "pad:" in entry[0] and "revs" in entry[0]:
                 data = eval(entry[1].replace("false", "False").replace("null", "None"))
@@ -270,29 +282,37 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, index_from_lines=
             index_from_lines += 1
 
     elif editor == 'collab-react-components' or editor == 'FROG':
+		# Connect to the DB
         client = MongoClient(port=config.mongodb_port)
         db = client[config.mongodb_database_name]
         o_docs = db[config.mongodb_collection_name]
+		# If we have revs_mongo, that mean we will look for the editor ops whose revs is after the revs specified in revs_mongo
         if revs_mongo is not None and len(revs_mongo) != 0:
             list_or = []
             for pad_name in revs_mongo:
+				# Fetching only the new operations. (Whose revs is after revs_mongo[pad_name])
                 list_or.append({'d': pad_name, 'v': {'$gt': revs_mongo[pad_name]}})
             if regex:
+				# If a regex is specified, keep listening also for new pads that are not in revs_mongo but match the regex
                 list_or.append({'$and': [
                     {'d': {'$regex': regex}},
                     {'d': {'$not': {'$in': list(revs_mongo.keys())}}}]})
             query = {'$or': list_or}
         else:
             if regex:
+				# Fetch all the documents that match the regex
                 query = {'d': {'$regex': regex}}
             else:
+				# Fetch everything
                 query = {}
             revs_mongo = dict()
 
         print(query)
+		# For each operation we find, we parse it and create the ElementaryOperation
         o_docs_find = o_docs.find(query)
         for item in o_docs_find:
             print(item)
+			# Parsing 
             if 'create' not in item.keys():
                 pad_name = item['d']
                 timestamp = item['m']['ts']

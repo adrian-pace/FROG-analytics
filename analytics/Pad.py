@@ -103,8 +103,6 @@ class Pad:
     def display_text_colored_by_ops(self):
         """
         Print the colored text according to the operations.
-
-        :return: None
         """
 
         letters = []
@@ -193,8 +191,6 @@ class Pad:
     def display_operations(self):
         """
         Print the descriptions of all the operations done on the pad
-
-        :return: None
         """
         for op in self.operations:
             print(op)
@@ -203,14 +199,15 @@ class Pad:
     def create_paragraphs_from_ops(self, new_elem_ops_sorted):
         """
         Build the paragraphs for the pad based on the existing paragraphs and the new elementary operations
-
+		
+		:param new_elem_ops_sorted: list of elementary operation for the pad that we want to add to the paragraphs
         """
 
         def para_it_belongs(elem_op_to_look_for):
             """
-            returns the index of the paragraph the elem_op should belong to
-            :param elem_op_to_look_for:
-            :return:
+            returns the index of the paragraph the elem_op should belong to. Returns -1 if it doesn't belong to any paragraph
+            :param elem_op_to_look_for: elem op we are looking at
+            :return: paragraph index
             """
             for para_i, paragraph in enumerate(self.paragraphs):
                 if (not paragraph.new_line) \
@@ -224,9 +221,6 @@ class Pad:
         for elem_op in new_elem_ops_sorted:
             # From where we will change the paragraph indices
             # should be infinity but this is enough since we can't add more than 2 paragraph
-
-
-
             update_indices_from = len(self.paragraphs) + 3
 
             # If it is a new line, we will create a new paragraph and insert it at the right place
@@ -488,6 +482,9 @@ class Pad:
                 self.authors.append(op.author)
 
     def display_paragraphs(self, verbose=0):
+		"""
+		Print all the paragraphs contained in the pad
+		"""
         for para in self.paragraphs:
             print(para.__str__(verbose))
             print("\n")

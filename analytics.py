@@ -2,6 +2,7 @@ import argparse
 from analytics import parser, operation_builder, visualization
 import config
 
+# Parsing the command line arguments
 cl_parser = argparse.ArgumentParser(description="Run the analytics.")
 cl_parser.add_argument("-p", "--path_to_db",
                        help="path to database storing the edits",
@@ -59,11 +60,12 @@ print("There are {} pads.".format(len(list_of_elem_ops_per_pad.keys())))
 if verbosity == 1:
     print("The pads are", list(list_of_elem_ops_per_pad.keys()))
 
+# Sort the ElementaryOperation
 list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(list_of_elem_ops_per_pad)
-
+# Build the operations from the ElementaryOperation
 pads, _, _ = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad_sorted,
                                                               config.maximum_time_between_elem_ops)
-
+# for each Pad, create the paragraphs, classifiy the ops and create their context
 for pad_name in pads:
     pad = pads[pad_name]
     # create the paragraphs
@@ -73,6 +75,7 @@ for pad_name in pads:
     # find the context of the operation of the pad
     pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
 
+# For each Pad, add the visualization
 for pad_name in pads:
     pad = pads[pad_name]
     if texts:

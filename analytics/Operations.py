@@ -69,6 +69,7 @@ class ElementaryOperation:
             self.length_to_delete = length_to_delete
         else:
             raise AttributeError("Undefined elementary operation")
+		# The position of the op when it was added
         self.abs_position = abs_position
         self.line_number = line_number
         self.position_inline = position_inline
@@ -79,6 +80,7 @@ class ElementaryOperation:
         self.changeset = changeset
         self.belong_to_operation = belong_to_operation
         self.editor = editor
+		# The position of the op in the current pad. 
         self.current_position = self.abs_position
         self.deleted=False
 
@@ -312,8 +314,6 @@ class Paragraph:
         :type elem_op: ElementaryOperation
         """
 
-        # Store the operation if not already done. We need elem_ops to have the para at a certain point in time
-        # Whether it's an addition or deletion, we add it to the lists
 
         def find_position_in_list(elem_ops, elem_op_):
             """
@@ -367,9 +367,18 @@ class Paragraph:
             raise NotImplementedError
 
     def get_length(self):
+		"""
+		Get the length of the paragraph
+		
+		:return: the length of the paragraph
+		:rtype: int
+		"""
         return self.length
 
     def get_abs_length(self):
+		"""
+		Get the sum of absolute value of the lengths of the elementary operation contained in the paragraph
+		"""
         abs_length = 0
         for op in self.operations:
             abs_length += abs(op.get_length_of_op())
@@ -427,11 +436,13 @@ class Paragraph:
                           - (elem_op.abs_position + elem_op.length_to_delete - last_paragraph.abs_position)
 
         new_para.elem_ops = first_paragraph.elem_ops
+		# Mark as deleted every elementary operation that is considered as deleted.
         for op in last_paragraph.elem_ops:
             # Mark the element as deleted (used in finding where to insert in the paragraph)
             if elem_op.abs_position <= op.current_position <= elem_op.abs_position + elem_op.length_to_delete:
                 op.deleted = True
             else:
+				# update the current position of the elem_op
                 op.current_position -= elem_op.length_to_delete
             new_para.elem_ops.append(op)
 
@@ -447,11 +458,13 @@ class Paragraph:
     @classmethod
     def split(cls, paragraph_to_split, position):
         """
-
-        :param paragraph_to_split:
+		split the paragraph in two on the position passed as parameter
+		
+        :param paragraph_to_split: paragraph to split 
         :type paragraph_to_split: Paragraph
-        :param position:
-        :return:
+        :param position: position at which we split the paragraph in two
+        :return: the 2 new paragraphs
+		:rtype: (Paragraph,Paragraph)
         """
         para1 = paragraph_to_split.copy()
         para2 = paragraph_to_split.copy()
@@ -463,7 +476,8 @@ class Paragraph:
         para2.operations = []
         para1.length = position - paragraph_to_split.abs_position
         para2.length = paragraph_to_split.abs_position + paragraph_to_split.length - position
-
+		
+		# for each elementary operation add it to the corresponding paragraph
         for elem_op in paragraph_to_split.elem_ops:
             length = elem_op.get_length_of_op()
 
@@ -481,23 +495,13 @@ class Paragraph:
                 para1.elem_ops.append(elem_op)
                 if not (elem_op.belong_to_operation in para1.operations):
                     para1.operations.append(elem_op.belong_to_operation)
+					# TODO remove 
                     # para2.elem_ops.append(elem_op)
                     # if not (elem_op.belong_to_operation in para2.operations):
                     #     para2.operations.append(elem_op.belong_to_operation)
 
         return para1, para2
 
-    # def __eq__(self, other):
-    #     if type(other) == Paragraph \
-    #             and self.abs_position == other.abs_position \
-    #             and self.length == other.length \
-    #             and self.new_line == other.newline:
-    #         return self.operations == self.operations and self.elem_ops == other.elem_ops
-    #     return False
-
     def __lt__(self, other):
         return self.abs_position < other.abs_position
 
-        # def get_main_author(self):
-        # for op in self.operations:
-        # op.context[]
