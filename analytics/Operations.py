@@ -367,18 +367,20 @@ class Paragraph:
             raise NotImplementedError
 
     def get_length(self):
-		"""
-		Get the length of the paragraph
-		
+        """
+        Get the length of the paragraph
+
 		:return: the length of the paragraph
 		:rtype: int
-		"""
+        """
         return self.length
 
     def get_abs_length(self):
-		"""
-		Get the sum of absolute value of the lengths of the elementary operation contained in the paragraph
-		"""
+        """
+        Get the sum of absolute value of the lengths of the elementary operation contained in the paragraph
+
+        :return:
+        """
         abs_length = 0
         for op in self.operations:
             abs_length += abs(op.get_length_of_op())

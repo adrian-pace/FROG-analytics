@@ -62,14 +62,18 @@ for pad_name in pads:
 
     # Find the time of the start and the end of the pad
     timestamps = [x.timestamp for x in pad.get_elem_ops(sorted_=False)]
-    start_time = min(timestamps)
+    start = min(timestamps)
     end_time = max(timestamps)
 
     # Initialize the metric scores for this pad
     num_splits = 32
     zoom_proportion = 14/15
-    # the essay writing started 90min before the last op
-    start_time = end_time - 6e+6
+    # the essay writing started 120min before the last op
+    start_time = end_time - 7.2e+6
+    special_pads = ['Group 1_session 1', 'Group 3_session 1', 'Group 9_session 1', ]
+    if pad_name in special_pads:
+        start_time = start
+
     thresholds = np.linspace(start_time, end_time, num_splits+1)
     start_thresholds = np.linspace(thresholds[math.ceil(num_splits*zoom_proportion)], end_time, num_splits+1)
     splits_name = []

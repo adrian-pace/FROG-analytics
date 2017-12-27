@@ -482,9 +482,12 @@ class Pad:
                 self.authors.append(op.author)
 
     def display_paragraphs(self, verbose=0):
-		"""
-		Print all the paragraphs contained in the pad
-		"""
+        """
+        Print all the paragraphs contained in the pad
+
+        :param verbose: print detailed info if verbose is 1
+        :return:
+        """
         for para in self.paragraphs:
             print(para.__str__(verbose))
             print("\n")
