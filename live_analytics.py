@@ -3,18 +3,21 @@ from analytics import operation_builder
 from analytics import parser
 import time
 
-#index_from = 0
+index_from = 0
 dic_author_current_operations_per_pad = dict()
 pads = dict()
 revs_mongo = None
 while True:
-    # new_list_of_elem_ops_per_pad, index_from = parser.get_elem_ops_per_pad_from_db(None,
-    #                                                                                'collab-react-components',
-    #                                                                                index_from_lines=index_from)
-    new_list_of_elem_ops_per_pad, revs_mongo = parser.get_elem_ops_per_pad_from_db(None,
-                                                                                   'collab-react-components',
-                                                                                   revs_mongo=revs_mongo,
-                                                                                   regex='^editor')
+    if config.editor == 'etherpad':
+        new_list_of_elem_ops_per_pad, index_from = parser.get_elem_ops_per_pad_from_db(None,
+                                                                                       'etherpad',
+                                                                                       index_from_lines=index_from)
+    else:
+        new_list_of_elem_ops_per_pad, revs_mongo = parser.get_elem_ops_per_pad_from_db(None,
+                                                                                       editor=config.editor,
+                                                                                       revs_mongo=revs_mongo,
+                                                                                       regex='^editor')
+
     if len(new_list_of_elem_ops_per_pad) != 0:
         new_list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(new_list_of_elem_ops_per_pad)
         pads, dic_author_current_operations_per_pad, elem_ops_treated = operation_builder.build_operations_from_elem_ops(
@@ -36,7 +39,7 @@ while True:
             print(text)
             print('\nCOLORED TEXT BY AUTHOR')
             print(pad.display_text_colored_by_authors())
-
+            #
             print('\nCOLORED TEXT BY OPS')
             print(pad.display_text_colored_by_ops())
 
@@ -55,5 +58,6 @@ while True:
             print('User paste score:', pad.user_type_score('paste'))
             print('User delete score:', pad.user_type_score('delete'))
             print('User edit score:', pad.user_type_score('edit'))
+            print('\n\n\n')
 
-    time.sleep(0.5)
+    time.sleep(config.server_update_delay)

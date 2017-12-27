@@ -1,7 +1,7 @@
 # FROG-analytics
 
 Analytics algorithms and visualizations for collaborative writings.
-It currently handle two collaborative document editors, [Etherpad](http://etherpad.org/) and [Collab-react-components](https://github.com/chili-epfl/collab-react-components).
+It currently handle three collaborative document editors, [Etherpad](http://etherpad.org/), [Collab-react-components](https://github.com/chili-epfl/collab-react-components) and [FROG](https://github.com/chili-epfl/FROG)
 
 ## Setup
 
@@ -11,13 +11,12 @@ You will need Python3 and the following dependencies.
 - ast
 - numpy  
 - argparse
-- pymongo (if using collab-react-components editor)
+- pymongo (if using collab-react-components editor or FROG)
 - matplotlib
 - pandas
 - seaborn
 - sqlite3
-- time
-- flask
+- flask (if using the webserver)
 
 ```
 pip install csv
@@ -29,7 +28,6 @@ pip install matplotlib
 pip install pandas
 pip install seaborn
 pip install sqlite3
-pip install time
 pip install flask
 ```
 
@@ -52,7 +50,7 @@ In order to use the text collab editor written by [Dario Anongba](https://github
 ```
 pip install pymongo
 ```
-Clone the program from dario:  [Collab-React-Components](https://github.com/chili-epfl/collab-react-components) in any folder (doesn't have to be in the same folder as the repo).  
+Clone the program from Dario:  [Collab-React-Components](https://github.com/chili-epfl/collab-react-components) in any folder (doesn't have to be in the same folder as the repo).  
 Install node.js/npm  
 Install react with npm (version 15.4.0+) in Dario's folder
 ```
@@ -88,17 +86,24 @@ Find a detailed tutorial on [MongoDB](http://api.mongodb.com/python/current/tuto
 
 ## Usage
 
-In its current state, the program groups the fine grained writing events (`ElementaryOperation`) provided by the editors into `Operations` (list of writing events by the same author in the same place). Then `Paragraphs` are deduced which are the collection of operations in the same line. This allows us to build the context of an operation:  
-- Was this operation written while other authors were also working on the doc ? With who ?
-- Was this operation written while other authors were also working in the same paragraph ? With who ?
-- Is this a prominent author in the doc at the time of the operation?
-- Is this a prominent author in the paragraph at the time of the operation ?
-- Is this the first operation of the day ? The first after a small break ?  
-For the moment we provided a small set visualizations that are detailed in a following section.  
+In its current state, the program groups the fine grained writing events (`ElementaryOperation`) provided by the editors into `Operations` (list of writing events by the same author in a short time lapse and at the same position). Then `Paragraphs` are deduced which are the collection of operations in the same line. This allows us to compute metrics from the context of an operation:  
+- Proportion score: how balanced are the contributions of the users in the whole document ? (1 is very balanced, 0 unbalanced)
+- User proportion per paragraph score: On average over all the paragraphs, how balanced are the contributions of the users per paragraph ? (1 is very balanced, 0 unbalanced)
+- Synchronous score: how synchronous are the contributions of the users in the whole document ? (1 is very balanced, 0 unbalanced)
+- Alternating score: Are the main author of each paragraph alternating ? (1 if the main author of each paragraph is always different than the main author of the next paragraph. Very close to 0 if each author wrote a block of paragraph in a sequence)
+- Break score day: Do they often take long breaks ?
+- Break score short: Do they often take short breaks ?
+- Overall write type score: What is the proportion of 'write' operations ? (writing a relatively big amount of letters)
+- Overall paste type score: What is the proportion of 'paste' operations ? (from copy/paste)
+- Overall delete type score: What is the proportion of 'delete' operations ? (deleting a relatively big amount of letters)
+- Overall edit type score: What is the proportion of 'edit' operations ? (deleting, adding or changing a relatively small amount of letters)
+- User write score: How balanced are the 'write' operations ? (1 if every user has the same proportion of 'write' operations. 0 if a user did all the 'write' operations)
+- User paste score: How balanced are the 'paste' operations ? (1 if every user has the same proportion of 'paste' operations. 0 if a user did all the 'paste' operations)
+- User delete score: How balanced are the 'delete' operations ? (1 if every user has the same proportion of 'delete' operations. 0 if a user did all the 'delete' operations)
+- User edit score: How balanced are the 'edit' operations ? (1 if every user has the same proportion of 'edit' operations. 0 if a user did all the 'edit' operations)
 
 
-
-### Execution
+### Command line execution
 We have provided a small command line interface to interact with the program.
 ```
 python analytics.py
@@ -129,7 +134,7 @@ optional arguments:
 
 Below are a few examples of execution.
 
-### Examples of execution
+#### Examples of execution
 ##### Etherpad
 To launch the program on data collected with the Etherpad editor. You can launch the following command:
 
@@ -155,15 +160,72 @@ python analytics.py -p "stian logs/store.csv" -e stian_logs -t -viz -v --subset_
 ```
 This will display the visualizations and colored texts for the first 10 pads.
 
+### Live analytics for Etherpad and collab-react-components
+
+Live analytics updates the metrics, as soon as there is a change in the document. You can run it with:   
+```
+python live_analytics.py
+```
+> Note: live_analytics.py doesn't take any command line arguments. We suggest you configure which editor you are using in config.py !
+
+### Live analytics for FROG
+
+Live analytics for FROG receives by HTTP/POST in a json the pad_names it wants to follow. It can also send a regex. Then every few seconds (the refresh rate is configurable in the config.py file), the program sends a HTTP/POST to a listening server (adress specified in the config.py).   
+You can run the server with :
+
+```
+export FLASK_APP=server.py
+flask run --host=0.0.0.0
+```
+
+The HTTP/POST defining the pad_names we want to follow should be of the following format :   
+
+```
+{'pad_names': ["/ac-textarea/default/0","/ac-textarea/default/0"]}
+```
+
+or we can send a regex   
+
+```
+{'regex': "^/ac-textarea/default"}
+```
+
+Finally, by sending a HTTP/POST without a json, we will get updates on all the existing pads at the time of the POST.
+
+The answer will be of the following format:
+```
+{<pad name>: {'Alternating score:': 0.75,
+              'Break score day:': 4.286906128731559e-06,
+              'Break score short:': 0.0,
+              'Overall delete type score:': 0.043478260869565216,
+              'Overall edit type score:': 0.6086956521739131,
+              'Overall paste type score:': 0.0,
+              'Overall write type score:': 0.34782608695652173,
+              'Proportion score:': 0.7069812420203414,
+              'Synchronous score:': 0.9533678756476682,
+              'User delete score:': 3.855291626815406e-05,
+              'User edit score:': 0.860781638418886,
+              'User paste score:': 4.626349952178488e-05,
+              'User proportion per paragraph score': 3.855291626815406e-05,
+              'User write score:': 0.8015329750891311,
+              'text': <document text>,
+              'text_colored_by_authors': <text colored by authors>,
+              'text_colored_by_ops': <text colored by ops>}
+```
 
 ### Architecture
-A list of `Pad` each corresponding to an edited document is articulated in the following way. It is defined by a list of `Operation` which are themselves defined by a list of `ElementaryOperation`.  
-- `ElementaryOperation` is of the same granularity as the writing events of the editor. They encapsulate various information on this event such as when it occurred, where, what is the operation (addition or deletion)... They are defined in the class `ElementaryOperation` in `Operation.py`. For now the two `ElementaryOperation` types are `del` and `add`. They are extracted from the various editors with `Parser.py` which contains methods to parse `dirty.db` or  a sqlite database from Etherpad,  the mongo database from the Collab-React-Components or the mongo database from FROG.
-- `Operation` is a list of `ElementaryOperation` executed over a determined time without interruption or moving somewhere else in the pad. Its implementation can be found in `Operation.py`. They are constructed with the methods in `operation_builder.py`.
-- `Paragraph` are the collection of `Operation` and of their `ElementaryOperation` that are in the same line. They are used to build the context of an operation which is detailed in the section Usage.
-- Each `Operation` of a `Pad` can be classified to a Write, Edit, Delete, Copy/Paste or Jump (if the user adds a new line) depending on the length of the operation. There are various parameters that can be tweaked to change this classification taking place in `operation_builder.py`. The parameters are located in the `config.py` file.
-- Each `Operation` has a `context` parameter that is computed using `operation_builder.py`. It contains information on whether the `Operation` is written synchronously with an other author in the `Pad` or in the `Paragraph`, how prominent is this author in the `Pad` or `Paragraph` and whether this is the first `Operation` of the day or after a small break.
--  `main_stian_logs_py` and `main.py` contains a program used in development to test new features on the logs of Stian.
+The whole program use various files:
+- config.py: This file contains all the tweakable parameters. There is a description of each paramater in the file. You can configure the editor type, the path to the database, if applicable, the various parameters impacting the operation computations and the mongo database connection information, if applicable.
+- parser.py: This file contains all the methods used to extract the ElementaryOperation from the database of the editor.
+- Operations.py: This file contains the classes of ElementaryOperation and Operations. An ElementaryOperation is mostly defined by its position, its type (add or del), its text to add or length to delete, timestamp and author. It also contains additional attributes used on the backend such as its position at a certain time, the Operation it belongs to and so on... An Operation is a list of ElementaryOperation. It is mostly defined by its start position, its length, starting and ending timestamp, author, its type, its context and the list of ElementaryOperation it is composed of. The list of ElementaryOperation must be of the same author, written without pausing for too long and intersecting each other. The Operation's type is computed by studying this list and classifying the Operation in either write (writing a big amount of letters), edit (writing/deleting/replacing a small amount of letters), delete (deleting a big amount of letters), paste (from copy/paste) and jump (creating a new line. When a user adds a new line, it is considered as a new operation). The operation context contains information such as whether this operation was written synchronously with other authors, how big it is compared to the rest of the operations and so on...
+- operation_builder.py: Contains the methods to cluster the ElementaryOperation into Operations and creating the corresponding Pads.
+- Pad.py: Defines the class Pad. A Pad is a list of operations and a list of paragraph. It corresponds to a document. It is from a Pad we will calculate the metrics. A paragraph is the list of operation that are, at this state of the pad, on the same line. This allows us to create metrics such as studying whether two users worked together on a smaller scale on the same paragraph or whether they each wrote their own block of text. The metrics calculated from a pad are explained on the section [Usage](#Usage)
+- visualization.py: Contains the code used to create various visualizations. It is used by most of the main files. It contains visualization to show the participation of each user, their writing style and so on...
+- main files: Files we used to test and develop our application. It might be necessary to modify them if you would like to use them. main.py was used to calculate the metrics and create the visualization for our own documents written in etherpad. main_stian_logs.py was used to calculate the metrics and create the visualization for Stian's data. main_belgians.py was used to calculate the metrics and create the visualization on the documents from the Belgian experiment.. Finally, main_belgians_evolution.py was used to study the evolution of the metrics on the documents from the Belgian experiment.
+- analytics.py: It is a python file that can be run with various parameters. See [Command line execution](#Command-line-execution). The parameters override those written in config.py.
+- live_analytics.py: It is a runnable python file than can display the metrics live for documents. See [Live analytics for Etherpad and collab-react-components](#Live-analytics-for-Etherpad-and-collab-react-components)
+- server.py: As explained in [Live analytics for FROG](#Live-analytics-for-FROG), it creates a webserver that listen for HTTP/POST requests that explains what we want to listen in a json payload. It then creates two threads. One of them parse all the writing events from the editor's database and then look for new unprocessed writing events at a certain refresh rate defined in config.py. The other thread sends, at a certain refresh rate defined in config.py, the metrics to a url defined in config.py in a HTTP/POST requests as a json payload.
+- the notebooks: The notebooks contain the small analysis we did on the studying the correlation between the metrics and the answers of the authors of the documents in the belgian experiment to a self-assessment test. It also contains an attempt to cluster these documents. These two study were not very conclusive.
 
 
 ### Visualization

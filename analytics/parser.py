@@ -158,7 +158,6 @@ def parse_op_collab_react(op_array, editor):
     elem_ops = []
     """:type: list[ElementaryOperation]"""
     for op in op_array:
-        print(op)
         if editor == 'collab-react-components':
             assert len(op['p']) == 1
             position = op['p'][0]  # Collab
