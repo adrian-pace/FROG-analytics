@@ -3,17 +3,21 @@ from analytics import operation_builder
 from analytics import parser
 import time
 
-
+index_from = 0
 dic_author_current_operations_per_pad = dict()
 pads = dict()
 revs_mongo = None
 while True:
-	# Get the new elementary operations
-    new_list_of_elem_ops_per_pad, revs_mongo = parser.get_elem_ops_per_pad_from_db(None,
-                                                                                   'collab-react-components',
-                                                                                   revs_mongo=revs_mongo,
-                                                                                   regex='^editor')
-	# if we have new ops
+    if config.editor == 'etherpad':
+        new_list_of_elem_ops_per_pad, index_from = parser.get_elem_ops_per_pad_from_db(None,
+                                                                                       'etherpad',
+                                                                                       index_from_lines=index_from)
+    else:
+        new_list_of_elem_ops_per_pad, revs_mongo = parser.get_elem_ops_per_pad_from_db(None,
+                                                                                       editor=config.editor,
+                                                                                       revs_mongo=revs_mongo,
+                                                                                       regex='^editor')
+
     if len(new_list_of_elem_ops_per_pad) != 0:
 		# sort them by their timestamps, even though they should already be sorted
         new_list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(new_list_of_elem_ops_per_pad)
@@ -30,8 +34,8 @@ while True:
             pad.classify_operations(length_edit=config.length_edit, length_delete=config.length_delete)
             # find the context of the operation of the pad
             pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
-		
-		# For each pad, calculate the metrics 
+
+		# For each pad, calculate the metrics
         for pad_name in pads:
             pad = pads[pad_name]
             print("PAD:", pad_name)
@@ -39,7 +43,7 @@ while True:
             print(text)
             print('\nCOLORED TEXT BY AUTHOR')
             print(pad.display_text_colored_by_authors())
-
+            #
             print('\nCOLORED TEXT BY OPS')
             print(pad.display_text_colored_by_ops())
 
@@ -58,5 +62,6 @@ while True:
             print('User paste score:', pad.user_type_score('paste'))
             print('User delete score:', pad.user_type_score('delete'))
             print('User edit score:', pad.user_type_score('edit'))
+            print('\n\n\n')
 
-    time.sleep(0.5)
+    time.sleep(config.server_update_delay)
