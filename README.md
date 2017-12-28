@@ -91,8 +91,8 @@ In its current state, the program groups the fine grained writing events (`Eleme
 - User proportion per paragraph score: On average over all the paragraphs, how balanced are the contributions of the users per paragraph ? (1 is very balanced, 0 unbalanced)
 - Synchronous score: how synchronous are the contributions of the users in the whole document ? (1 is very balanced, 0 unbalanced)
 - Alternating score: Are the main author of each paragraph alternating ? (1 if the main author of each paragraph is always different than the main author of the next paragraph. Very close to 0 if each author wrote a block of paragraph in a sequence)
-- Break score day: Do they often take long breaks ?
-- Break score short: Do they often take short breaks ?
+- Break score day: Do they often take long breaks ? If no operation as been made within 8 hours in the pad, then we increment the number of day breaks. This score tells whether users wrote the pad in one day or several ones. The scores tends to increase as the number of “day break” increases.  
+- Break score short: Do they often take short breaks ? Same as above, except we consider a short break to be 10 minutes.   
 - Overall write type score: What is the proportion of 'write' operations ? (writing a relatively big amount of letters)
 - Overall paste type score: What is the proportion of 'paste' operations ? (from copy/paste)
 - Overall delete type score: What is the proportion of 'delete' operations ? (deleting a relatively big amount of letters)
