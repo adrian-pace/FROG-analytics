@@ -89,7 +89,7 @@ Find a detailed tutorial on [MongoDB](http://api.mongodb.com/python/current/tuto
 In its current state, the program groups the fine grained writing events (`ElementaryOperation`) provided by the editors into `Operations` (list of writing events by the same author in a short time lapse and at the same position). Then `Paragraphs` are deduced which are the collection of operations in the same line. This allows us to compute metrics from the context of an operation:  
 - Proportion score: how balanced are the contributions of the users in the whole document ? (1 is very balanced, 0 unbalanced)
 - User proportion per paragraph score: On average over all the paragraphs, how balanced are the contributions of the users per paragraph ? (1 is very balanced, 0 unbalanced)
-- Synchronous score: how synchronous are the contributions of the users in the whole document ? (1 is very balanced, 0 unbalanced)
+- Synchronous score: how synchronous are the contributions of the users in the whole document ? (1 is synchronous, 0 unsynchronous)
 - Alternating score: Are the main author of each paragraph alternating ? (1 if the main author of each paragraph is always different than the main author of the next paragraph. Very close to 0 if each author wrote a block of paragraph in a sequence)
 - Break score day: Do they often take long breaks ? If no operation as been made within 8 hours in the pad, then we increment the number of day breaks. This score tells whether users wrote the pad in one day or several ones. The scores tends to increase as the number of “day break” increases.  
 - Break score short: Do they often take short breaks ? Same as above, except we consider a short break to be 10 minutes.   
