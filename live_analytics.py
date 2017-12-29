@@ -19,14 +19,14 @@ while True:
                                                                                        regex='^editor')
 
     if len(new_list_of_elem_ops_per_pad) != 0:
-		# sort them by their timestamps, even though they should already be sorted
+        # sort them by their timestamps, even though they should already be sorted
         new_list_of_elem_ops_per_pad_sorted = operation_builder.sort_elem_ops_per_pad(new_list_of_elem_ops_per_pad)
-		# Create the operations from the elementary operations
+        # Create the operations from the elementary operations
         pads, dic_author_current_operations_per_pad, elem_ops_treated = operation_builder.build_operations_from_elem_ops(
             new_list_of_elem_ops_per_pad_sorted, config.maximum_time_between_elem_ops,
             dic_author_current_operations_per_pad, pads)
         # For each pad, create the paragraphs, classify the operations and create the context
-		for pad_name in elem_ops_treated:
+        for pad_name in elem_ops_treated:
             pad = pads[pad_name]
             # create the paragraphs
             pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
@@ -35,7 +35,7 @@ while True:
             # find the context of the operation of the pad
             pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
 
-		# For each pad, calculate the metrics
+        # For each pad, calculate the metrics
         for pad_name in pads:
             pad = pads[pad_name]
             print("PAD:", pad_name)
