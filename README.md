@@ -255,10 +255,10 @@ Show the proportion written synchronously of each `Paragraphs` using `display_pr
 ![](readme_figures/Demo_sync_prop_para.png)
 
 Show the distribution of `Operation` different types (except Jump) in one pad using `display_overall_op_type`:
-<img src="readme_figures/Demo_overall_op_type.png" width="250">
+<img src="readme_figures/Demo_overall_op_type.png" height="700" width="800">
 
 Show the same as above but according to authors using `display_types_per_user`:
-![](readme_figures/Demo_types_per_user.png =250x)
+<img src="readme_figures/Demo_types_per_user.png" height="700" width="800">
 
 
 ### Future work
