@@ -252,9 +252,9 @@ def display_boxplot_split(df, metric, save_location=None):
     :return:
     """
     plt.subplots(figsize=(15, 6))
-    sns.boxplot(x='time', y=metric, data=df, color="royalblue")
+    sns.boxplot(x='time', y=metric, data=df, color="steelblue")
     plt.title('Distribution of ' + metric + ' at different point in time of all pads')
-    plt.savefig(save_location + '/metrics/boxplot_zoomed_%s.png' % metric,
+    plt.savefig(save_location + '/metrics/boxplot_%s.png' % metric,
                 bbox_inches='tight')
     plt.close('all')
 
@@ -269,8 +269,8 @@ def display_barplot_split(df, metric, pad_name, save_location=None):
     :return:
     """
     plt.subplots(figsize=(15, 6))
-    sns.barplot(x='time', y=metric, data=df, color='seagreen')
+    sns.barplot(x='time', y=metric, data=df, color='darkseagreen')
     plt.title('Distribution of ' + metric + ' at different point in time of the pad '+pad_name)
-    plt.savefig(save_location + '/%s/evolution_zoomed_%s.png' % (pad_name, metric),
+    plt.savefig(save_location + '/%s/evolution_%s.png' % (pad_name, metric),
                 bbox_inches='tight')
     plt.close('all')

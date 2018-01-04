@@ -61,21 +61,24 @@ for pad_name in pads:
     pad = pads[pad_name]
 
     # Find the time of the start and the end of the pad
-    timestamps = [x.timestamp for x in pad.get_elem_ops(sorted_=False)]
-    start = min(timestamps)
-    end_time = max(timestamps)
-
-    # Initialize the metric scores for this pad
     num_splits = 32
-    zoom_proportion = 14/15
+    zoom_proportion = 14 / 15
+    timestamps = [x.timestamp for x in pad.get_elem_ops(sorted_=False)]
+    start_time = min(timestamps)
+    end_time = max(timestamps)
+    all_thresholds = np.linspace(start_time, end_time, num_splits + 1)
+
     # the essay writing started 120min before the last op
     start_time = end_time - 7.2e+6
-    special_pads = ['Group 1_session 1', 'Group 3_session 1', 'Group 9_session 1', ]
-    if pad_name in special_pads:
-        start_time = start
+    thresholds = np.linspace(start_time, end_time, num_splits + 1)
+    if pad_name == 'Group 1_session 1':
+        thresholds = np.linspace(all_thresholds[math.ceil(num_splits*28/30)], all_thresholds[math.ceil(num_splits*30/30)], num_splits + 1)
+    elif pad_name == 'Group 3_session 1':
+        thresholds = np.linspace(all_thresholds[math.ceil(num_splits*28/30)], all_thresholds[math.ceil(num_splits*30/30)], num_splits + 1)
+    elif pad_name == 'Group 9_session 1':
+        thresholds = np.linspace(all_thresholds[math.ceil(num_splits*16/30)], all_thresholds[math.ceil(num_splits*19/30)], num_splits + 1)
 
-    thresholds = np.linspace(start_time, end_time, num_splits+1)
-    start_thresholds = np.linspace(thresholds[math.ceil(num_splits*zoom_proportion)], end_time, num_splits+1)
+    # Initialize the metric scores for this pad
     splits_name = []
     user_participation_paragraph_score_list = []
     prop_score_list = []
@@ -94,7 +97,7 @@ for pad_name in pads:
 
     # we will study the evolution of the metrics over time per pad. So we split the pad in different pads all
     # corresponding to a different point in time
-    for num_th, threshold in enumerate(thresholds[1:]):
+    for num_th, threshold in enumerate(all_thresholds[1:]):
         # Create the names for the splits
         split_name = str(num_th+1)+'/'+str(num_splits)
         splits_name.append(split_name)

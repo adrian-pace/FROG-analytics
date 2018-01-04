@@ -231,26 +231,33 @@ The whole program use various files:
 ### Visualization
 > Note: The implementation of the visu methods can be found in `visualization.py`
 
-Show the text with the different authors using `display_text_colored_by_authors()`, here is an example with the admin and two other authors:
+Show the text with the different authors using `display_text_colored_by_authors`, here is an example with the admin and two other authors:
 ![](readme_figures/authors.JPG)
 
-Show the same text with `Operations` of the pad with different colors using `display_text_colored_by_ops()`:
+Show the same text with `Operations` randomly colored using `display_text_colored_by_ops:
 ![](readme_figures/operations.JPG)
 
-Show the proportion of synchronous participation of authors in one pad using `display_proportion_sync_in_paragraphs(pad)`:
-![](readme_figures/prop_auth.png)
+Show the overall proportion of participation of the pad using `display_user_participation`:
+> Note: We consider participations to be absolute. So if a user delete for example a line, it counts as a participation. See below for a separated visualization.
+![](readme_figures/Demo_user_participation.JPG)
 
-Show the same proportion as before but for each paragraph `display_user_participation(pad)`:
-![](readme_figures/prop_authors_para.png)
+Show the same proportion as before but for each `Paragraphs` using `display_user_participation_paragraphs`:
+![](readme_figures/Demo_user_abs_participation_para.png)
 
-Show the same proportion as before but with addition and deletions separated `display_user_participation_paragraphs_with_del(pad)`:
-![](readme_figures/prop_add_del.png)
+Show the same proportion as before but with addition and deletions separated `display_user_participation_paragraphs_with_del`:
+![](readme_figures/Demo_user_participation_para.png)
 
-Show the distribution of `Operation` type in one pad using `display_overall_op_type(pad)`:
-![](readme_figures/op_type.png)
+Show the proportion of the pad written synchronously using `display_proportion_sync_in_paragraphs`:
+![](readme_figures/Demo_sync_prop_pad.png)
 
-Show the same as above but according to authors using `display_types_per_user(pad)`:
-![](readme_figures/op_type_user.png)
+Show the proportion written synchronously of each `Paragraphs` using `display_proportion_sync_in_paragraphs`:
+![](readme_figures/Demo_sync_prop_para.png)
+
+Show the distribution of `Operation` different types (except Jump) in one pad using `display_overall_op_type`:
+![](readme_figures/Demo_overall_op_type.png)
+
+Show the same as above but according to authors using `display_types_per_user`:
+![](readme_figures/Demo_types_per_user.png)
 
 
 ### Future work
