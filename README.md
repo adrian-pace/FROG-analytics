@@ -1,4 +1,4 @@
-# FROG-analytics
+﻿# FROG-analytics
 
 Analytics algorithms and visualizations for collaborative writings.
 It currently handle three collaborative document editors, [Etherpad](http://etherpad.org/), [Collab-react-components](https://github.com/chili-epfl/collab-react-components) and [FROG](https://github.com/chili-epfl/FROG)
@@ -249,6 +249,8 @@ Show the same proportion as before but with addition and deletions separated `di
 ![](readme_figures/Demo_user_participation_para.png)
 
 Show the proportion of the pad written synchronously using `display_proportion_sync_in_pad`:
+> Note: We don't take into account the admin here whereas in the next figure we do in order to be consistent with the previous figures.  
+
 ![](readme_figures/Demo_sync_prop_pad.png)
 
 Show the proportion written synchronously of each `Paragraphs` using `display_proportion_sync_in_paragraphs`:
