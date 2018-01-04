@@ -238,7 +238,8 @@ Show the same text with `Operations` randomly colored using `display_text_colore
 ![](readme_figures/operations.JPG)
 
 Show the overall proportion of participation of the pad using `display_user_participation`:
-> Note: We consider participations to be absolute. So if a user delete for example a line, it counts as a participation. See below for a separated visualization.
+> Note: We consider participations to be absolute. So if a user delete for example a line, it counts as a participation. See below for a separated visualization.  
+
 ![](readme_figures/Demo_user_participation.png)
 
 Show the same proportion as before but for each `Paragraphs` using `display_user_participation_paragraphs`:
@@ -254,7 +255,7 @@ Show the proportion written synchronously of each `Paragraphs` using `display_pr
 ![](readme_figures/Demo_sync_prop_para.png)
 
 Show the distribution of `Operation` different types (except Jump) in one pad using `display_overall_op_type`:
-![](readme_figures/Demo_overall_op_type.png =250x)
+<img src="readme_figures/Demo_overall_op_type.png" width="250">
 
 Show the same as above but according to authors using `display_types_per_user`:
 ![](readme_figures/Demo_types_per_user.png =250x)
