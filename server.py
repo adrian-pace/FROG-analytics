@@ -163,14 +163,14 @@ def receiving_requests():
     if flask_request.method == 'POST':
         # The json contains which pads are of interest to us.
         json = flask_request.get_json()
-        if 'pad_names' in json:
-            pad_names = json['pad_names']
-        else:
-            pad_names = []
-        if 'regex' in json:
-            regex = json['regex']
-        else:
-            regex = None
+        pad_names = []
+        regex = None
+        if json:
+            if 'pad_names' in json:
+                pad_names = json['pad_names']
+            if 'regex' in json:
+                regex = json['regex']
+
         # When we get a post, we stop the running threads and start new ones looking for the new pads
         if analytics_started:
             print("Exiting analytics threads with old pad names")
