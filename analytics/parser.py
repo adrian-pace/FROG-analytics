@@ -66,7 +66,7 @@ def parse_changeset_etherpad(changeset):
                 # |L+N
                 # Insert N characters from the source text, containing L newlines.
                 # The last character inserted MUST be a newline, but not the (new)
-                # document’s final newline.
+                # document's final newline.
 
                 next_symbol_position = find_next_symbol_idx(changeset, symbol_idx + 1)
                 # We care about  N (size of the addition) since we will date N chars from the databank.
@@ -89,7 +89,7 @@ def parse_changeset_etherpad(changeset):
                 # |L-N
                 # Delete N characters from the source text, containing L newlines.
                 # The last character inserted MUST be a newline, but not the (old)
-                # document’s final newline.
+                # document's final newline.
                 next_symbol_position = find_next_symbol_idx(changeset, symbol_idx + 1)
                 # N
                 chars_to_delete = int(changeset[symbol_idx + 1:next_symbol_position], 36)
@@ -225,7 +225,6 @@ def get_elem_ops_per_pad_from_db(path_to_db=None, editor=None, index_from_lines=
     Get the list of ElementaryOperation parsed from the db file
 
     :param index_from_lines:
-    :param pad_name:
     :param editor: 'etherpad' or 'collab-react-components' or 'stian_logs'
     :param path_to_db: path to the db file containing the operations
     :return: list of ElementaryOperation
