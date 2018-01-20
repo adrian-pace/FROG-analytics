@@ -96,8 +96,8 @@ class AnalyticThread(threading.Thread):
                     answer_per_pad['User edit score'] = pad.user_type_score('edit')
                     pprint(answer_per_pad)
                     answer_per_pad['text'] = pad.get_text()
-                    answer_per_pad['text_colored_by_authors'] = pad.display_text_colored_by_authors()
-                    answer_per_pad['text_colored_by_ops'] = pad.display_text_colored_by_ops()
+                    # answer_per_pad['text_colored_by_authors'] = pad.display_text_colored_by_authors()
+                    # answer_per_pad['text_colored_by_ops'] = pad.display_text_colored_by_ops()
                     print(answer_per_pad['text'])
                     answer[pad_name] = answer_per_pad
             time.sleep(self.update_delay)
