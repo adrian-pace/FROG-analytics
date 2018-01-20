@@ -17,7 +17,7 @@ mongodb_database_name = 'sharedb'
 mongodb_collection_name = 'o_rz'
 
 # To which url should the program send its metrics updates
-update_post_url = 'http://35.227.79.64:5000/'
+update_post_url = 'http://35.229.83.91:5000/'
 # How many seconds should you wait before treating the new elementary operations. (recommended to be less than
 # maximum_time_between_elem_ops)
 server_update_delay = 1
