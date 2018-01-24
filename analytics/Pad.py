@@ -1,3 +1,4 @@
+from analytics import operation_builder
 from analytics.Operations import ElementaryOperation, Paragraph, Operation
 import numpy as np
 import config
@@ -833,3 +834,24 @@ class Pad:
             type_scores.append(self.compute_entropy_prop(type_props, len(users)))
         return type_scores[types.index(op_type)]
 
+
+    def pad_at_timestamp(self, timestamp_threshold):
+        """
+        Return the pad at a certain timestamp. It will contain all the operations that started before the timestamp
+
+        :param timestamp_threshold: timestamp until which we take the operations
+        :type timestamp_threshold: int
+        :return: The new pad
+        :rtype: Pad
+        """
+
+        new_pad = Pad(self.pad_name)
+        elem_ops = []
+        for elem_op in self.get_elem_ops(True):
+            if elem_op.timestamp <= timestamp_threshold:
+                if not elem_op.belong_to_operation in new_pad.operations:
+                    new_pad.operations.append(elem_op.belong_to_operation)
+                elem_ops.append(elem_op)
+        pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops({self.pad_name: elem_ops},
+                                                                                     config.maximum_time_between_elem_ops)
+        return pads[self.pad_name], elem_ops_treated[self.pad_name]
