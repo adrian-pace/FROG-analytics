@@ -9,7 +9,7 @@ pads = dict()
 revs_mongo = None
 while True:
     if config.editor == 'etherpad':
-        new_list_of_elem_ops_per_pad, index_from = parser.get_elem_ops_per_pad_from_db(None,
+        new_list_of_elem_ops_per_pad, index_from = parser.get_elem_ops_per_pad_from_db(config.path_to_db,
                                                                                        'etherpad',
                                                                                        index_from_lines=index_from)
     else:

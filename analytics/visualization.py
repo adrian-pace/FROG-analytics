@@ -81,11 +81,11 @@ def display_types_per_user(pad, save_location, jump=False):
     # Plot the results as a seaborn countplot
     plt.figure(figsize=(16, 16))
     sns.countplot(x='Types', hue="Authors", data=df)
-    plt.title('Type repartition of operations of the pad per user')
+    plt.title('Type repartition of operations of the pad per user', fontsize=25)
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
+    plt.tick_params(axis='both', labelsize=20)
     plt.savefig(save_location + '/%s/%s_types_per_user.png' % (pad.pad_name, pad.pad_name), bbox_inches='tight')
-
 
 def display_proportion_sync_in_pad(pad, save_location):
     """
@@ -144,6 +144,7 @@ def display_proportion_sync_in_paragraphs(pad, save_location):
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=2)
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
+    plt.tick_params(axis='y', labelsize=6)
     plt.savefig(save_location + '/%s/%s_sync_prop_para.png' % (pad.pad_name, pad.pad_name), bbox_inches='tight')
 
 
@@ -171,6 +172,7 @@ def display_user_participation_paragraphs(pad, save_location):
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(author_names))
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
+    plt.tick_params(axis='y', labelsize=6)
     plt.savefig(save_location + '/%s/%s_user_abs_participation_para.png' % (pad.pad_name, pad.pad_name),
                 bbox_inches='tight')
 
@@ -237,6 +239,7 @@ def display_user_participation_paragraphs_with_del(pad, save_location):
     plt.legend(loc='upper center', bbox_to_anchor=(0.5, -0.05), ncol=len(author_names))
     if not os.path.isdir(save_location + '/' + pad.pad_name):
         os.makedirs(save_location + '/' + pad.pad_name)
+    plt.tick_params(axis='y', labelsize=6)
     plt.savefig(save_location + '/%s/%s_user_participation_para.png' % (pad.pad_name, pad.pad_name),
                 bbox_inches='tight')
     plt.close('all')

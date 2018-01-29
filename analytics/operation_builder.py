@@ -119,7 +119,7 @@ def build_operations_from_elem_ops(list_of_elem_ops_per_pad, maximum_time_betwee
                     # We offset the timestamp so that we keep the order
                     last_elem_op.timestamp += (len(elem_op_txts) + 1) / number_of_new_elem_ops
                     elem_ops_treated[pad_name].append(last_elem_op)
-                    dic_author_current_operations[elem_op.author] = Operation(elem_op)
+                    dic_author_current_operations[elem_op.author] = Operation(last_elem_op)
 
             else:
                 # if the elementary operation does not contain a new line

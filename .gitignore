@@ -8,3 +8,4 @@
 /analytics/texts/
 /testing stuff/texts/
 /testing stuff/figures/
+*.pyc

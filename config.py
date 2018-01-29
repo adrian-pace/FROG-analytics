@@ -1,4 +1,4 @@
-path_to_db = "etherpad\\var\\dirty.db"  # Path to database
+path_to_db = "etherpad/var/dirty.db"  # Path to database
 editor = 'etherpad'  # Style of the database
 maximum_time_between_elem_ops = 20000  # milliseconds
 delay_sync = 180000  # delay to differentiate if two ops are in sync in ms (3min)
@@ -17,7 +17,7 @@ mongodb_database_name = 'sharedb'
 mongodb_collection_name = 'o_rz'
 
 # To which url should the program send its metrics updates
-update_post_url = 'http://35.227.79.64:5000/'
+update_post_url = 'http://35.229.83.91:5000/'
 # How many seconds should you wait before treating the new elementary operations. (recommended to be less than
 # maximum_time_between_elem_ops)
 server_update_delay = 1
