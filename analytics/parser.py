@@ -162,9 +162,11 @@ def parse_op_collab_react(op_array, editor):
             assert len(op['p']) == 1
             position = op['p'][0]  # Collab
         else:
-            assert len(op['p']) == 2
+            if len(op['p']) != 2:
+                raise AssertionError("len(op['p']) != 2. Might be because you are treating ill-formatted logs"
+                                     " from the DB.")
             assert op['p'][0] == 'text'
-            position = op['p'][1]  # Collab
+            position = op['p'][1]  # FROG
 
         if 'sd' in op.keys():
             # Deleting some letters
