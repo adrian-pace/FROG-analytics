@@ -1,8 +1,8 @@
 import matplotlib.pyplot as plt
 import numpy as np
+import os
 import pandas as pd
 import seaborn as sns
-import os
 
 
 def display_user_participation(pad, save_location):

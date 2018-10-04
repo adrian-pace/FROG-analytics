@@ -80,7 +80,7 @@ class ElementaryOperation:
         self.changeset = changeset
         self.belong_to_operation = belong_to_operation
         self.editor = editor
-		# The position of the op in the current pad. 
+		# The position of the op in the current pad.
         self.current_position = self.abs_position
         self.deleted=False
 
@@ -179,7 +179,7 @@ class Operation:
         """Time of the end of the operation"""
         self.elem_ops = []
         """list of all the elementary operation that makes this operation
-        
+
         :type: list[ElementaryOperation]"""
         # tell to the elem_op to which op it now belongs
         elem_op.belong_to_operation = self
@@ -240,10 +240,10 @@ class Operation:
 
     def update_indices(self, elem_op):
         """
-                Move the position of the Operation if a edit happens before it
+        Move the position of the Operation if a edit happens before it
 
-                :param elem_op: the element we check
-                :type elem_op: ElementaryOperation
+        :param elem_op: the element we check
+        :type elem_op: ElementaryOperation
         """
         # Check that we are indeed after the edit. If so we must move our position accordingly
         if elem_op.operation_type == "add" and elem_op.abs_position < self.position_start_of_op:
@@ -461,8 +461,8 @@ class Paragraph:
     def split(cls, paragraph_to_split, position):
         """
 		split the paragraph in two on the position passed as parameter
-		
-        :param paragraph_to_split: paragraph to split 
+
+        :param paragraph_to_split: paragraph to split
         :type paragraph_to_split: Paragraph
         :param position: position at which we split the paragraph in two
         :return: the 2 new paragraphs
@@ -478,7 +478,7 @@ class Paragraph:
         para2.operations = []
         para1.length = position - paragraph_to_split.abs_position
         para2.length = paragraph_to_split.abs_position + paragraph_to_split.length - position
-		
+
 		# for each elementary operation add it to the corresponding paragraph
         for elem_op in paragraph_to_split.elem_ops:
             length = elem_op.get_length_of_op()
@@ -497,7 +497,7 @@ class Paragraph:
                 para1.elem_ops.append(elem_op)
                 if not (elem_op.belong_to_operation in para1.operations):
                     para1.operations.append(elem_op.belong_to_operation)
-					# TODO remove 
+					# TODO remove
                     # para2.elem_ops.append(elem_op)
                     # if not (elem_op.belong_to_operation in para2.operations):
                     #     para2.operations.append(elem_op.belong_to_operation)
