@@ -3,7 +3,6 @@ from analytics.Operations import ElementaryOperation, Paragraph, Operation
 import numpy as np
 import config
 
-
 def get_colors():
     colors = []
     for i in range(30, 38):
@@ -82,7 +81,7 @@ class Pad:
         and the new elementary operations
 
         :param new_elem_ops_sorted: list of elementary operation for the
-            pad that we want to add to the paragraphs
+            pad that we want to add to the paragraphs to
         """
 
         def para_it_belongs(elem_op_to_look_for):
@@ -115,7 +114,6 @@ class Pad:
                 # If it is supposed to be in a paragraph which is a new line
                 # or at the end of paragraph
                 if para_it_belongs_to == -1:
-
                     # Is it an op at the beginning ?
                     if elem_op.abs_position == 0:
                         self.paragraphs.insert(0, Paragraph(elem_op, new_line=True))
@@ -143,15 +141,15 @@ class Pad:
 
                 # or if it is at the start of a non-newline para:
                 elif (self.paragraphs[para_it_belongs_to].abs_position ==
-                      elem_op.abs_position):
+                    elem_op.abs_position):
                     self.paragraphs.insert(para_it_belongs_to,
                                            Paragraph(elem_op, new_line=True))
                     update_indices_from = para_it_belongs_to + 1
 
                 # or if it is at the end of a non-newline para:
                 elif (self.paragraphs[para_it_belongs_to].abs_position +
-                      self.paragraphs[para_it_belongs_to].length ==
-                      elem_op.abs_position):
+                    self.paragraphs[para_it_belongs_to].length ==
+                    elem_op.abs_position):
                     self.paragraphs.insert(para_it_belongs_to + 1,
                                            Paragraph(elem_op, new_line=True))
                     update_indices_from = para_it_belongs_to + 2
@@ -234,8 +232,8 @@ class Pad:
                     # paragraph is fully contained in deletion and it touches
                     # other paragraphs
                     elif (elem_op.abs_position <= para.abs_position and
-                          elem_op.abs_position + elem_op.length_to_delete >=
-                          para.abs_position + para.get_length()):
+                        elem_op.abs_position + elem_op.length_to_delete >=
+                        para.abs_position + para.get_length()):
                         # We remove the whole paragraph
                         to_remove.append(para_idx)
                         # shouldn't be necessary since it will be taken care
@@ -271,8 +269,8 @@ class Pad:
                     # Start of deletion is within our para whether the end is
                     # within para or not
                     elif (para.abs_position <=
-                          elem_op.abs_position <
-                          para.abs_position + para.get_length()):
+                        elem_op.abs_position <
+                        para.abs_position + para.get_length()):
                         # Add the operation to the para
                         para.add_elem_op(elem_op)
                         # update the indices from here
@@ -283,8 +281,8 @@ class Pad:
                     # End of deletion is within our para but start isn't
                     # (or it would have gone in the elif before
                     elif (para.abs_position <
-                          elem_op.abs_position + elem_op.length_to_delete <=
-                          para.abs_position + para.get_length()):
+                        elem_op.abs_position + elem_op.length_to_delete <=
+                        para.abs_position + para.get_length()):
                         # If there is no merge, apply the op to the paragraph.
                         # Otherwise, it is included in the first merge
                         if merge1 is None:
@@ -430,7 +428,10 @@ class Pad:
             else:
                 op.type = 'edit'
 
-    def build_operation_context(self, delay_sync, time_to_reset_day, time_to_reset_break):
+    def build_operation_context(self,
+        delay_sync,
+        time_to_reset_day,
+        time_to_reset_break):
         """
         Build the context of each operation progressively added to the pad.
         The context is a dictionary containing whether a pad is synchronous
@@ -506,9 +507,11 @@ class Pad:
                     if (other_op.author != op.author and
                         other_op.author != 'Etherpad_admin' and
                         op.author != 'Etherpad_admin' and
-                        end_time + delay_sync >= other_start_time >= start_time - delay_sync):
+                        end_time + delay_sync >= other_start_time >=
+                        start_time - delay_sync):
                         op.context['synchronous_in_paragraph'] = True
-                        if other_op.author not in op.context['synchronous_in_paragraph_with']:
+                        if (other_op.author not in
+                            op.context['synchronous_in_paragraph_with']):
                             op.context['synchronous_in_paragraph_with'].append(
                                 other_op.author
                             )
@@ -522,25 +525,6 @@ class Pad:
                     op.context['proportion_paragraph'] /= abs_length_para
                 else:
                     op.context['proportion_paragraph'] = 0
-
-    def create_content(self,
-                       elem_ops,
-                       length_edit,
-                       length_delete,
-                       delay_sync,
-                       time_to_reset_day,
-                       time_to_reset_break):
-        # create the paragraphs
-        self.create_paragraphs_from_ops(elem_ops)
-        # classify the operations of the pad
-        self.classify_operations(
-            length_edit=length_edit,
-            length_delete=length_delete
-        )
-        # find the context of the operation of the pad
-        self.build_operation_context(delay_sync,
-                                     time_to_reset_day,
-                                     time_to_reset_break)
 
     ###############################
     # Visualizations
@@ -581,7 +565,6 @@ class Pad:
         """
         Print the colored text according to the operations.
         """
-
         letters = []
         letters_color = []
         idx_color = 0
@@ -643,7 +626,10 @@ class Pad:
         colors = get_colors()
         for elem_op in elem_ops_ordered:
             idx_elem = elem_op.abs_position
-            color = colors[authors.index(elem_op.author) % len(colors)]
+
+            color = colors[0]
+            if elem_op.author in authors:
+                color = colors[authors.index(elem_op.author) % len(colors)]
             if elem_op.operation_type == 'add':
                 # We add to the end of the ext
                 if idx_elem == len(letters):
@@ -728,43 +714,40 @@ class Pad:
         if metrics_dict is None:
             metrics_dict = self.compute_metrics()
         metrics_text = (
-            "User proportion per paragraph score: {user_participation_paragraph_score}\n"
-            "Proportion score: {prop_score}\n"
-            "Synchronous score: {sync_score}\n"
-            "Alternating score: {alternating_score}\n"
-            "Break score day: {break_score_day}\n"
-            "Break score short: {break_score_short}\n"
-            "Overall write type score: {type_overall_score_write}\n"
-            "Overall paste type score: {type_overall_score_paste}\n"
-            "Overall delete type score: {type_overall_score_delete}\n"
-            "Overall edit type score: {type_overall_score_edit}\n"
-            "User write score: {user_type_score_write}\n"
-            "User paste score: {user_type_score_paste}\n"
-            "User delete score: {user_type_score_delete}\n"
-            "User edit score: {user_type_score_edit}\n"
-        ).format(
-            user_participation_paragraph_score=metrics_dict[
-                "user_participation_paragraph_score"
-            ],
-            prop_score=metrics_dict["prop_score"],
-            sync_score=metrics_dict["sync_score"],
-            alternating_score=metrics_dict["alternating_score"],
-            break_score_day=metrics_dict["break_score_day"],
-            break_score_short=metrics_dict["break_score_short"],
-            type_overall_score_write=metrics_dict["type_overall_score_write"],
-            type_overall_score_paste=metrics_dict["type_overall_score_paste"],
-            type_overall_score_delete=metrics_dict["type_overall_score_delete"],
-            type_overall_score_edit=metrics_dict["type_overall_score_edit"],
-            user_type_score_write=metrics_dict["user_type_score_write"],
-            user_type_score_paste=metrics_dict["user_type_score_paste"],
-            user_type_score_delete=metrics_dict["user_type_score_delete"],
-            user_type_score_edit=metrics_dict["user_type_score_edit"]
+            "User proportion per paragraph score: {}\n".format(
+                metrics_dict["user_participation_paragraph_score"]) +
+            "Proportion score: {}\n".format(
+                metrics_dict["prop_score"]) +
+            "Synchronous score: {}\n".format(
+                metrics_dict["sync_score"]) +
+            "Alternating score: {}\n".format(
+                metrics_dict["alternating_score"]) +
+            "Break score day: {}\n".format(
+                metrics_dict["break_score_day"]) +
+            "Break score short: {}\n".format(
+                metrics_dict["break_score_short"]) +
+            "Overall write type score: {}\n".format(
+                metrics_dict["type_overall_score_write"]) +
+            "Overall paste type score: {}\n".format(
+                metrics_dict["type_overall_score_paste"]) +
+            "Overall delete type score: {}\n".format(
+                metrics_dict["type_overall_score_delete"]) +
+            "Overall edit type score: {}\n".format(
+                metrics_dict["type_overall_score_edit"]) +
+            "User write score: {}\n".format(
+                metrics_dict["user_type_score_write"]) +
+            "User paste score: {}\n".format(
+                metrics_dict["user_type_score_paste"]) +
+            "User delete score: {}\n".format(
+                metrics_dict["user_type_score_delete"]) +
+            "User edit score: {}\n".format(
+                metrics_dict["user_type_score_edit"])
         )
         return metrics_text
 
     def author_proportions(self, considerate_admin=True):
         """
-        Compute the proportion of each authors for the entire pad.
+        Compute the proportion of each author for the entire pad.
 
         :param considerate_admin: Boolean to determine if we include the
             admin or not in our computations
@@ -774,7 +757,7 @@ class Pad:
         """
 
         # Fetch all the authors who participated in the pad
-        authors = self.authors
+        authors = self.authors[:]
 
         # Delete the admin if needed
         if not considerate_admin and 'Etherpad_admin' in authors:
@@ -813,14 +796,15 @@ class Pad:
                              np.log(len_authors))
         return entropy_score
 
-    def prop_score(self):
+    def prop_score(self, considerate_admin=False):
         """
         Compute the proportion score using the entropy.
 
         :return: proportion score between 0 and 1
         :rtype: float
         """
-        authors, proportions = self.author_proportions(considerate_admin=False)
+        authors, proportions = self.author_proportions(
+            considerate_admin=considerate_admin)
         return self.compute_entropy_prop(proportions, len(authors))
 
     def sync_score(self):
@@ -1025,7 +1009,8 @@ class Pad:
         # Compute the entropy for all types
         type_scores = []
         for type_props in norm_user.T:
-            type_scores.append(self.compute_entropy_prop(type_props, len(users)))
+            type_scores.append(
+                self.compute_entropy_prop(type_props, len(users)))
         return type_scores[types.index(op_type)]
 
     def pad_at_timestamp(self, timestamp_threshold):
@@ -1054,19 +1039,29 @@ class Pad:
         return pads[self.pad_name], elem_ops_treated[self.pad_name]
 
     def to_print(self,
-                 pad_name=True,
-                 text=True,
-                 text_colored_by_authors=True,
-                 text_colored_by_ops=True,
-                 metrics_text=True):
+        pad_name=True,
+        text=True,
+        text_colored_by_authors=True,
+        text_colored_by_ops=True,
+        metrics_text=True):
+        """
+        Return a string with the information to be printed.
+        The boolean parameters indicate the parts of information to be
+        included in (excluded from) the string.
+        """
+        text = ""
+        if pad_name:
+            text += "PAD: {}\n".format(self.pad_name)
+        if text:
+            text += "TEXT:\n{}\n".format(self.get_text())
+        if text_colored_by_authors:
+            text += "\nCOLORED TEXT BY AUTHOR:\n{}\n".format(
+                self.display_text_colored_by_authors())
+        if text_colored_by_ops:
+            text += "\nCOLORED TEXT BY OPS:\n{}\n".format(
+                self.display_text_colored_by_ops()
+            )
+        if metrics_text:
+            text += "\nSCORES:\n{}".format(self.get_metrics_text())
 
-        return ("PAD: {pad_name}\n"
-                "TEXT:\n{text}\n"
-                "\nCOLORED TEXT BY AUTHOR:\n{text_colored_by_authors}\n"
-                "\nCOLORED TEXT BY OPS:\n{text_colored_by_ops}\n"
-                "\nSCORES:\n{metrics_text}").format(
-                pad_name=self.pad_name,
-                text=self.get_text(),
-                text_colored_by_authors=self.display_text_colored_by_authors(),
-                text_colored_by_ops=self.display_text_colored_by_ops(),
-                metrics_text=self.get_metrics_text())
+        return text

@@ -251,7 +251,12 @@ def extract_elem_ops_etherpad(line_dict, timestamp_offset, editor):
     return pad_name, elem_ops_result, timestamp_offset
 
 
-def get_elem_ops_per_pad_from_db(path_to_db, editor, index_from_lines=0, revs_mongo=None, regex=None):
+def get_elem_ops_per_pad_from_db(
+    path_to_db,
+    editor,
+    index_from_lines=0,
+    revs_mongo=None,
+    regex=None):
     """
     Get the list of ElementaryOperation parsed from the db file
 
