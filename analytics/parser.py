@@ -214,7 +214,7 @@ def extract_elem_ops_etherpad(line_dict, timestamp_offset, editor):
     """
 	extract the ElementaryOperation from a line in etherpad format
 
-	:param line_dict: line we want to extrat the ElementaryOperation from
+	:param line_dict: line we want to extract the ElementaryOperation from
 	:param timestamp_offset: offset we want to add to the timestamps.
         This is because sometimes we generate multiple elementary operations
         from a single line and we want to keep their order by changing a
@@ -439,6 +439,64 @@ def get_elem_ops_per_pad_from_db(
                     elem_op.pad_name = pad_name
 
                     list_of_elem_ops_per_pad[pad_name].append(elem_op)
+
+    elif editor == 'sql_dump':
+        with open('../Data/private/edusearch-etherpad-MDP.sql') as f:
+            line_entries = f.readlines()
+
+        components_per_line_dict = []
+        timestamp_offset = 0
+
+        for spaced_line in line_entries:
+            components_per_line = {'globalAuthor':[],
+                                   'pad2readonly':[],
+                                   'pad':[],
+                                   'readonly2pad':[],
+                                   'sessionstorage':[],
+                                   'token2author':[]
+                                  }
+
+            line = spaced_line.strip()
+
+            if line.startswith("INSERT"):
+                evaled_line = eval(line.split("VALUES")[1][:-1].replace(
+                                  '\\"','"').replace(
+                                  "false", "False").replace(
+                                  "null", "None"))
+                for line_component in evaled_line:
+                    if line_component[0].split(':')[0] in components_per_line.keys():
+                        components_per_line[line_component[0].split(':')[0]].append(line_component)
+                components_per_line_dict.append(components_per_line)
+            else:
+                assert "INSERT" not in line and "insert" not in line
+
+        for components_per_line in components_per_line_dict:
+            new = 0
+            new_used = []
+            old = 0
+            old_used = []
+            # For each entry, parse it and extract the elem_op
+            for entry in components_per_line['pad']:
+                if "pad:" in entry[0] and "revs" in entry[0]:
+                    line_dict = {'key': entry[0], 'val': eval(entry[1])}
+                    pad_name, elem_ops, timestamp_offset = extract_elem_ops_etherpad(line_dict,
+                                                                                     timestamp_offset,
+                                                                                     'etherpadSQLite3')
+                    if pad_name not in list_of_elem_ops_per_pad.keys():
+                        list_of_elem_ops_per_pad[pad_name] = []
+                        new_used.append(pad_name)
+                        new += 1
+                    else:
+                        if pad_name not in old_used and pad_name not in new_used:
+                            old_used.append(pad_name)
+                            old += 1
+                    list_of_elem_ops_per_pad[pad_name] += elem_ops
+            # print('new',new,'old',old,'all',len(list_of_elem_ops_per_pad))
+            # print(old_used)
+            # print()
+        for pad_name in list_of_elem_ops_per_pad:
+            list_of_elem_ops_per_pad[pad_name] = sorted(list_of_elem_ops_per_pad[pad_name],
+                                                        key=(lambda x: x.timestamp))
 
     else:
         raise ValueError("Undefined editor")

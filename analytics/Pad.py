@@ -379,21 +379,21 @@ class Pad:
             # checking that length is not 0
             for i in range(0, len(self.paragraphs)):
                 if self.paragraphs[i].length == 0:
-                    print(self.pad_name, i, "\n", elem_op)
+                    # print(self.pad_name, i, "\n", elem_op)
                     raise AssertionError
             # Checking that the paragraphs touch each others
             for i in range(1, len(self.paragraphs)):
                 if self.paragraphs[i - 1].abs_position \
                         + self.paragraphs[i - 1].length \
                         != self.paragraphs[i].abs_position:
-                    print(elem_op)
+                    # print(elem_op)
                     raise AssertionError
             # Checking that a text paragraph is encapsulated between two
             # new_line paragraphs
             for i in range(1, len(self.paragraphs) - 1):
                 if not (self.paragraphs[i].new_line or
                         self.paragraphs[i + 1].new_line):
-                    print(elem_op)
+                    # print(elem_op)
                     raise AssertionError
 
         # Find the list of authors in the pad
@@ -1039,29 +1039,29 @@ class Pad:
         return pads[self.pad_name], elem_ops_treated[self.pad_name]
 
     def to_print(self,
-        pad_name=True,
-        text=True,
-        text_colored_by_authors=True,
-        text_colored_by_ops=True,
-        metrics_text=True):
+        print_pad_name=True,
+        print_text=False,
+        print_text_colored_by_authors=False,
+        print_text_colored_by_ops=False,
+        print_metrics_text=True):
         """
         Return a string with the information to be printed.
         The boolean parameters indicate the parts of information to be
         included in (excluded from) the string.
         """
         text = ""
-        if pad_name:
+        if print_pad_name:
             text += "PAD: {}\n".format(self.pad_name)
-        if text:
+        if print_text:
             text += "TEXT:\n{}\n".format(self.get_text())
-        if text_colored_by_authors:
+        if print_text_colored_by_authors:
             text += "\nCOLORED TEXT BY AUTHOR:\n{}\n".format(
                 self.display_text_colored_by_authors())
-        if text_colored_by_ops:
+        if print_text_colored_by_ops:
             text += "\nCOLORED TEXT BY OPS:\n{}\n".format(
                 self.display_text_colored_by_ops()
             )
-        if metrics_text:
+        if print_metrics_text:
             text += "\nSCORES:\n{}".format(self.get_metrics_text())
 
         return text

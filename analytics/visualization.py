@@ -58,7 +58,7 @@ def display_overall_op_type(pad, save_location=None, jump=False):
                        'Types': types
                        })
     df.index = df['Types']
-    print(df)
+    #print(df)
     # Plot the results as a Seaborn barplot
     plt.figure(figsize=(16, 16))
     sns.barplot(x='Types', y='Type Counts', data=df)
