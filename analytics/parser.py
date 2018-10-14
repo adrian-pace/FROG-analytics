@@ -283,7 +283,10 @@ def extract_elem_ops_etherpad_(lines, editor):
         timestamp_offset = 0
         prev_timestamp = None
         for rev in range(len(revs)):
-            evaled_pad_content = eval(pad_content[rev])
+            if type(pad_content[rev]) == str:
+                evaled_pad_content = eval(pad_content[rev])
+            else:
+                evaled_pad_content = eval(pad_content[rev])
             author_name = evaled_pad_content['meta']['author']
             timestamp = evaled_pad_content['meta']['timestamp']
             elem_ops = parse_changeset_etherpad(evaled_pad_content['changeset'])
@@ -353,8 +356,6 @@ def get_elem_ops_per_pad_from_db(
                     list_of_elem_ops_per_pad[pad_name] += elem_ops
 
     elif editor == 'etherpadSQLite3':
-        # TODO: add the sorted algorithm
-
         # Connect to the db file.
         conn = sqlite3.connect(path_to_db)
         c = conn.cursor()
@@ -362,19 +363,14 @@ def get_elem_ops_per_pad_from_db(
         # Fetch all the entries.
         entries = c.fetchall()
         conn.close()
-        timestamp_offset = 0
-        # For each entry, parse it and extract the elem_op
+
+        lines = []
+        # For each entry, parse it in order to extract the elem_op
         for entry in entries[index_from_lines:]:
             if "pad:" in entry[0] and "revs" in entry[0]:
-                data = eval(entry[1].replace("false", "False").replace("null", "None"))
-                line_dict = {'key': entry[0], 'val': data}
-
-                pad_name, elem_ops, timestamp_offset = extract_elem_ops_etherpad(line_dict,
-                                                                                 timestamp_offset,
-                                                                                 editor)
-                if pad_name not in list_of_elem_ops_per_pad.keys():
-                    list_of_elem_ops_per_pad[pad_name] = []
-                list_of_elem_ops_per_pad[pad_name] += elem_ops
+                value = eval(entry[1].replace("false", "False").replace("null", "None"))
+                lines.append({"key":entry[0], "value":value})
+        list_of_elem_ops_per_pad = extract_elem_ops_etherpad_(lines, editor)
 
     elif editor == 'collab-react-components' or editor == 'FROG':
         # Connect to the DB
