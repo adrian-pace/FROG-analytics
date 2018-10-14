@@ -1,5 +1,3 @@
-# Main file to display the metrics and visualizations from the belgian
-# experiment pads
 from analytics.parser import get_elem_ops_per_pad_from_db
 from analytics.operation_builder import sort_elem_ops_per_pad
 import config
@@ -22,8 +20,6 @@ for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
 
             for pad_name, pad_vals in list_of_elem_ops_per_main.items():
                 list_of_elem_ops_per_pad[pad_name + filename[-7:-4]] = pad_vals
-
-list_of_elem_ops_per_pad = sort_elem_ops_per_pad(list_of_elem_ops_per_pad)
 
 run_analytics.run(list_of_elem_ops_per_pad,
     texts=True,

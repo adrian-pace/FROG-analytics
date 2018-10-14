@@ -20,8 +20,6 @@ class ElementaryOperation:
     - changeset: Original information encoded in Etherpad format
         (http://policypad.readthedocs.io/en/latest/changesets.html)
     - belong_to_operation : to which operation it belongs
-
-
     """
 
     def __init__(
