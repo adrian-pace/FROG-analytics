@@ -95,7 +95,7 @@ class Pad:
                 if ((not paragraph.new_line) and
                     paragraph.abs_position <= elem_op_to_look_for.abs_position <=
                     paragraph.abs_position + paragraph.get_length()):
-                    return para_i
+                        return para_i
             return -1
 
         # Look at each elem_op and assign it to a new/existing paragraph
@@ -110,13 +110,14 @@ class Pad:
             if elem_op.operation_type == "add" and "\n" in elem_op.text_to_add:
                 # To which paragraph this op corresponds ?
                 para_it_belongs_to = para_it_belongs(elem_op)
-
+                elem_op.assignPara(para_it_belongs_to)
                 # If it is supposed to be in a paragraph which is a new line
                 # or at the end of paragraph
                 if para_it_belongs_to == -1:
                     # Is it an op at the beginning ?
                     if elem_op.abs_position == 0:
                         self.paragraphs.insert(0, Paragraph(elem_op, new_line=True))
+                        elem_op.assignPara(len(self.paragraphs))
                         update_indices_from = 1
 
                     # Is it the last op ?
@@ -124,6 +125,7 @@ class Pad:
                           self.paragraphs[len(self.paragraphs) - 1].length <=
                           elem_op.abs_position):
                         self.paragraphs.append(Paragraph(elem_op, new_line=True))
+                        elem_op.assignPara(len(self.paragraphs))
 
                     # Find where we should insert it
                     else:
@@ -133,6 +135,7 @@ class Pad:
                                elem_op.abs_position):
                             para_idx += 1
                         # Insert it
+                        elem_op.assignPara(para_idx + 1)
                         self.paragraphs.insert(para_idx + 1, Paragraph(
                             elem_op,
                             new_line=True)
@@ -674,8 +677,7 @@ class Pad:
         Print the descriptions of all the operations done on the pad
         """
         for op in self.operations:
-            print(op)
-            print()
+            print(op.getLine())
 
     def display_paragraphs(self, verbose=0):
         """

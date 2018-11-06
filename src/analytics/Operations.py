@@ -80,6 +80,7 @@ class ElementaryOperation:
             raise AttributeError("Undefined elementary operation")
 		# The position of the op when it was added
         self.abs_position = abs_position
+        self.assigned_para = None
         self.line_number = line_number
         self.position_inline = position_inline
         self.author = author
@@ -92,6 +93,7 @@ class ElementaryOperation:
 		# The position of the op in the current pad.
         self.current_position = self.abs_position
         self.deleted=False
+        self.assigned_para=[]
 
     def __str__(self):
         return ("Operation: {}".format(self.operation_type) +
@@ -108,6 +110,9 @@ class ElementaryOperation:
                 "\nOriginal changeset: {}".format(self.changeset) +
                 "\nEditor: {}".format(self.editor) +
                 "\nBelong to Operation: {}".format(self.belong_to_operation))
+
+    def assignPara(self, para):
+        self.assigned_para.append(para)
 
     def get_length_of_op(self):
         """
@@ -241,6 +246,49 @@ class Operation:
             length += elem_op.get_length_of_op()
         return length
 
+    def get_assigned_para(self):
+        """
+        Return the number of characters added (can be negative in case of
+        deletions)
+
+        :return: the N of chars
+        :rtype: int
+        """
+        paras = []
+        for elem_op in self.elem_ops:
+            paras.extend(elem_op.assigned_para)
+        newList = list(set(filter(lambda x: x != -1, paras)))
+        if len(newList) > 0:
+            return newList[0]
+        else:
+            return None
+
+    def get_text_added(self):
+        """
+        Get text added from the elem_ops.
+
+        :return: The text
+        :rtype:string
+        """
+        text = ""
+        for elem_op in self.elem_ops:
+            if elem_op.operation_type == "add":
+                text += elem_op.text_to_add
+        return text
+
+    def get_deletion_length(self):
+        """
+        Get deletion length from elem_ops.
+
+        :return: Length
+        :rtype:int
+        """
+        length = 0
+        for elem_op in self.elem_ops:
+            if elem_op.operation_type == "del":
+                length += elem_op.length_to_delete
+        return length
+
     def __str__(self):
         return ("Author: {}".format(self.author) +
                 "\nPosition: From {} to {}".format(
@@ -251,7 +299,24 @@ class Operation:
                     self.timestamp_end) +
                 "\nWith {} elementary operations".format(len(self.elem_ops)) +
                 "\nType: {}".format(self.type) +
+                "\nText to add: {}".format(self.get_text_added()) +
+                "\nLength of deletion: {}".format(self.get_deletion_length()) +
+                "\nParagraphs: {}".format(self.get_assigned_para()) +
                 "\nContext: {}".format(self.context))
+
+    def getLine(self):
+        return "\t".join(map(lambda x: format(x), [self.author,
+                                                   self.position_start_of_op,
+                                                   (self.position_start_of_op + self.get_length_of_op()),
+                                                   self.timestamp_start,
+                                                   self.timestamp_end,
+                                                   len(self.elem_ops),
+                                                   self.type,
+                                                   self.get_text_added() if self.type != "jump" else None,
+                                                   self.get_deletion_length(),
+                                                   self.get_assigned_para(),
+                                                   self.context["proportion_pad"],
+                                                   self.context["proportion_paragraph"]]))
 
     def update_indices(self, elem_op):
         """

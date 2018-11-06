@@ -2,6 +2,7 @@ from analytics import operation_builder, parser, visualization
 import argparse
 import config
 import os
+import traceback
 
 def run(list_of_elem_ops_per_pad,
     verbosity=0,
@@ -43,20 +44,21 @@ def run(list_of_elem_ops_per_pad,
                                         time_to_reset_day,
                                         time_to_reset_break)
         except:
+            print(traceback.format_exc())
             excepted.append(pad_name)
 
-    if len(excepted):
-        print(excepted)
-        print(len(excepted))
+    # if len(excepted):
+    #     print(excepted)
+    #     print(len(excepted))
 
-    if verbosity:
-        print(
-            "{} pad(s) contain a total of {} elementary operations".format(
-                len(pads),
-                sum(len(pad_elem_ops_treated) for
-                    pad_elem_ops_treated in elem_ops_treated.values())
-            )
-        )
+    # if verbosity:
+    #     print(
+    #         "{} pad(s) contain a total of {} elementary operations".format(
+    #             len(pads),
+    #             sum(len(pad_elem_ops_treated) for
+    #                 pad_elem_ops_treated in elem_ops_treated.values())
+    #         )
+    #     )
 
     # For each Pad, add the visualization
     for pad_name in pads:
@@ -64,15 +66,15 @@ def run(list_of_elem_ops_per_pad,
             continue
 
         pad = pads[pad_name]
-
         if texts:
             to_print = pad.to_print(
                 print_pad_name=print_pad_name,
-                print_text=print_text,
-                print_text_colored_by_authors=print_text_colored_by_authors,
-                print_text_colored_by_ops=print_text_colored_by_ops,
+                print_text=True,
+                print_text_colored_by_authors=True,
+                print_text_colored_by_ops=True,
                 print_metrics_text=print_metrics_text)
             if verbosity:
+                print("PRINT")
                 print(to_print)
             if texts_save_location is not None:
                 if not os.path.isdir(texts_save_location):
@@ -116,11 +118,14 @@ def run(list_of_elem_ops_per_pad,
                 figs_save_location)
 
         if verbosity > 1:
-            print("OPERATIONS")
+            # print("OPERATIONS")
+
+            header = "author\tposStart\tposEnd\ttimeStart\ttimeEnd\tatomicOpCount\ttype\ttextAdded\tdeletionLength\tparagraph\tproportionPad\tproportionParagraph"
+            print(header)
             pad.display_operations()
 
-            print("PARAGRAPHS:")
-            pad.display_paragraphs(verbose=1)
+            # print("PARAGRAPHS:")
+            # pad.display_paragraphs(verbose=1)
 
 
 if __name__ == "__main__":
@@ -189,11 +194,11 @@ if __name__ == "__main__":
                 args.specific_pad: list_of_elem_ops_per_pad[args.specific_pad]
             }
 
-        if args.verbosity:
-            print("There are {} pads.".format(len(list_of_elem_ops_per_pad)))
+        # if args.verbosity:
+        #     print("There are {} pads.".format(len(list_of_elem_ops_per_pad)))
 
-            if args.verbosity > 1:
-                print("The pads are ", list(list_of_elem_ops_per_pad.keys()))
+        #     if args.verbosity > 1:
+        #         print("The pads are ", list(list_of_elem_ops_per_pad.keys()))
 
         # Run the analysis
         run(list_of_elem_ops_per_pad,
