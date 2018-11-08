@@ -248,11 +248,11 @@ class Operation:
 
     def get_assigned_para(self):
         """
-        Return the number of characters added (can be negative in case of
-        deletions)
 
-        :return: the N of chars
-        :rtype: int
+
+
+
+
         """
         paras = []
         for elem_op in self.elem_ops:

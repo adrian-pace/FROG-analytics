@@ -110,20 +110,18 @@ class Pad:
             if elem_op.operation_type == "add" and "\n" in elem_op.text_to_add:
                 # To which paragraph this op corresponds ?
                 para_it_belongs_to = para_it_belongs(elem_op)
-                elem_op.assignPara(para_it_belongs_to)
                 # If it is supposed to be in a paragraph which is a new line
                 # or at the end of paragraph
                 if para_it_belongs_to == -1:
                     # Is it an op at the beginning ?
                     if elem_op.abs_position == 0:
                         self.paragraphs.insert(0, Paragraph(elem_op, new_line=True))
-                        elem_op.assignPara(len(self.paragraphs))
+                        elem_op.assignPara(1)
                         update_indices_from = 1
-
                     # Is it the last op ?
                     elif (self.paragraphs[len(self.paragraphs) - 1].abs_position +
-                          self.paragraphs[len(self.paragraphs) - 1].length <=
-                          elem_op.abs_position):
+                        self.paragraphs[len(self.paragraphs) - 1].length <=
+                        elem_op.abs_position):
                         self.paragraphs.append(Paragraph(elem_op, new_line=True))
                         elem_op.assignPara(len(self.paragraphs))
 
@@ -131,9 +129,11 @@ class Pad:
                     else:
                         para_idx = 0
                         while (self.paragraphs[para_idx].abs_position +
-                               self.paragraphs[para_idx].length <
-                               elem_op.abs_position):
+                            self.paragraphs[para_idx].length <
+                            elem_op.abs_position):
+
                             para_idx += 1
+
                         # Insert it
                         elem_op.assignPara(para_idx + 1)
                         self.paragraphs.insert(para_idx + 1, Paragraph(
@@ -147,6 +147,7 @@ class Pad:
                     elem_op.abs_position):
                     self.paragraphs.insert(para_it_belongs_to,
                                            Paragraph(elem_op, new_line=True))
+                    elem_op.assignPara(para_it_belongs_to)
                     update_indices_from = para_it_belongs_to + 1
 
                 # or if it is at the end of a non-newline para:
@@ -155,6 +156,7 @@ class Pad:
                     elem_op.abs_position):
                     self.paragraphs.insert(para_it_belongs_to + 1,
                                            Paragraph(elem_op, new_line=True))
+                    elem_op.assignPara(para_it_belongs_to + 1)
                     update_indices_from = para_it_belongs_to + 2
 
                 # We will split the paragraph in two, where there is the newline
@@ -177,6 +179,9 @@ class Pad:
                     )
                     # Insert the first paragraph
                     self.paragraphs.insert(para_it_belongs_to, para1)
+
+                    elem_op.assignPara(para_it_belongs_to + 1)
+
                     # From where we will update the indices
                     update_indices_from = para_it_belongs_to + 3
 
@@ -208,7 +213,7 @@ class Pad:
                         to_remove.append(para_idx)
                         # We will update the indices from here
                         update_indices_from = para_idx + 1
-
+                        elem_op.assignPara(para_idx)
                         # If the paragraph just before is not a new line, we
                         # might merge it with the one after
                         if (0 < para_idx and
@@ -239,6 +244,7 @@ class Pad:
                         para.abs_position + para.get_length()):
                         # We remove the whole paragraph
                         to_remove.append(para_idx)
+                        elem_op.assignPara(para_idx)
                         # shouldn't be necessary since it will be taken care
                         # by the last paragraph we delete.
                         update_indices_from = para_idx + 1
@@ -276,6 +282,7 @@ class Pad:
                         para.abs_position + para.get_length()):
                         # Add the operation to the para
                         para.add_elem_op(elem_op)
+                        elem_op.assignPara(para_idx)
                         # update the indices from here
                         update_indices_from = para_idx + 1
                         # If there is a merge, it will be from here
@@ -293,6 +300,7 @@ class Pad:
                             para.add_elem_op(elem_op)
                             # Update the indices from here
                             update_indices_from = para_idx + 1
+                        elem_op.assignPara(para_idx)
                         # We will merge with this paragraph
                         # (if there is a merge, aka. merge1 is not None)
                         merge2 = para_idx
@@ -341,13 +349,16 @@ class Pad:
 
                     # If we are at the start of the document
                     if elem_op.abs_position == 0:
+                        elem_op.assignPara(0)
                         self.paragraphs.insert(0, new_paragraph)
                         update_indices_from = 1
 
                     # If we are at the end of the paragraph
                     elif (self.paragraphs[len(self.paragraphs) - 1].abs_position +
-                          self.paragraphs[len(self.paragraphs) - 1].length <=
-                          elem_op.abs_position):
+                        self.paragraphs[len(self.paragraphs) - 1].length <=
+                        elem_op.abs_position):
+
+                        elem_op.assignPara(len(self.paragraphs))
                         self.paragraphs.append(new_paragraph)
 
                     # Insert the new paragraph in the good place
@@ -360,11 +371,13 @@ class Pad:
                             para_idx += 1
                         # Insert it
                         self.paragraphs.insert(para_idx + 1, new_paragraph)
+                        elem_op.assignPara(para_idx + 1)
                         # Update indices of the next paragraphs from here
                         update_indices_from = para_idx + 2
 
                 # Just add to the paragraph
                 else:
+                    elem_op.assignPara(para_it_belongs_to)
                     # Add it
                     self.paragraphs[para_it_belongs_to].add_elem_op(elem_op)
                     # Update indices of the next paragraphs from here
@@ -673,8 +686,8 @@ class Pad:
         return colored_text + get_colors()[0]
 
     def display_csv(self,
-                    separator_char='\t', string_delimiter='',
-                    pad_id=None):
+        separator_char='\t', string_delimiter='',
+        pad_id=None):
         """
         Print the descriptions of all the operations done on the pad
         """
