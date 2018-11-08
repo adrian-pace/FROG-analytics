@@ -304,19 +304,31 @@ class Operation:
                 "\nParagraphs: {}".format(self.get_assigned_para()) +
                 "\nContext: {}".format(self.context))
 
-    def getLine(self):
-        return "\t".join(map(lambda x: format(x), [self.author,
-                                                   self.position_start_of_op,
-                                                   (self.position_start_of_op + self.get_length_of_op()),
-                                                   self.timestamp_start,
-                                                   self.timestamp_end,
-                                                   len(self.elem_ops),
-                                                   self.type,
-                                                   self.get_text_added() if self.type != "jump" else None,
-                                                   self.get_deletion_length(),
-                                                   self.get_assigned_para(),
-                                                   self.context["proportion_pad"],
-                                                   self.context["proportion_paragraph"]]))
+    def get_line(self, separator_char='\t', string_delimiter=''):
+        def format_delimiter(field):
+            # we need string_delimiter if separator_char is included in a field
+            if type(field) == str and separator_char in field:
+                return string_delimiter + field + string_delimiter
+            else:
+                return format(field)
+
+        return separator_char.join(map(lambda x: format_delimiter(x), [
+                    self.author,
+                    self.position_start_of_op,
+                    (self.position_start_of_op + self.get_length_of_op()),
+                    self.timestamp_start,
+                    self.timestamp_end,
+                    len(self.elem_ops),
+                    self.type,
+                    # In get_text_added(), remove '\n' from the text because
+                    # there may be problems reading the csv file
+                    self.get_text_added().replace("\n", "") if self.type != "jump" else None,
+                    # If no problems, comment previous line and uncomment the following:
+                    # self.get_text_added() if self.type != "jump" else None,
+                    self.get_deletion_length(),
+                    self.get_assigned_para(),
+                    self.context["proportion_pad"],
+                    self.context["proportion_paragraph"]]))
 
     def update_indices(self, elem_op):
         """

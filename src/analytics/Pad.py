@@ -672,12 +672,29 @@ class Pad:
         # Change color back to original
         return colored_text + get_colors()[0]
 
+    def display_csv(self,
+                    separator_char='\t', string_delimiter='',
+                    pad_id=None):
+        """
+        Print the descriptions of all the operations done on the pad
+        """
+        for op in self.operations:
+            if pad_id is None:
+                print(self.pad_name + separator_char +
+                      op.get_line(separator_char=separator_char,
+                                  string_delimiter=string_delimiter))
+            else:
+                print(format(pad_id) + separator_char +
+                      op.get_line(separator_char=separator_char,
+                                  string_delimiter=string_delimiter))
+
     def display_operations(self):
         """
         Print the descriptions of all the operations done on the pad
         """
         for op in self.operations:
-            print(op.getLine())
+            print(op)
+            print()
 
     def display_paragraphs(self, verbose=0):
         """
