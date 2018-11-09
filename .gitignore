@@ -1,11 +1,4 @@
-/.ipynb_checkpoints/
-/.idea/
-/etherpad/
-/stian logs/
-/etherpad-lite-win-1.6.2-32027134cb.zip
-/belgian_experiment/
-/analytics/figures/
-/analytics/texts/
-/testing stuff/texts/
-/testing stuff/figures/
-*.pyc
+# file ignore 
+data/
+ResponseClustering/
+pre_modle/
