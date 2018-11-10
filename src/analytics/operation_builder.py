@@ -90,8 +90,7 @@ def build_operations_from_elem_ops(
                         # it will be an empty string)
                         last_elem_op_txt = elem_op.text_to_add[idx_newline + 1:]
 
-                    elif (elem_op.text_to_add[idx_newline:idx_next_newline] !=
-                        "\n"):
+                    elif (elem_op.text_to_add[idx_newline:idx_next_newline] != "\n"):
                         # if the text in between is also characters
                         elem_op_txts.append(elem_op.text_to_add[
                             idx_newline + 1:elem_op.text_to_add.find(
@@ -207,27 +206,23 @@ def treat_op(elem_op,
         new_position = elem_op.abs_position
         current_op = dic_author_current_operations[elem_op.author]
 
-        # check whether it should be part of the current operation
-        if new_time - current_op.timestamp_end < maximum_time_between_elem_ops:
-            # Time between the last ElementaryOperation of the Operation and
-            # our current ElementaryOperation is smaller than
-            # maximum_time_between_elem_ops
-            if (current_op.position_start_of_op -
-                abs(elem_op.get_length_of_op()) <=
-                new_position <=
-                current_op.position_start_of_op +
-                abs(current_op.get_length_of_op())):
-                # Checking that the position of the elementary op is more or
-                # less inside the Operation bounds
-                current_op.add_elem_op(elem_op)
-                return dic_author_current_operations
+        # Check whether it should be part of the current operation:
+        # Time between the last ElementaryOperation of the Operation and
+        # our current ElementaryOperation is smaller than
+        # maximum_time_between_elem_ops
+        part_of_current_op_in_time = (new_time - current_op.timestamp_end <
+            maximum_time_between_elem_ops)
+        # Checking that the position of the elementary op is more or
+        # less inside the Operation bounds
+        part_of_current_op_in_position = (
+            current_op.position_start_of_op - abs(elem_op.get_length_of_op()) <=
+            new_position <=
+            current_op.position_start_of_op + abs(current_op.get_length_of_op()))
 
-            else:
-                # If it shouldn't be added to the operation. We push the
-                # operation and create a new operation
-                pad.add_operation(current_op)
-                dic_author_current_operations[elem_op.author] = Operation(elem_op)
-                return dic_author_current_operations
+        if part_of_current_op_in_time and part_of_current_op_in_position:
+            current_op.add_elem_op(elem_op)
+            return dic_author_current_operations
+
         else:
             # If it shouldn't be added to the operation. We push the
             # operation and create a new operation

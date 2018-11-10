@@ -1,4 +1,3 @@
-
 class ElementaryOperation:
     """
     Elementary operation (finest granularity). Such as addition or removal of
@@ -78,9 +77,8 @@ class ElementaryOperation:
             self.length_to_delete = length_to_delete
         else:
             raise AttributeError("Undefined elementary operation")
-		# The position of the op when it was added
+        # The position of the op when it was added
         self.abs_position = abs_position
-        self.assigned_para = None
         self.line_number = line_number
         self.position_inline = position_inline
         self.author = author
@@ -90,10 +88,10 @@ class ElementaryOperation:
         self.changeset = changeset
         self.belong_to_operation = belong_to_operation
         self.editor = editor
-		# The position of the op in the current pad.
+        # The position of the op in the current pad.
         self.current_position = self.abs_position
-        self.deleted=False
-        self.assigned_para=[]
+        self.deleted = False
+        self.assigned_para = [[],[]]
 
     def __str__(self):
         return ("Operation: {}".format(self.operation_type) +
@@ -111,8 +109,13 @@ class ElementaryOperation:
                 "\nEditor: {}".format(self.editor) +
                 "\nBelong to Operation: {}".format(self.belong_to_operation))
 
-    def assignPara(self, para):
-        self.assigned_para.append(para)
+    def assign_para(self, para_to_assign):
+        para_to_assign = [sorted(set(list_para)) for
+                          list_para in para_to_assign]
+        for list_para in para_to_assign:
+            if type(list_para[0]) == int and list_para[0] < 0:
+                list_para[0]
+        self.assigned_para = para_to_assign
 
     def get_length_of_op(self):
         """
@@ -122,7 +125,7 @@ class ElementaryOperation:
         """
         if self.operation_type == "add":
             return len(self.text_to_add)
-        elif self.operation_type == 'del':
+        elif self.operation_type == "del":
             return -self.length_to_delete
         else:
             raise AttributeError("Undefined elementary operation")
@@ -163,6 +166,7 @@ class ElementaryOperation:
                                      belong_to_operation=self.belong_to_operation,
                                      editor=self.editor)
         return new_op
+
 
 
 class Operation:
@@ -246,20 +250,25 @@ class Operation:
             length += elem_op.get_length_of_op()
         return length
 
-    def get_assigned_para(self):
-        """
+    def get_assigned_para(self, get_para_before=True, get_min_para=True):
 
+        paras_before = []
+        paras_after = []
 
-
-
-
-        """
-        paras = []
         for elem_op in self.elem_ops:
-            paras.extend(elem_op.assigned_para)
-        newList = list(set(filter(lambda x: x != -1, paras)))
-        if len(newList) > 0:
-            return newList[0]
+            paras_before.extend(elem_op.assigned_para[0])
+            paras_after.extend(elem_op.assigned_para[1])
+
+        paras_before = sorted(set(paras_before))
+        paras_after = sorted(set(paras_after))
+
+        paras_list = paras_before if get_para_before else paras_after
+
+        if len(paras_list) > 0:
+            if get_min_para:
+                return paras_list[0]
+            else:
+                return paras_list[-1]
         else:
             return None
 
@@ -362,6 +371,7 @@ class Operation:
         # sort them
         sorted_ops = sorted(ops, key=lambda e: e[0])
         return [op_tuple[1] for op_tuple in sorted_ops]
+
 
 
 class Paragraph:
@@ -480,8 +490,8 @@ class Paragraph:
         """
         Get the length of the paragraph
 
-		:return: the length of the paragraph
-		:rtype: int
+        :return: the length of the paragraph
+        :rtype: int
         """
         return self.length
 
@@ -556,7 +566,7 @@ class Paragraph:
                             last_paragraph.abs_position))
 
         new_para.elem_ops = first_paragraph.elem_ops
-		# Mark as deleted every elementary operation that is considered as
+        # Mark as deleted every elementary operation that is considered as
         # deleted.
         for op in last_paragraph.elem_ops:
             # Mark the element as deleted (used in finding where to insert
@@ -565,7 +575,7 @@ class Paragraph:
                 elem_op.abs_position + elem_op.length_to_delete):
                 op.deleted = True
             else:
-				# update the current position of the elem_op
+                # update the current position of the elem_op
                 op.current_position -= elem_op.length_to_delete
             new_para.elem_ops.append(op)
 
@@ -582,13 +592,13 @@ class Paragraph:
     @classmethod
     def split(cls, paragraph_to_split, position):
         """
-		split the paragraph in two on the position passed as parameter
+        split the paragraph in two on the position passed as parameter
 
         :param paragraph_to_split: paragraph to split
         :type paragraph_to_split: Paragraph
         :param position: position at which we split the paragraph in two
         :return: the 2 new paragraphs
-		:rtype: (Paragraph,Paragraph)
+        :rtype: (Paragraph,Paragraph)
         """
         para1 = paragraph_to_split.copy()
         para2 = paragraph_to_split.copy()
@@ -603,7 +613,7 @@ class Paragraph:
                         paragraph_to_split.length -
                         position)
 
-		# for each elementary operation add it to the corresponding paragraph
+        # for each elementary operation add it to the corresponding paragraph
         for elem_op in paragraph_to_split.elem_ops:
             length = elem_op.get_length_of_op()
 
@@ -622,7 +632,7 @@ class Paragraph:
                 para1.elem_ops.append(elem_op)
                 if not (elem_op.belong_to_operation in para1.operations):
                     para1.operations.append(elem_op.belong_to_operation)
-					# TODO remove
+                    # TODO remove
                     # para2.elem_ops.append(elem_op)
                     # if not (elem_op.belong_to_operation in para2.operations):
                     #     para2.operations.append(elem_op.belong_to_operation)

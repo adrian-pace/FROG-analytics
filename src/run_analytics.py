@@ -46,12 +46,9 @@ def run(list_of_elem_ops_per_pad,
                                         time_to_reset_day,
                                         time_to_reset_break)
         except:
+            print("Error at {}:".format(pad_name))
             print(traceback.format_exc())
             excepted.append(pad_name)
-
-    # if len(excepted):
-    #     print(excepted)
-    #     print(len(excepted))
 
     if verbosity:
         print(
@@ -82,7 +79,6 @@ def run(list_of_elem_ops_per_pad,
             # Option 2: Use a custom string as the pad ID
             pad.display_csv(separator_char=separator_char,
                             pad_id='id{}'.format(pad_id))
-
 
     elif generate_csv_summary:
         separator_char = '\t'
