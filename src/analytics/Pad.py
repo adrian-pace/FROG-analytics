@@ -122,7 +122,7 @@ class Pad:
 
             # If it is a new line, create a new paragraph and insert it at
             # the right place
-            if elem_op.operation_type == "add" and "\n" in elem_op.text_to_add:
+            if elem_op.operation_type == "add" and "\n\n" in elem_op.text_to_add:
                 # To which paragraph this op corresponds ?
                 para_it_belongs_to, number_new_lines = para_it_belongs(elem_op)
 
@@ -614,26 +614,26 @@ class Pad:
             # Assertions
             # TODO remove for production
             # Checking that the paragraph is in order
-            assert self.paragraphs == sorted(self.paragraphs)
-            # checking that length is not 0
-            for i in range(0, len(self.paragraphs)):
-                if self.paragraphs[i].length == 0:
-                    # print(self.pad_name, i, "\n", elem_op)
-                    raise AssertionError
-            # Checking that the paragraphs touch each others
-            for i in range(1, len(self.paragraphs)):
-                if self.paragraphs[i - 1].abs_position \
-                        + self.paragraphs[i - 1].length \
-                        != self.paragraphs[i].abs_position:
-                    # print(elem_op)
-                    raise AssertionError
-            # Checking that a text paragraph is encapsulated between two
-            # new_line paragraphs
-            for i in range(1, len(self.paragraphs) - 1):
-                if not (self.paragraphs[i].new_line or
-                        self.paragraphs[i + 1].new_line):
-                    # print(elem_op)
-                    raise AssertionError
+            # assert self.paragraphs == sorted(self.paragraphs)
+            # # checking that length is not 0
+            # for i in range(0, len(self.paragraphs)):
+            #     if self.paragraphs[i].length == 0:
+            #         # print(self.pad_name, i, "\n", elem_op)
+            #         raise AssertionError
+            # # Checking that the paragraphs touch each others
+            # for i in range(1, len(self.paragraphs)):
+            #     if self.paragraphs[i - 1].abs_position \
+            #             + self.paragraphs[i - 1].length \
+            #             != self.paragraphs[i].abs_position:
+            #         # print(elem_op)
+            #         # raise AssertionError
+            # # Checking that a text paragraph is encapsulated between two
+            # # new_line paragraphs
+            # for i in range(1, len(self.paragraphs) - 1):
+            #     if not (self.paragraphs[i].new_line or
+            #             self.paragraphs[i + 1].new_line):
+            #         # print(elem_op)
+                    # raise AssertionError
 
         # Find the list of authors in the pad
         for op in self.operations:
@@ -662,7 +662,7 @@ class Pad:
                 op.type = 'delete'
             elif len(op.elem_ops) == 1 \
                     and op.elem_ops[0].operation_type == "add" \
-                    and op.elem_ops[0].text_to_add == '\n':
+                and op.elem_ops[0].text_to_add == '\n\n':
                 op.type = 'jump'
             else:
                 op.type = 'edit'

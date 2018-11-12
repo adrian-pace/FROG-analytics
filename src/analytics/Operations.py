@@ -590,10 +590,10 @@ class Paragraph:
             self.abs_position -= elem_op.length_to_delete
             for op in self.elem_ops:
                 op.current_position -= elem_op.length_to_delete
-        else:
-            # Shouldn't happen, maybe remove the condition elif or check
-            # that we ask the right paragraphs to update
-            raise AssertionError
+        # else:
+        #     # Shouldn't happen, maybe remove the condition elif or check
+        #     # that we ask the right paragraphs to update
+        #     raise AssertionError
 
     def copy(self):
         return Paragraph(paragraph=self, paragraph_id=self.paragraph_id)

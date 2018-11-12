@@ -68,33 +68,33 @@ def build_operations_from_elem_ops(
         # For each elementary operation, we study it and add it to a existing
         # operation or create a new one
         for elem_op in list_of_elem_ops_per_pad[pad_name]:
-            if elem_op.operation_type == "add" and "\n" in elem_op.text_to_add:
+            if elem_op.operation_type == "add" and "\n\n" in elem_op.text_to_add:
                 # Split the elem_op if it contains a new line
-                idx_newline = elem_op.text_to_add.find("\n")
+                idx_newline = elem_op.text_to_add.find("\n\n")
                 elem_op_txts = []
                 # Text before the newline
-                if elem_op.text_to_add[0] != "\n":
+                if elem_op.text_to_add[0:2] != "\n\n":
                     first_elem_op_txt = elem_op.text_to_add[:idx_newline]
                 else:
                     first_elem_op_txt = ""
 
                 # we decomposed the op by their new_line
                 while idx_newline != -1:
-                    elem_op_txts.append("\n")
+                    elem_op_txts.append("\n\n")
                     # Add the text between our new line and the next new line
                     idx_next_newline = elem_op.text_to_add.find(
-                        "\n", idx_newline + 1)
+                        "\n\n", idx_newline + 1)
                     if idx_next_newline == -1:
                         # We are the last new line
                         # We add the remaining chars (if there are none,
                         # it will be an empty string)
                         last_elem_op_txt = elem_op.text_to_add[idx_newline + 1:]
 
-                    elif (elem_op.text_to_add[idx_newline:idx_next_newline] != "\n"):
+                    elif (elem_op.text_to_add[idx_newline:idx_next_newline] != "\n\n"):
                         # if the text in between is also characters
                         elem_op_txts.append(elem_op.text_to_add[
                             idx_newline + 1:elem_op.text_to_add.find(
-                                "\n", idx_newline + 1
+                                "\n\n", idx_newline + 1
                             )
                         ])
                     # Update our position
