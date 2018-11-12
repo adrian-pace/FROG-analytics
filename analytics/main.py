@@ -25,6 +25,7 @@ for pad_name in pads:
     # find the context of the operation of the pad
     pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
 
+
 # For each pad we calculate the metrics and display them. We also save the visualizations.
 for pad_name in pads:
     pad = pads[pad_name]

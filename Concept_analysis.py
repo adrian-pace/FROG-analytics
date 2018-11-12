@@ -31,10 +31,18 @@ from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from collections import OrderedDict
+import gensim.models as g
+import numpy as np
 
 list_of_elem_ops_per_pad = dict()
 elemOpsCounter = 0
 root_of_dbs = "data/"
+
+
+model = 'pre_modle/doc2vec/doc2vec.bin'
+m = g.Doc2Vec.load(model)
+start_alpha=0.01
+infer_epoch=1000
 
 for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
     for filename in filenames:
@@ -54,22 +62,33 @@ for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
 pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,##  pads with all the operations
                                                                              config.maximum_time_between_elem_ops)
 
+
 for pad_name in pads:
+
     paraTextPerPad = {}
     elemOpsCounter += len(elem_ops_treated[pad_name])
     pad = pads[pad_name]
     # create the paragraphs
     pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
+    #pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
+
     paras = pad.paragraphs
     text = pad.get_text()
     ## real-time print the text of each paragraph
+
     for para in paras:
-        # timeStampList = [elem_op.timestamp for elem_op in para.elem_ops]
-        # timeStampList.sort()
-        # for time in timeStampList:
-        #     text1 = para.get_para_text(time)
         para.create_para_text()
+    author_context = []
+    pad.PreprocessOperationByAuthor()
+    AuthorOperation = pad.AuthorOperation
+    AuthorTimeStamp = pad.AuthorTimeStamp
+    pad.BuildWindowOperation()
+    pad.getTextByWin(m,start_alpha,infer_epoch)
+   
+    pad.PlotLengthOperationTime()
+
     print(1)
+
 
 
 

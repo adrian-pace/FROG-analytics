@@ -2,7 +2,7 @@ from analytics import operation_builder
 from analytics.Operations import ElementaryOperation, Paragraph, Operation
 import numpy as np
 import config
-
+import matplotlib.pyplot as plt
 
 def get_colors():
     colors = []
@@ -35,6 +35,11 @@ class Pad:
         self.pad_name = pad_name
 
         self.paragraphs = []
+
+        self.AuthorOperation= {}
+        self.AuthorTimeStamp = {}
+        self.startTime = float('inf')
+        self.windowOperation = {}
         """:type: list[Paragraph]"""
 
     ###############################
@@ -104,6 +109,9 @@ class Pad:
             # From where we will change the paragraph indices
             # should be infinity but this is enough since we can't add more
             # than 2 paragraphs
+            if self.startTime>elem_op.timestamp:
+                self.startTime = elem_op.timestamp
+
             update_indices_from = len(self.paragraphs) + 3
 
             # If it is a new line, create a new paragraph and insert it at
@@ -530,37 +538,7 @@ class Pad:
     ###############################
     # Visualizations
     ###############################
-    def get_text(self, until_timestamp=None):
-        """
-        Return a string with the whole text
 
-        :param until_timestamp:
-        :return: the text written so far on the pad
-        :rtype: str
-        """
-        elem_ops_ordered = self.get_elem_ops(sorted_=True)
-        text = ""
-        for elem_id, elem_op in enumerate(elem_ops_ordered):
-            if until_timestamp is not None and elem_op.timestamp > until_timestamp:
-                return text
-            if elem_op.operation_type == 'add':
-                # We add to the end of the ext
-                if ('*' in elem_op.text_to_add or '*' in text or
-                    len(elem_ops_ordered) - 1 == elem_id):
-                    pass
-                if len(text) == elem_op.abs_position:
-                    text += elem_op.text_to_add
-                else:
-                    text = (text[:elem_op.abs_position] +
-                            elem_op.text_to_add +
-                            text[elem_op.abs_position:])
-            elif elem_op.operation_type == 'del':
-                text = (text[:elem_op.abs_position] +
-                        text[elem_op.abs_position +
-                        elem_op.length_to_delete:])
-            else:
-                raise AttributeError("Undefined elementary operation")
-        return text
 
     def display_text_colored_by_ops(self):
         """
@@ -1067,6 +1045,167 @@ class Pad:
 
         return text
 
+    def get_text(self, until_timestamp=None):
+        """
+        Return a string with the whole text
 
-    def FastText(self):
-        model = fasttext.load_model('model.bin')
+        :param until_timestamp:
+        :return: the text written so far on the pad
+        :rtype: str
+        """
+        elem_ops_ordered = self.get_elem_ops(sorted_=True)
+        text = ""
+        for elem_id, elem_op in enumerate(elem_ops_ordered):
+            if until_timestamp is not None and elem_op.timestamp > until_timestamp:
+                return text
+            if elem_op.operation_type == 'add':
+                # We add to the end of the ext
+                if ('*' in elem_op.text_to_add or '*' in text or
+                    len(elem_ops_ordered) - 1 == elem_id):
+                    pass
+                if len(text) == elem_op.abs_position:
+                    text += elem_op.text_to_add
+                else:
+                    text = (text[:elem_op.abs_position] +
+                            elem_op.text_to_add +
+                            text[elem_op.abs_position:])
+            elif elem_op.operation_type == 'del':
+                text = (text[:elem_op.abs_position] +
+                        text[elem_op.abs_position +
+                        elem_op.length_to_delete:])
+            else:
+                raise AttributeError("Undefined elementary operation")
+        return text
+
+
+    def PreprocessOperationByAuthor(self,timeInterval=120):
+        for op in self.operations:
+            if op.author not in self.AuthorOperation.keys():
+                self.AuthorOperation[op.author] = [op]
+            else:
+                self.AuthorOperation[op.author].append(op)
+
+            if op.author not in self.AuthorTimeStamp.keys():
+                self.AuthorTimeStamp[op.author] = [[op.timestamp_start, op.timestamp_end]]
+            else:
+                self.AuthorTimeStamp[op.author].append([op.timestamp_start, op.timestamp_end])
+
+
+
+    def PlotLengthOperationTime(self):
+        timeLengActor = {}
+        for op in self.operations:
+            if op.author not in timeLengActor.keys():
+                timeLengActor[op.author]=[[],[]]
+
+            timeLengActor[op.author][0].append((op.timestamp_end+op.timestamp_start)/2)
+            for elem_op in op.elem_ops:
+                L = 0
+                if elem_op.operation_type=="add":
+                    L += len(elem_op.text_to_add)
+                else:
+                    L+=elem_op.length_to_delete
+            timeLengActor[op.author][1].append(L)
+
+        jet = plt.get_cmap('coolwarm')
+        for author in timeLengActor.keys():
+            plt.scatter(timeLengActor[author][0],timeLengActor[author][1],cmap=jet)
+        plt.show()
+
+
+    def BuildWindowOperation(self,timeInterval=100000):
+        i = 1
+        for op in self.operations:
+            if op.author=='Etherpad_admin':
+                continue
+            differenceTime = op.timestamp_end-self.startTime
+            while(differenceTime>timeInterval*i):
+                i +=1
+            tmpWindowOperation = WindowOperation(i,op.author,[op],self.startTime,timeInterval)
+            if i not in self.windowOperation.keys():
+                self.windowOperation[i] = [tmpWindowOperation]
+
+            elif tmpWindowOperation in self.windowOperation[i]:
+                self.windowOperation[i][self.windowOperation[i].index(tmpWindowOperation)].addOperation(op)
+
+            else:
+                self.windowOperation[i].append(tmpWindowOperation)
+
+
+
+    def getTextByWin(self, model,start_alpha,infer_epoch):
+        """
+        Return a string with the whole text
+
+        :param until_timestamp:
+        :return: the text written so far on the pad
+        :rtype: str
+        """
+        for groupNum in self.windowOperation.keys():
+            for winOp in self.windowOperation[groupNum]:
+                winOp.generateElemOps()
+                winOp.createWindowText(model,start_alpha,infer_epoch)
+
+
+
+
+
+
+    # def ComputeDictance(self):
+class WindowOperation:
+    def __init__(self,group,author,ops,startTime,timeInterval=1000000):
+        self.group = group
+        self.author = author
+        self.operations = ops
+        self.elemOps = []
+        self.startTime = startTime
+        self.timeInterval = timeInterval
+        self.text = ''
+        self.textVector=[]
+
+
+    def addOperation(self,op):
+        self.operations.append(op)
+
+    def generateElemOps(self):
+        for op in self.operations:
+            self.elemOps.extend(op.elem_ops)
+        self.elemOps = ElementaryOperation.sort_elem_ops(self.elemOps)
+
+
+    def __eq__(self, other):
+
+        return (self.author==other.author) and (self.group==other.group)
+
+    def __hash__(self):
+
+        return hash(self.author,self.group)
+
+    def createWindowText(self,model,start_alpha,infer_epoch):
+        elem_ops_ordered = self.elemOps
+        elem_ops_ordered = ElementaryOperation.sort_elem_ops(elem_ops_ordered)
+        text = ""
+        for elem_id, elem_op in enumerate(elem_ops_ordered):
+            if elem_id == 0:
+                start_position = elem_op.abs_position
+            position = elem_op.abs_position - start_position
+            if elem_op.operation_type == 'add':
+                # We add to the end of the ext
+                if ('*' in elem_op.text_to_add or '*' in text or
+                        len(elem_ops_ordered) - 1 == elem_id):
+                    pass
+                if len(text) == position:
+                    text += elem_op.text_to_add
+                else:
+                    text = (text[:position] +
+                            elem_op.text_to_add +
+                            text[position:])
+            elif elem_op.operation_type == 'del':
+                text = (text[:position] +
+                        text[position +
+                             elem_op.length_to_delete:])
+            else:
+                raise AttributeError("Undefined elementary operation")
+        self.text = text
+        self.textVector =  model.infer_vector(text, alpha=start_alpha, steps=infer_epoch)
+
