@@ -40,6 +40,7 @@ class Pad:
         self.AuthorTimeStamp = {}
         self.startTime = float('inf')
         self.windowOperation = {}
+        self.distance={}
         """:type: list[Paragraph]"""
 
     ###############################
@@ -1133,6 +1134,7 @@ class Pad:
 
 
 
+
     def getTextByWin(self, model,start_alpha,infer_epoch):
         """
         Return a string with the whole text
@@ -1145,6 +1147,21 @@ class Pad:
             for winOp in self.windowOperation[groupNum]:
                 winOp.generateElemOps()
                 winOp.createWindowText(model,start_alpha,infer_epoch)
+
+    def computeDistance(self):
+        for groupNum in self.windowOperation.keys():
+            if len(self.windowOperation[groupNum])<2:
+                self.distance[groupNum]=0
+            else:
+                text1 = self.windowOperation[groupNum][0].text
+                text2 = self.windowOperation[groupNum][1].text
+
+                self.distance[groupNum]  = np.linalg.norm(self.windowOperation[groupNum][0].textVector-self.windowOperation[groupNum][1].textVector)
+
+
+
+
+
 
 
 
@@ -1177,9 +1194,6 @@ class WindowOperation:
 
         return (self.author==other.author) and (self.group==other.group)
 
-    def __hash__(self):
-
-        return hash(self.author,self.group)
 
     def createWindowText(self,model,start_alpha,infer_epoch):
         elem_ops_ordered = self.elemOps

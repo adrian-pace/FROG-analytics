@@ -5,8 +5,6 @@
       <change beforePath="$PROJECT_DIR$/Concept_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/Concept_analysis.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ResponseClustering" beforeDir="false" afterPath="$PROJECT_DIR$/ResponseClustering" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analytics/Pad.py" beforeDir="false" afterPath="$PROJECT_DIR$/analytics/Pad.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/analytics/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/analytics/main.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/main belgians_evolution.py" beforeDir="false" afterPath="$PROJECT_DIR$/main belgians_evolution.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -17,7 +15,7 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/FROG_analytics$text.coverage" NAME="text Coverage Results" MODIFIED="1542027185078" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/FROG_analytics$Concept_analysis.coverage" NAME="Concept_analysis Coverage Results" MODIFIED="1542033562683" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/FROG_analytics$Concept_analysis.coverage" NAME="Concept_analysis Coverage Results" MODIFIED="1542039508757" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/FROG_analytics$main_belgians_evolution.coverage" NAME="main belgians_evolution Coverage Results" MODIFIED="1541765623853" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="DatabaseView">
@@ -39,10 +37,31 @@
       <file leaf-file-name="Concept_analysis.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Concept_analysis.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="424">
-              <caret line="89" selection-start-line="89" selection-end-line="89" />
+            <state relative-caret-position="77">
+              <caret line="56" lean-forward="true" selection-start-line="56" selection-end-line="56" />
               <folding>
                 <element signature="e#0#61#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="apport_python_hook.py" pinned="false" current-in-tab="false">
+        <entry file="file:///usr/lib/python3/dist-packages/apport_python_hook.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="153">
+              <caret line="46" selection-start-line="46" selection-end-line="46" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="Pad.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="180">
+              <caret line="1156" column="62" lean-forward="true" selection-start-line="1156" selection-start-column="62" selection-end-line="1156" selection-end-column="62" />
+              <folding>
+                <element signature="e#0#39#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -57,23 +76,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Pad.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="17408">
-              <caret line="1144" selection-start-line="1144" selection-end-line="1144" />
-              <folding>
-                <element signature="e#0#39#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="helper.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/helper.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="306">
-              <caret line="18" selection-start-line="18" selection-end-line="18" selection-end-column="35" />
+            <state relative-caret-position="323">
+              <caret line="19" lean-forward="true" selection-start-line="19" selection-end-line="19" selection-end-column="35" />
               <folding>
                 <element signature="e#0#14#0" expanded="true" />
               </folding>
@@ -127,9 +134,10 @@
         <option value="$PROJECT_DIR$/main belgians_evolution.py" />
         <option value="$PROJECT_DIR$/analytics/main.py" />
         <option value="$PROJECT_DIR$/text.py" />
-        <option value="$PROJECT_DIR$/analytics/Pad.py" />
         <option value="$PROJECT_DIR$/analytics/Operations.py" />
+        <option value="$PROJECT_DIR$/helper.py" />
         <option value="$PROJECT_DIR$/Concept_analysis.py" />
+        <option value="$PROJECT_DIR$/analytics/Pad.py" />
       </list>
     </option>
   </component>
@@ -143,7 +151,7 @@
     <packageJsonPaths />
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="55" />
+    <option name="x" value="528" />
     <option name="y" value="29" />
     <option name="width" value="933" />
     <option name="height" value="1051" />
@@ -301,6 +309,7 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="55" y="29" width="1865" height="1051" extended-state="6" />
+    <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" weight="0.32930845" />
       <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.50082463" side_tool="true" weight="0.39956093" />
@@ -312,10 +321,10 @@
       <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.20505773" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="right" id="Database" order="3" weight="0.32985157" />
-      <window_info anchor="right" content_ui="combo" id="SciView" order="3" visible="true" weight="0.5184167" />
+      <window_info anchor="right" content_ui="combo" id="SciView" order="3" weight="0.5184167" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" sideWeight="0.49917537" visible="true" weight="0.38419318" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49917537" weight="0.4061471" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -336,10 +345,6 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/Concept_analysis.py</url>
-          <line>89</line>
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/main belgians_evolution.py</url>
           <line>76</line>
           <option name="timeStamp" value="1" />
@@ -349,6 +354,11 @@
           <line>13</line>
           <option name="timeStamp" value="32" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Concept_analysis.py</url>
+          <line>87</line>
+          <option name="timeStamp" value="43" />
+        </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
         <breakpoint type="python-exception">
@@ -357,7 +367,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="41" />
+      <option name="time" value="45" />
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
@@ -453,17 +463,13 @@
         </state>
       </provider>
     </entry>
-    <entry file="file:///usr/lib/python3/dist-packages/apport_python_hook.py">
+    <entry file="file://$PROJECT_DIR$/helper.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="52" selection-start-line="52" selection-end-line="52" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/analytics/Operations.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="316">
-          <caret line="507" column="44" lean-forward="true" selection-start-line="507" selection-start-column="44" selection-end-line="507" selection-end-column="44" />
+        <state relative-caret-position="323">
+          <caret line="19" lean-forward="true" selection-start-line="19" selection-end-line="19" selection-end-column="35" />
+          <folding>
+            <element signature="e#0#14#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
@@ -474,20 +480,24 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/helper.py">
+    <entry file="file:///usr/lib/python3/dist-packages/apport_python_hook.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="306">
-          <caret line="18" selection-start-line="18" selection-end-line="18" selection-end-column="35" />
-          <folding>
-            <element signature="e#0#14#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="153">
+          <caret line="46" selection-start-line="46" selection-end-line="46" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/analytics/Operations.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="316">
+          <caret line="507" column="44" lean-forward="true" selection-start-line="507" selection-start-column="44" selection-end-line="507" selection-end-column="44" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="17408">
-          <caret line="1144" selection-start-line="1144" selection-end-line="1144" />
+        <state relative-caret-position="180">
+          <caret line="1156" column="62" lean-forward="true" selection-start-line="1156" selection-start-column="62" selection-end-line="1156" selection-end-column="62" />
           <folding>
             <element signature="e#0#39#0" expanded="true" />
           </folding>
@@ -496,8 +506,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/Concept_analysis.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="424">
-          <caret line="89" selection-start-line="89" selection-end-line="89" />
+        <state relative-caret-position="77">
+          <caret line="56" lean-forward="true" selection-start-line="56" selection-end-line="56" />
           <folding>
             <element signature="e#0#61#0" expanded="true" />
           </folding>

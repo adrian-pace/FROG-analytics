@@ -84,7 +84,7 @@ for pad_name in pads:
     AuthorTimeStamp = pad.AuthorTimeStamp
     pad.BuildWindowOperation()
     pad.getTextByWin(m,start_alpha,infer_epoch)
-   
+    pad.computeDistance()
     pad.PlotLengthOperationTime()
 
     print(1)
