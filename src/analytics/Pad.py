@@ -36,6 +36,8 @@ class Pad:
 
         self.paragraphs = []
         """:type: list[Paragraph]"""
+        self.all_paragraphs = [] # All paragraphs that have ever been added
+        """:type: list[Paragraph]"""
 
     ###############################
     # Complete content of the Pad
@@ -76,6 +78,15 @@ class Pad:
         else:
             return elem_ops
 
+    def get_absolute_index(self, paragraph_index):
+        paragraph_id = self.paragraphs[paragraph_index].paragraph_id
+
+        for para_idx, para in enumerate(self.all_paragraphs):
+            if para.paragraph_id == paragraph_id:
+                return para_idx
+        else:
+            return -1
+
     def create_paragraphs_from_ops(self, new_elem_ops_sorted):
         """
         Build the paragraphs for the pad based on the existing paragraphs
@@ -114,24 +125,56 @@ class Pad:
             if elem_op.operation_type == "add" and "\n" in elem_op.text_to_add:
                 # To which paragraph this op corresponds ?
                 para_it_belongs_to, number_new_lines = para_it_belongs(elem_op)
+
+                # If we found it, compute the "absolute index"
+                # (i.e. the index of the paragraph in all_paragraphs)
+                para_it_belongs_to_absolute = -1
+                if para_it_belongs_to != -1:
+                    para_it_belongs_to_absolute = self.get_absolute_index(para_it_belongs_to)
+
                 # If it is supposed to be in a paragraph which is a new line
                 # or at the end of paragraph
                 if para_it_belongs_to == -1:
-                    # Is it an op at the beginning ?
+                    # Is it an op at the beginning?
                     if elem_op.abs_position == 0:
-                        self.paragraphs.insert(0, Paragraph(elem_op, new_line=True))
+                        if len(self.all_paragraphs):
+                            new_paragraph_id = Paragraph.compute_para_id("insert_before",
+                                self.all_paragraphs[0].paragraph_id)
+                        else:
+                            new_paragraph_id = Paragraph.compute_para_id("initial")
+
+                        new_paragraph = Paragraph(elem_op, new_line=True,
+                            paragraph_id=new_paragraph_id)
+
+                        self.paragraphs.insert(0, new_paragraph)
+                        self.all_paragraphs.insert(0, new_paragraph)
+
                         elem_op.assign_para(2 * [[0]])
+                        elem_op.assign_paragraph_id(new_paragraph_id)
+
                         update_indices_from = 1
 
-                    # Is it the last op ?
+                    # Is it the last op?
                     elif (self.paragraphs[-1].abs_position +
                         self.paragraphs[-1].length <=
                         elem_op.abs_position):
 
-                        self.paragraphs.append(Paragraph(elem_op, new_line=True))
+                        if len(self.all_paragraphs):
+                            new_paragraph_id = Paragraph.compute_para_id("insert_after",
+                                self.all_paragraphs[-1].paragraph_id)
+                        else:
+                            new_paragraph_id = Paragraph.compute_para_id("initial")
+
+                        new_paragraph = Paragraph(elem_op, new_line=True,
+                            paragraph_id=new_paragraph_id)
+
+                        self.paragraphs.append(new_paragraph)
+                        self.all_paragraphs.append(new_paragraph)
+
                         elem_op.assign_para(2 *
                             [[len(self.paragraphs) - number_new_lines - 2,
                               len(self.paragraphs) - number_new_lines - 1]])
+                        elem_op.assign_paragraph_id(new_paragraph_id)
 
                     # Find where we should insert it
                     else:
@@ -144,56 +187,112 @@ class Pad:
                             para_idx += 1
                             if self.paragraphs[para_idx].new_line:
                                 number_new_lines += 1
+                        para_idx_absolute = self.get_absolute_index(para_idx)
+
+                        if para_idx_absolute + 1 < len(self.all_paragraphs):
+                            new_paragraph_id = Paragraph.compute_para_id("insert_between",
+                                self.all_paragraphs[para_idx_absolute].paragraph_id,
+                                self.all_paragraphs[para_idx_absolute + 1].paragraph_id)
+                        else:
+                            new_paragraph_id = Paragraph.compute_para_id("insert_after",
+                                self.all_paragraphs[para_idx_absolute].paragraph_id)
+
+
+                        new_paragraph = Paragraph(elem_op, new_line=True,
+                            paragraph_id=new_paragraph_id)
 
                         # Insert it
+                        self.paragraphs.insert(para_idx + 1, new_paragraph)
+                        self.all_paragraphs.insert(para_idx_absolute + 1, new_paragraph)
+
                         elem_op.assign_para(2 * [[para_idx - number_new_lines,
-                            para_idx - number_new_lines + 1]])
-                        self.paragraphs.insert(para_idx + 1,
-                            Paragraph(elem_op, new_line=True))
+                                            para_idx - number_new_lines + 1]])
+                        elem_op.assign_paragraph_id(new_paragraph_id)
+
                         update_indices_from = para_idx + 2
 
                 # or if it is at the start of a non-newline para:
                 elif (self.paragraphs[para_it_belongs_to].abs_position ==
                     elem_op.abs_position):
-                    self.paragraphs.insert(para_it_belongs_to,
-                                           Paragraph(elem_op, new_line=True))
+
+                    if para_it_belongs_to_absolute - 1 >= 0:
+                        new_paragraph_id = Paragraph.compute_para_id("insert_between",
+                            self.all_paragraphs[para_it_belongs_to_absolute - 1].paragraph_id,
+                            self.all_paragraphs[para_it_belongs_to_absolute].paragraph_id)
+                    else:
+                        new_paragraph_id = Paragraph.compute_para_id("insert_before",
+                            self.all_paragraphs[para_it_belongs_to_absolute].paragraph_id)
+
+                    new_paragraph = Paragraph(elem_op, new_line=True,
+                        paragraph_id=new_paragraph_id)
+
+                    self.paragraphs.insert(para_it_belongs_to, new_paragraph)
+                    self.all_paragraphs.insert(para_it_belongs_to_absolute,
+                                               new_paragraph)
+
                     elem_op.assign_para(2 *
                         [[para_it_belongs_to - number_new_lines - 1,
                             para_it_belongs_to - number_new_lines]])
+                    elem_op.assign_paragraph_id(new_paragraph_id)
+
                     update_indices_from = para_it_belongs_to + 1
 
                 # or if it is at the end of a non-newline para:
                 elif (self.paragraphs[para_it_belongs_to].abs_position +
                     self.paragraphs[para_it_belongs_to].length ==
                     elem_op.abs_position):
+
+                    if para_it_belongs_to_absolute + 1 < len(self.all_paragraphs):
+                        new_paragraph_id = Paragraph.compute_para_id("insert_between",
+                            self.all_paragraphs[para_it_belongs_to_absolute].paragraph_id,
+                            self.all_paragraphs[para_it_belongs_to_absolute + 1].paragraph_id)
+                    else:
+                        new_paragraph_id = Paragraph.compute_para_id("insert_after",
+                            self.all_paragraphs[para_it_belongs_to_absolute].paragraph_id)
+
+                    new_paragraph = Paragraph(elem_op, new_line=True,
+                        paragraph_id=new_paragraph_id)
+
                     self.paragraphs.insert(para_it_belongs_to + 1,
-                                           Paragraph(elem_op, new_line=True))
+                                           new_paragraph)
+                    self.all_paragraphs.insert(para_it_belongs_to_absolute + 1,
+                                               new_paragraph)
+
                     elem_op.assign_para(2 *
                         [[para_it_belongs_to - number_new_lines,
                             para_it_belongs_to - number_new_lines + 1]])
+                    elem_op.assign_paragraph_id(new_paragraph_id)
+
                     update_indices_from = para_it_belongs_to + 2
 
                 # We split the paragraph in two, where there is the newline
                 else:
                     # The two paragraphs from the split
-                    para1, para2 = Paragraph.split(
+                    para1, para2, para_new_line_id = Paragraph.split(
                         self.paragraphs[para_it_belongs_to],
-                        elem_op.abs_position)
+                        elem_op.abs_position,
+                        return_new_line_paragraph_id=True)
+
                     # We delete the old paragraph
                     del self.paragraphs[para_it_belongs_to]
+                    self.all_paragraphs[para_it_belongs_to_absolute].is_deleted = True
                     # Insert the second paragraph
                     self.paragraphs.insert(para_it_belongs_to, para2)
+                    self.all_paragraphs.insert(para_it_belongs_to_absolute, para2)
                     # Insert the new line just before
-                    self.paragraphs.insert(
-                        para_it_belongs_to,
-                        Paragraph(elem_op, new_line=True))
+                    para_new_line = Paragraph(elem_op, new_line=True,
+                                              paragraph_id=para_new_line_id)
+                    self.paragraphs.insert(para_it_belongs_to, para_new_line)
+                    self.all_paragraphs.insert(para_it_belongs_to_absolute, para_new_line)
                     # Insert the first paragraph
                     self.paragraphs.insert(para_it_belongs_to, para1)
+                    self.all_paragraphs.insert(para_it_belongs_to_absolute, para1)
 
                     elem_op.assign_para([
                         [para_it_belongs_to - number_new_lines],
                         [para_it_belongs_to - number_new_lines,
                             para_it_belongs_to - number_new_lines + 1]])
+                    elem_op.assign_paragraph_id(para1.paragraph_id)
 
                     # From where we will update the indices
                     update_indices_from = para_it_belongs_to + 3
@@ -375,11 +474,18 @@ class Pad:
                                                        self.paragraphs[merge2],
                                                        elem_op)
                     # We remove the second paragraph
+                    merge2_absolute = self.get_absolute_index(merge2)
                     del self.paragraphs[merge2]
+                    self.all_paragraphs[merge2_absolute].is_deleted = True
                     # We put the merged paragraph where the first paragraph was
                     self.paragraphs[merge1] = merged_paragraph
+                    merge1_absolute = self.get_absolute_index(merge1)
+                    self.all_paragraphs[merge1_absolute].is_deleted = True
+                    self.all_paragraphs.insert(merge1_absolute, merged_paragraph)
                     # We will update the indices from the paragraph from here
                     update_indices_from = merge2
+
+                    elem_op.assign_paragraph_id(merged_paragraph.paragraph_id)
 
                 # We need to notify the paragraphs that are after my edit,
                 # that their position might have changed
@@ -388,7 +494,10 @@ class Pad:
 
                 # Remove the paragraphs we are supposed to remove
                 for idx in to_remove[::-1]:
+                    elem_op.assign_paragraph_id(self.paragraphs[idx].paragraph_id)
+                    idx_absolute = self.get_absolute_index(idx)
                     del self.paragraphs[idx]
+                    self.all_paragraphs[idx_absolute].is_deleted = True
 
 
             # Keep our paragraphs as they are, just add the elem_op
@@ -396,15 +505,33 @@ class Pad:
                 # Find the paragraph it should belong to
                 para_it_belongs_to, number_new_lines = para_it_belongs(elem_op)
 
+                # If we found it, compute the "absolute index"
+                # (i.e. the index of the paragraph in all_paragraphs)
+                para_it_belongs_to_absolute = -1
+                if para_it_belongs_to != -1:
+                    para_it_belongs_to_absolute = self.get_absolute_index(para_it_belongs_to)
+
                 # If we should create a new para for this elem_op
                 if para_it_belongs_to == -1:
-                    # The new paragraph
-                    new_paragraph = Paragraph(elem_op)
-
                     # If we are at the start of the document
+                    # TODO: Create a function for this and the previous "-1" case?
+                    # (because the code is almost the same)
                     if elem_op.abs_position == 0:
-                        elem_op.assign_para(2 * [[0]])
+                        if len(self.all_paragraphs):
+                            new_paragraph_id = Paragraph.compute_para_id("insert_before",
+                                self.all_paragraphs[0].paragraph_id)
+                        else:
+                            new_paragraph_id = Paragraph.compute_para_id("initial")
+
+                        new_paragraph = Paragraph(elem_op,
+                            paragraph_id=new_paragraph_id)
+
                         self.paragraphs.insert(0, new_paragraph)
+                        self.all_paragraphs.insert(0, new_paragraph)
+
+                        elem_op.assign_para(2 * [[0]])
+                        elem_op.assign_paragraph_id(new_paragraph_id)
+
                         update_indices_from = 1
 
                     # If we are at the end of the paragraph
@@ -412,10 +539,22 @@ class Pad:
                         self.paragraphs[-1].length <=
                         elem_op.abs_position):
 
+                        if len(self.all_paragraphs):
+                            new_paragraph_id = Paragraph.compute_para_id("insert_after",
+                                self.all_paragraphs[-1].paragraph_id)
+                        else:
+                            new_paragraph_id = Paragraph.compute_para_id("initial")
+
+                        new_paragraph = Paragraph(elem_op,
+                            paragraph_id=new_paragraph_id)
+
+                        self.paragraphs.append(new_paragraph)
+                        self.all_paragraphs.append(new_paragraph)
+
                         elem_op.assign_para([
                             [len(self.paragraphs) - number_new_lines - 1],
                             [len(self.paragraphs) - number_new_lines]])
-                        self.paragraphs.append(new_paragraph)
+                        elem_op.assign_paragraph_id(new_paragraph_id)
 
                     # Insert the new paragraph in the good place
                     else:
@@ -425,15 +564,32 @@ class Pad:
                         while (self.paragraphs[para_idx].abs_position +
                                self.paragraphs[para_idx].length <
                                elem_op.abs_position):
+
                             para_idx += 1
                             if self.paragraphs[para_idx].new_line:
                                 number_new_lines += 1
+                        para_idx_absolute = self.get_absolute_index(para_idx)
+
+                        if para_idx_absolute + 1 < len(self.all_paragraphs):
+                            new_paragraph_id = Paragraph.compute_para_id("insert_between",
+                                self.all_paragraphs[para_idx_absolute].paragraph_id,
+                                self.all_paragraphs[para_idx_absolute + 1].paragraph_id)
+                        else:
+                            new_paragraph_id = Paragraph.compute_para_id("insert_after",
+                                self.all_paragraphs[para_idx_absolute].paragraph_id)
+
+                        new_paragraph = Paragraph(elem_op,
+                            paragraph_id=new_paragraph_id)
 
                         # Insert it
                         self.paragraphs.insert(para_idx + 1, new_paragraph)
+                        self.all_paragraphs.insert(para_idx_absolute + 1, new_paragraph)
+
                         elem_op.assign_para([
                             [para_idx - number_new_lines, para_idx - number_new_lines + 1],
                             [para_idx - number_new_lines + 1]])
+                        elem_op.assign_paragraph_id(new_paragraph_id)
+
                         # Update indices of the next paragraphs from here
                         update_indices_from = para_idx + 2
 
@@ -442,6 +598,8 @@ class Pad:
                     elem_op.assign_para([
                         [para_it_belongs_to - number_new_lines],
                         [para_it_belongs_to - number_new_lines]])
+                    elem_op.assign_paragraph_id(
+                        self.paragraphs[para_it_belongs_to].paragraph_id)
                     # Add it
                     self.paragraphs[para_it_belongs_to].add_elem_op(elem_op)
                     # Update indices of the next paragraphs from here

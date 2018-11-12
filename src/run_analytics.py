@@ -30,8 +30,28 @@ def run(list_of_elem_ops_per_pad,
         list_of_elem_ops_per_pad,
         maximum_time_between_elem_ops)
 
+    separator_char = '\t' # For the csv files
+    metric_names = ["user_participation_paragraph_score","prop_score",
+                    "sync_score","alternating_score","break_score_day",
+                    "break_score_short","type_overall_score_write",
+                    "type_overall_score_paste","type_overall_score_delete",
+                    "type_overall_score_edit","user_type_score_write",
+                    "user_type_score_paste","user_type_score_delete",
+                    "user_type_score_edit"]
+    if generate_csv:
+        header = separator_char.join(["docID","author","posStart","posEnd",
+                                      "timeStart","timeEnd","atomicOpCount",
+                                      "type","textAdded","deletionLength",
+                                      "paragraph","paragraphHistory","paragraphOriginal",
+                                      "proportionPad","proportionParagraph"])
+        print(header)
+    elif generate_csv_summary:
+        header = separator_char.join(["docID"] + metric_names)
+        print(header)
+
     # Create content for each Pad
-    excepted = []
+    pad_id = 0 # This counter is used to generate IDs for the pads
+
     for pad_name, pad in pads.items():
         try:
             # create the paragraphs
@@ -45,10 +65,92 @@ def run(list_of_elem_ops_per_pad,
             pad.build_operation_context(delay_sync,
                                         time_to_reset_day,
                                         time_to_reset_break)
+            pad_id += 1
+
+            if generate_csv:
+                # Option 1: Use the name of the pad as the pad ID
+                # pad.display_csv(separator_char=separator_char)
+
+                # Option 2: Use a custom string as the pad ID
+                pad.display_csv(separator_char=separator_char,
+                                pad_id='id{}'.format(pad_id))
+
+            elif generate_csv_summary:
+                pad_metrics = pad.compute_metrics()
+                pad_metrics_string = separator_char.join([
+                    format(pad_metrics[metric]) for metric in metric_names])
+
+                # Option 1: Use the name of the pad as the pad ID
+                print(pad_name + separator_char + pad_metrics_string)
+
+                # Option 2: Use a custom string as the pad ID
+                # print('id{}'.format(pad_id) + separator_char + pad_metrics_string)
+
+            else:
+                # For each Pad, add the visualization
+                if texts:
+                    to_print = pad.to_print(
+                        print_pad_name=print_pad_name,
+                        print_text=print_text,
+                        print_text_colored_by_authors=print_text_colored_by_authors,
+                        print_text_colored_by_ops=print_text_colored_by_ops,
+                        print_metrics_text=print_metrics_text)
+                    if verbosity:
+                        print("PRINT")
+                        print(to_print)
+                    if texts_save_location is not None:
+                        if not os.path.isdir(texts_save_location):
+                            os.makedirs(texts_save_location)
+                        with open("{}/{}.txt".format(texts_save_location, pad_name),
+                                  "w+",
+                                  encoding="utf-8") as f:
+                            f.write(to_print)
+
+                if show_visualization:
+                    # plot the participation proportion per user per paragraphs
+                    visualization.display_user_participation(
+                        pad,
+                        figs_save_location)
+
+                    visualization.display_user_participation_paragraphs(
+                        pad,
+                        figs_save_location)
+
+                    visualization.display_user_participation_paragraphs_with_del(
+                        pad,
+                        figs_save_location)
+
+                    # plot the proportion of synchronous writing per paragraphs
+                    visualization.display_proportion_sync_in_paragraphs(
+                        pad,
+                        figs_save_location)
+
+                    visualization.display_proportion_sync_in_pad(
+                        pad,
+                        figs_save_location)
+
+                    # plot the overall type counts
+                    visualization.display_overall_op_type(
+                        pad,
+                        figs_save_location)
+
+                    # plot the counts of type per users
+                    visualization.display_types_per_user(
+                        pad,
+                        figs_save_location)
+
+                if verbosity > 1:
+                    print("OPERATIONS")
+                    pad.display_operations()
+
+                    print("PARAGRAPHS:")
+                    pad.display_paragraphs(verbose=1)
+
         except:
             print("Error at {}:".format(pad_name))
             print(traceback.format_exc())
-            excepted.append(pad_name)
+            # break
+
 
     if verbosity:
         print(
@@ -58,121 +160,6 @@ def run(list_of_elem_ops_per_pad,
                     pad_elem_ops_treated in elem_ops_treated.values())
             )
         )
-
-    if generate_csv:
-        separator_char = '\t'
-        header = separator_char.join(["docID","author","posStart","posEnd",
-                                      "timeStart","timeEnd","atomicOpCount",
-                                      "type","textAdded","deletionLength",
-                                      "paragraph","proportionPad",
-                                      "proportionParagraph"])
-        print(header)
-        pad_id = 0 # This counter is used to generate IDs for the pads
-        for pad_name, pad in pads.items():
-            if pad_name in excepted:
-                continue
-            pad_id += 1
-
-            # Option 1: Use the name of the pad as the pad ID
-            # pad.display_csv(separator_char=separator_char)
-
-            # Option 2: Use a custom string as the pad ID
-            pad.display_csv(separator_char=separator_char,
-                            pad_id='id{}'.format(pad_id))
-
-    elif generate_csv_summary:
-        separator_char = '\t'
-        metric_names = ["user_participation_paragraph_score","prop_score",
-                        "sync_score","alternating_score","break_score_day",
-                        "break_score_short","type_overall_score_write",
-                        "type_overall_score_paste","type_overall_score_delete",
-                        "type_overall_score_edit","user_type_score_write",
-                        "user_type_score_paste","user_type_score_delete",
-                        "user_type_score_edit"]
-
-        header = separator_char.join(["docID"] + metric_names)
-        print(header)
-
-        pad_id = 0 # This counter is used to generate IDs for the pads
-        for pad_name, pad in pads.items():
-            if pad_name in excepted:
-                continue
-            pad_id += 1
-
-            pad_metrics = pad.compute_metrics()
-            pad_metrics_string = separator_char.join([
-                format(pad_metrics[metric]) for metric in metric_names])
-
-            # Option 1: Use the name of the pad as the pad ID
-            print(pad_name + separator_char + pad_metrics_string)
-
-            # Option 2: Use a custom string as the pad ID
-            # print('id{}'.format(pad_id) + separator_char + pad_metrics_string)
-
-    else:
-        # For each Pad, add the visualization
-        for pad_name in pads:
-            if pad_name in excepted:
-                continue
-
-            pad = pads[pad_name]
-            if texts:
-                to_print = pad.to_print(
-                    print_pad_name=print_pad_name,
-                    print_text=print_text,
-                    print_text_colored_by_authors=print_text_colored_by_authors,
-                    print_text_colored_by_ops=print_text_colored_by_ops,
-                    print_metrics_text=print_metrics_text)
-                if verbosity:
-                    print("PRINT")
-                    print(to_print)
-                if texts_save_location is not None:
-                    if not os.path.isdir(texts_save_location):
-                        os.makedirs(texts_save_location)
-                    with open("{}/{}.txt".format(texts_save_location, pad_name),
-                              "w+",
-                              encoding="utf-8") as f:
-                        f.write(to_print)
-
-            if show_visualization:
-                # plot the participation proportion per user per paragraphs
-                visualization.display_user_participation(
-                    pad,
-                    figs_save_location)
-
-                visualization.display_user_participation_paragraphs(
-                    pad,
-                    figs_save_location)
-
-                visualization.display_user_participation_paragraphs_with_del(
-                    pad,
-                    figs_save_location)
-
-                # plot the proportion of synchronous writing per paragraphs
-                visualization.display_proportion_sync_in_paragraphs(
-                    pad,
-                    figs_save_location)
-
-                visualization.display_proportion_sync_in_pad(
-                    pad,
-                    figs_save_location)
-
-                # plot the overall type counts
-                visualization.display_overall_op_type(
-                    pad,
-                    figs_save_location)
-
-                # plot the counts of type per users
-                visualization.display_types_per_user(
-                    pad,
-                    figs_save_location)
-
-            if verbosity > 1:
-                print("OPERATIONS")
-                pad.display_operations()
-
-                print("PARAGRAPHS:")
-                pad.display_paragraphs(verbose=1)
 
 
 if __name__ == "__main__":

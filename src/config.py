@@ -24,3 +24,5 @@ update_post_url = "http://35.229.83.91:5000/"
 server_update_delay = 1
 # How often you send the metrics to the server
 send_update_delay = 5
+
+max_len_id = 15

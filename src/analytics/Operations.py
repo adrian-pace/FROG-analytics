@@ -1,3 +1,7 @@
+import config
+import random
+import string
+
 class ElementaryOperation:
     """
     Elementary operation (finest granularity). Such as addition or removal of
@@ -92,6 +96,7 @@ class ElementaryOperation:
         self.current_position = self.abs_position
         self.deleted = False
         self.assigned_para = [[],[]]
+        self.paragraph_id = ""
 
     def __str__(self):
         return ("Operation: {}".format(self.operation_type) +
@@ -116,6 +121,9 @@ class ElementaryOperation:
             if type(list_para[0]) == int and list_para[0] < 0:
                 list_para[0]
         self.assigned_para = para_to_assign
+
+    def assign_paragraph_id(self, paragraph_id):
+        self.paragraph_id = paragraph_id
 
     def get_length_of_op(self):
         """
@@ -166,7 +174,6 @@ class ElementaryOperation:
                                      belong_to_operation=self.belong_to_operation,
                                      editor=self.editor)
         return new_op
-
 
 
 class Operation:
@@ -272,6 +279,46 @@ class Operation:
         else:
             return None
 
+    def get_paragraph_history(self):
+        paras_hists = []
+        for elem_op in self.elem_ops:
+            paras_hists.append(elem_op.paragraph_id)
+
+        if len(paras_hists) > 0:
+            return paras_hists[0]
+        else:
+            return None
+
+    def get_paragraph_original(self):
+        def remove_split_suffix(p_id):
+            new_p_id = p_id
+            while True:
+                if "." in p_id:
+                    split_p_id = p_id.split(".")
+                    if (split_p_id[-1].isalpha() and
+                        split_p_id[-1].isupper()):
+                        new_p_id = ".".join(split_p_id[:-1])
+                if new_p_id == p_id:
+                    break
+                p_id = new_p_id
+            return p_id
+
+        paras_orig = []
+        for elem_op in self.elem_ops:
+            p_id = elem_op.paragraph_id
+            p_id = remove_split_suffix(p_id)
+            if ("+" in p_id and
+                p_id[0] == "(" and p_id[-1] == ")"):
+                p_o = p_id[1:].split("+")[0]
+                p_id = remove_split_suffix(p_o)
+                p_id = [entry for entry in p_id.split('(') if entry != ''][0]
+            paras_orig.append(p_id)
+
+        if len(paras_orig) > 0:
+            return paras_orig[0]
+        else:
+            return None
+
     def get_text_added(self):
         """
         Get text added from the elem_ops.
@@ -336,6 +383,8 @@ class Operation:
                     # self.get_text_added() if self.type != "jump" else None,
                     self.get_deletion_length(),
                     self.get_assigned_para(),
+                    self.get_paragraph_history(),
+                    self.get_paragraph_original(),
                     self.context["proportion_pad"],
                     self.context["proportion_paragraph"]]))
 
@@ -375,7 +424,7 @@ class Operation:
 
 
 class Paragraph:
-    def __init__(self, elem_op=None, new_line=False, paragraph=None):
+    def __init__(self, elem_op=None, new_line=False, paragraph=None, paragraph_id=""):
         """
         Create a new paragraph from an ElementaryOperation or a Paragraph
 
@@ -389,6 +438,10 @@ class Paragraph:
         assert elem_op is not None or paragraph is not None, ("Error"
             "creating new Paragraph. Either elem_op or paragraph must be"
             "non-null")
+
+        self.paragraph_id = paragraph_id
+        self.is_deleted = False
+
         if elem_op is not None:
             self.elem_ops = [elem_op]
             """list[ElementaryOperation]"""
@@ -543,7 +596,7 @@ class Paragraph:
             raise AssertionError
 
     def copy(self):
-        return Paragraph(paragraph=self)
+        return Paragraph(paragraph=self, paragraph_id=self.paragraph_id)
 
     @classmethod
     def merge(cls, first_paragraph, last_paragraph, elem_op):
@@ -590,7 +643,8 @@ class Paragraph:
         return new_para
 
     @classmethod
-    def split(cls, paragraph_to_split, position):
+    def split(cls, paragraph_to_split, position,
+        return_new_line_paragraph_id=False):
         """
         split the paragraph in two on the position passed as parameter
 
@@ -600,8 +654,13 @@ class Paragraph:
         :return: the 2 new paragraphs
         :rtype: (Paragraph,Paragraph)
         """
+        new_paragraph_ids = Paragraph.compute_para_id("split",
+                                            paragraph_to_split.paragraph_id)
+
         para1 = paragraph_to_split.copy()
+        para1.paragraph_id = new_paragraph_ids[0]
         para2 = paragraph_to_split.copy()
+        para2.paragraph_id = new_paragraph_ids[2]
 
         para1.elem_ops = []
         para2.elem_ops = []
@@ -637,7 +696,175 @@ class Paragraph:
                     # if not (elem_op.belong_to_operation in para2.operations):
                     #     para2.operations.append(elem_op.belong_to_operation)
 
-        return para1, para2
+        if return_new_line_paragraph_id:
+            return para1, para2, new_paragraph_ids[1]
+        else:
+            return para1, para2
+
+    @classmethod
+    def compute_para_id(cls, relation, reference_id1=None, reference_id2=None):
+        def compute_new_end_chars(end_chars):
+            """Used when splitting
+            For example, it makes it possible to use suffixes 0.D, 0.E, 0.F
+            instead of 0.C.A, 0.C.B, 0.C.C
+            """
+            assert len(end_chars)
+            char_increments = [1,2,3]
+
+            def int2base(x, base, c_digs=None):
+                if c_digs is None:
+                    digs = [chr(i) for i in range(ord('A'), ord('Z')+1)]
+                else:
+                    digs = c_digs
+
+                digits = []
+                while x:
+                    digits.append(digs[int(x % base)])
+                    x = int(x / base)
+                digits.reverse()
+                return ''.join(digits)
+
+            # Represent as number
+            base = ord('Z') - ord('A') + 1
+            offset_char_int = ord('A')
+            int_representation = sum([
+                base ** idx * (ord(c) - offset_char_int)
+                for idx, c in enumerate(end_chars[::-1])])
+
+            new_int_representations = [int_representation + ci
+                                       for ci in char_increments]
+            return [int2base(nir, base)
+                    for nir in new_int_representations]
+
+
+        split_suffixes_init = ["A", "B", "C"]
+        split_suffix = "."
+        after_suffix = "_"
+
+        # After many operations the ID may become incredibly long.
+        # One quick fix is to generate a random number and use it instead.
+        # of the ID that we would use otherwise
+        random_id = ''.join(random.choice(string.digits)
+                       for _ in range(int(config.max_len_id / 2)))
+
+        if relation == "insert_before":
+            assert reference_id1 is not None
+            if len(reference_id1) > config.max_len_id:
+                return random_id
+
+            for first_number_idx, c in enumerate(reference_id1):
+                if c.isdigit():
+                    break
+            last_number_idx = first_number_idx
+            while reference_id1[last_number_idx].isdigit():
+                last_number_idx += 1
+                if last_number_idx == len(reference_id1):
+                    break
+
+            if (first_number_idx > 0 and
+                reference_id1[first_number_idx - 1] == "-"):
+                # The number is negative, so we include the sign
+                first_number_idx -= 1
+
+            paragraph_id_number_int = int(
+                reference_id1[first_number_idx:last_number_idx])
+
+            return str(paragraph_id_number_int - 1)
+
+        elif relation == "insert_after":
+            assert reference_id1 is not None
+            if len(reference_id1) > config.max_len_id:
+                return random_id
+
+            # We check if the reference_id ends in "_" followed by an int
+            after_suffix_idx = reference_id1.rfind(after_suffix)
+            paragraph_id_number = reference_id1[after_suffix_idx + 1:]
+            try:
+                paragraph_id_number_int = int(paragraph_id_number)
+            except:
+                # It does not end in "_" followed by an int
+                # which is equivalent to not having "_" in the id at all
+                after_suffix_idx = -1
+            if after_suffix_idx == -1:
+                return reference_id1 + after_suffix + "0"
+            else:
+                return (reference_id1[:after_suffix_idx + 1] +
+                        str(paragraph_id_number_int + 1))
+
+        elif relation == "insert_between":
+            assert reference_id1 is not None and reference_id2 is not None
+            if (len(reference_id1) > config.max_len_id or
+                len(reference_id2) > config.max_len_id):
+                return random_id
+            # Same as for "insert_after":
+            after_suffix_idx = reference_id1.rfind(after_suffix)
+            after_paragraph_id_number = reference_id1[after_suffix_idx + 1:]
+            try:
+                after_paragraph_id_number_int = int(after_paragraph_id_number)
+            except:
+                # It does not end in "_" followed by an int
+                # which is equivalent to not having "_" in the id at all
+                after_suffix_idx = -1
+            # Now for before:
+            before_suffix_idx = reference_id2.rfind(after_suffix)
+            before_paragraph_id_number = reference_id2[before_suffix_idx + 1:]
+            try:
+                before_paragraph_id_number_int = int(before_paragraph_id_number)
+            except:
+                # It does not end in "_" followed by an int
+                # which is equivalent to not having "_" in the id at all
+                before_suffix_idx = -1
+
+            if (before_suffix_idx != -1 and after_suffix_idx != -1 and
+                reference_id1[:after_suffix_idx] == reference_id2[:before_suffix_idx]):
+                # e.g. insert between 0 and 1 => 0_1
+                return reference_id1 + after_suffix + "0"
+            elif (before_suffix_idx != -1 and after_suffix_idx != -1 and
+                reference_id2[:before_suffix_idx] == reference_id1[:before_suffix_idx]):
+                # e.g. insert between 0_1_1 and 0_2 => 0_1_2
+                return (reference_id1[:after_suffix_idx + 1] +
+                        str(after_paragraph_id_number_int + 1))
+            elif (before_suffix_idx != -1 and after_suffix_idx != -1 and
+                reference_id2[:after_suffix_idx] == reference_id1[:after_suffix_idx]):
+                # e.g. insert between 0_1 and 0_1_1 => 0_1_0
+                return (reference_id2[:before_suffix_idx + 1] +
+                        str(before_paragraph_id_number_int - 1))
+            elif len(reference_id1) <= len(reference_id2):
+                return reference_id1 + after_suffix + "0"
+            else:
+                return reference_id2 + after_suffix + "-1"
+
+        elif relation == "initial":
+            return "0"
+
+        elif relation == "merge":
+            assert reference_id1 is not None and reference_id2 is not None
+            if (len(reference_id1) > config.max_len_id or
+                len(reference_id2) > config.max_len_id):
+                return ""
+            return "({}+{})".format(reference_id1, reference_id2)
+
+        elif relation == "split":
+            assert reference_id1 is not None
+            if len(reference_id1) > config.max_len_id:
+                return [random_id + split_suffix + suf
+                        for suf in split_suffixes_init]
+
+            # See if reference_id1 finishes in "." followed by letters
+            # We check if the reference_id ends in "_" followed by an int
+            split_suffix_idx = reference_id1.rfind(split_suffix)
+            end_chars = reference_id1[split_suffix_idx + 1:]
+            if (split_suffix_idx != -1 and
+                end_chars.isalpha() and
+                end_chars.isupper()):
+                # Instead of using A, B and C we use the corresponding ones
+                new_end_chars = compute_new_end_chars(end_chars)
+                return [reference_id1[:split_suffix_idx + 1] + suf
+                        for suf in new_end_chars]
+
+            else:
+                return [reference_id1 + split_suffix + suf
+                        for suf in split_suffixes_init]
 
     def __lt__(self, other):
         return self.abs_position < other.abs_position
