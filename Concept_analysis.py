@@ -32,7 +32,7 @@ from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from collections import OrderedDict
 import gensim.models as g
-import numpy as np
+import pandas as pd
 
 list_of_elem_ops_per_pad = dict()
 elemOpsCounter = 0
@@ -57,13 +57,16 @@ for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
 
             for pad_name, pad_vals in list_of_elem_ops_per_main.items():
                 list_of_elem_ops_per_pad[pad_name + filename[-7:-4]] = pad_vals
-        break
 
 pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,##  pads with all the operations
                                                                              config.maximum_time_between_elem_ops)
 
-
+outputDistance = {}
+outputSimilarity = {}
+outputText = {}
+i = 0
 for pad_name in pads:
+    i +=1
 
     paraTextPerPad = {}
     elemOpsCounter += len(elem_ops_treated[pad_name])
@@ -82,17 +85,26 @@ for pad_name in pads:
     pad.PreprocessOperationByAuthor()
     AuthorOperation = pad.AuthorOperation
     AuthorTimeStamp = pad.AuthorTimeStamp
-    pad.BuildWindowOperation()
+    pad.BuildWindowOperation(60000)
     pad.getTextByWin(m,start_alpha,infer_epoch)
     pad.computeDistance()
-    pad.PlotLengthOperationTime()
-
-    print(1)
-
-
-
-
-
+    #pad.PlotLengthOperationTime()
+    outputDistance[pad_name]=pad.distance
+    outputSimilarity[pad_name] = pad.similarity
+    outputText[pad_name] = pad.WindowOperationText
+    print(i)
+    # a = pd.DataFrame(outputDistance)
+    # b = pd.DataFrame(outputText)
+    # print(1)
+outputTextDF = pd.DataFrame(outputText).fillna("No text!")
+outputTextDF  = outputTextDF.T
+outputTextDF.to_csv('Text1.csv', encoding='utf-8')
+outputDistanceDF= pd.DataFrame(outputDistance).fillna(0)
+outputDistanceDF = outputDistanceDF.T
+outputDistanceDF.to_csv('Distance1.csv',float_format='%.2f',encoding='utf-8')
+outputSimilarityDF= pd.DataFrame(outputSimilarity).fillna(0)
+outputSimilarityDF = outputSimilarityDF.T
+outputSimilarityDF.to_csv('similarity1.csv',float_format='%.2f',encoding='utf-8')
 
 
 

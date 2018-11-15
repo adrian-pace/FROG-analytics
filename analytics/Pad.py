@@ -1,8 +1,11 @@
+from scipy import spatial
+
 from analytics import operation_builder
 from analytics.Operations import ElementaryOperation, Paragraph, Operation
 import numpy as np
 import config
 import matplotlib.pyplot as plt
+import nltk
 
 def get_colors():
     colors = []
@@ -41,6 +44,8 @@ class Pad:
         self.startTime = float('inf')
         self.windowOperation = {}
         self.distance={}
+        self.similarity = {}
+        self.WindowOperationText={}
         """:type: list[Paragraph]"""
 
     ###############################
@@ -1117,8 +1122,8 @@ class Pad:
     def BuildWindowOperation(self,timeInterval=100000):
         i = 1
         for op in self.operations:
-            if op.author=='Etherpad_admin':
-                continue
+            # if op.author=='Etherpad_admin':
+            #     continue
             differenceTime = op.timestamp_end-self.startTime
             while(differenceTime>timeInterval*i):
                 i +=1
@@ -1156,14 +1161,17 @@ class Pad:
                 text1 = self.windowOperation[groupNum][0].text
                 text2 = self.windowOperation[groupNum][1].text
 
-                self.distance[groupNum]  = np.linalg.norm(self.windowOperation[groupNum][0].textVector-self.windowOperation[groupNum][1].textVector)
+                # self.distance[groupNum]  = [np.linalg.norm(self.windowOperation[groupNum][0].textVector-self.windowOperation[groupNum][1].textVector),text1,text2]
+                dis = round(np.linalg.norm(
+                     self.windowOperation[groupNum][0].textVector - self.windowOperation[groupNum][1].textVector),3)
 
+                similar = 1-spatial.distance.cosine(self.windowOperation[groupNum][0].textVector , self.windowOperation[groupNum][1].textVector)
+                if dis<0.2:
+                    dis=0
+                self.distance[groupNum] = dis
+                self.similarity[groupNum] = similar
 
-
-
-
-
-
+                self.WindowOperationText[groupNum] = ["-----user1:-----"+text1,"-----user2-----"+text2]
 
 
 
