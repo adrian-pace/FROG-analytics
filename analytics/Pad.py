@@ -41,6 +41,10 @@ class Pad:
 
         self.AuthorOperation= {}
         self.AuthorTimeStamp = {}
+        self.AuthorVectors = {}
+        self.AuthorText = {}
+        self.AuthorDistance ={}
+        self.AuthorSimilarity = {}
         self.startTime = float('inf')
         self.windowOperation = {}
         self.distance={}
@@ -1084,8 +1088,10 @@ class Pad:
         return text
 
 
-    def PreprocessOperationByAuthor(self,timeInterval=120):
+    def PreprocessOperationByAuthor(self,compute_vector=False,model=None,start_alpha=None,infer_epoch=None):
         for op in self.operations:
+            if op.author=="Etherpad_admin":
+                continue
             if op.author not in self.AuthorOperation.keys():
                 self.AuthorOperation[op.author] = [op]
             else:
@@ -1095,6 +1101,70 @@ class Pad:
                 self.AuthorTimeStamp[op.author] = [[op.timestamp_start, op.timestamp_end]]
             else:
                 self.AuthorTimeStamp[op.author].append([op.timestamp_start, op.timestamp_end])
+        PadText = self.get_text()
+        PadVec = model.infer_vector(PadText, alpha=start_alpha, steps=infer_epoch)
+        self.AuthorVectors["pad"] = PadVec
+        self.AuthorText["pad"] = PadText
+        if compute_vector==True:
+            authorNum=0
+            for author in self.authors:
+                if author!="Etherpad_admin":
+                    authorNum+=1
+                    authorText = self.get_text_by_author(author)
+                    authorVec = model.infer_vector(authorText, alpha=start_alpha, steps=infer_epoch)
+                    self.AuthorVectors[author] = authorVec
+                    self.AuthorText[authorNum] = authorText
+            AuthorList = list(self.AuthorVectors.keys())
+            for i in range(len(AuthorList)-1):
+                for j in range(i+1,len(AuthorList)):
+                    author1 = AuthorList[i]
+                    author2  = AuthorList[j]
+                    if AuthorList[i]=='pad':
+                        Author1 = 'pad'
+                        Author2 = str(j)
+                    elif AuthorList[j]=='pad':
+                        Author2 = 'pad'
+                        Author1 = str(i)
+                    else:
+                        Author2 = str(j)
+                        Author1 = str(i)
+
+                    self.AuthorDistance[Author1+' VS '+Author2] = np.linalg.norm(
+                     self.AuthorVectors[author1]- self.AuthorVectors[author2])
+
+                    self.AuthorSimilarity[Author1 + ' VS ' + Author2] = 1 - spatial.distance.cosine(self.AuthorVectors[author1],
+                                                              self.AuthorVectors[author2])
+
+
+    def get_text_by_author(self,author):
+        elemOps=[]
+        AuthorOperation = self.AuthorOperation[author]
+        for op in AuthorOperation:
+            elemOps.extend(op.elem_ops)
+        elemOps = ElementaryOperation.sort_elem_ops(elemOps)
+        text = ""
+        for elem_id, elem_op in enumerate(elemOps):
+            if elem_id == 0:
+                start_position = elem_op.abs_position
+            position = elem_op.abs_position - start_position
+            if elem_op.operation_type == 'add':
+                # We add to the end of the ext
+                if ('*' in elem_op.text_to_add or '*' in text or
+                        len(elemOps) - 1 == elem_id):
+                    pass
+                if len(text) == position:
+                    text += elem_op.text_to_add
+                else:
+                    text = (text[:position] +
+                            elem_op.text_to_add +
+                            text[position:])
+            elif elem_op.operation_type == 'del':
+                text = (text[:position] +
+                        text[position +
+                             elem_op.length_to_delete:])
+            else:
+                raise AttributeError("Undefined elementary operation")
+        return text
 
 
 
@@ -1122,36 +1192,44 @@ class Pad:
     def BuildWindowOperation(self,timeInterval=100000):
         i = 1
         for op in self.operations:
-            # if op.author=='Etherpad_admin':
-            #     continue
+            if op.author=='Etherpad_admin':
+                continue
             differenceTime = op.timestamp_end-self.startTime
             while(differenceTime>timeInterval*i):
+                ## last window is finished then we need to sort the operation
+                if self.windowOperation.keys() and i in self.windowOperation.keys():
+                    for win in self.windowOperation[i]:
+                        win.generateElemOps()
+                    self.windowOperation[i].sort(key=self.windowSort)
                 i +=1
-            tmpWindowOperation = WindowOperation(i,op.author,[op],self.startTime,timeInterval)
-            if i not in self.windowOperation.keys():
+            tmpWindowOperation = WindowOperation(i,op.author,[op],timeInterval)
+            if i not in self.windowOperation.keys(): ## the
                 self.windowOperation[i] = [tmpWindowOperation]
 
             elif tmpWindowOperation in self.windowOperation[i]:
                 self.windowOperation[i][self.windowOperation[i].index(tmpWindowOperation)].addOperation(op)
-
             else:
                 self.windowOperation[i].append(tmpWindowOperation)
 
 
-
-
     def getTextByWin(self, model,start_alpha,infer_epoch):
-        """
-        Return a string with the whole text
-
-        :param until_timestamp:
-        :return: the text written so far on the pad
-        :rtype: str
-        """
+        endTimeWinList = [0.0] # used to store the last window end time in order to recover the text
+        endTime = 0.0
+        t = 0
         for groupNum in self.windowOperation.keys():
+            if endTimeWinList[-1] ==0.0:
+                endTimeWinList[-1] = self.windowOperation[groupNum][0].startTime
+            allTextBefore = self.get_text(endTimeWinList[-1])
+            lastWinVec = model.infer_vector(allTextBefore, alpha=start_alpha, steps=infer_epoch)
             for winOp in self.windowOperation[groupNum]:
-                winOp.generateElemOps()
-                winOp.createWindowText(model,start_alpha,infer_epoch)
+                winOp.createWindowText(model,start_alpha,infer_epoch,allTextBefore,lastWinVec)
+                print(t)
+                t +=1
+                if endTime<winOp.endTime:
+                    endTime = winOp.endTime
+            endTimeWinList.append(endTime)
+
+
 
     def computeDistance(self):
         for groupNum in self.windowOperation.keys():
@@ -1165,7 +1243,7 @@ class Pad:
                 dis = round(np.linalg.norm(
                      self.windowOperation[groupNum][0].textVector - self.windowOperation[groupNum][1].textVector),3)
 
-                similar = 1-spatial.distance.cosine(self.windowOperation[groupNum][0].textVector , self.windowOperation[groupNum][1].textVector)
+                similar = 1-spatial.distance.cosine(self.windowOperation[groupNum][0].textVector, self.windowOperation[groupNum][1].textVector)
                 if dis<0.2:
                     dis=0
                 self.distance[groupNum] = dis
@@ -1173,61 +1251,66 @@ class Pad:
 
                 self.WindowOperationText[groupNum] = ["-----user1:-----"+text1,"-----user2-----"+text2]
 
+    def windowSort(self,win):
+        return win.startTime
+    def operationSort(self,op):
+        return op.timestamp_start
 
 
-
-    # def ComputeDictance(self):
 class WindowOperation:
-    def __init__(self,group,author,ops,startTime,timeInterval=1000000):
-        self.group = group
+    def __init__(self,groupNum,author,ops,timeInterval=1000000):
+        self.groupNum = groupNum
         self.author = author
         self.operations = ops
         self.elemOps = []
-        self.startTime = startTime
+        self.startTime =  float('inf')
         self.timeInterval = timeInterval
         self.text = ''
         self.textVector=[]
+        self.endTime = 0.0
 
 
     def addOperation(self,op):
         self.operations.append(op)
 
     def generateElemOps(self):
+        ## used to sort the elem_operation
+        ## and define the end time of the window
         for op in self.operations:
+            if self.endTime<op.timestamp_end:
+                self.endTime= op.timestamp_end
+            if self.startTime>op.timestamp_start:
+                self.startTime = op.timestamp_start
             self.elemOps.extend(op.elem_ops)
         self.elemOps = ElementaryOperation.sort_elem_ops(self.elemOps)
 
 
     def __eq__(self, other):
 
-        return (self.author==other.author) and (self.group==other.group)
+        return (self.author==other.author) and (self.groupNum==other.groupNum)
 
 
-    def createWindowText(self,model,start_alpha,infer_epoch):
+    def createWindowText(self,model,start_alpha,infer_epoch,allTextBefore,lastWinVec):
         elem_ops_ordered = self.elemOps
-        elem_ops_ordered = ElementaryOperation.sort_elem_ops(elem_ops_ordered)
-        text = ""
+        text = allTextBefore
         for elem_id, elem_op in enumerate(elem_ops_ordered):
-            if elem_id == 0:
-                start_position = elem_op.abs_position
-            position = elem_op.abs_position - start_position
             if elem_op.operation_type == 'add':
-                # We add to the end of the ext
                 if ('*' in elem_op.text_to_add or '*' in text or
                         len(elem_ops_ordered) - 1 == elem_id):
                     pass
-                if len(text) == position:
+                if len(text) == elem_op.abs_position:
                     text += elem_op.text_to_add
                 else:
-                    text = (text[:position] +
+                    text = (text[:elem_op.abs_position] +
                             elem_op.text_to_add +
-                            text[position:])
+                            text[elem_op.abs_position:])
             elif elem_op.operation_type == 'del':
-                text = (text[:position] +
-                        text[position +
+                text = (text[:elem_op.abs_position] +
+                        text[elem_op.abs_position +
                              elem_op.length_to_delete:])
-            else:
-                raise AttributeError("Undefined elementary operation")
         self.text = text
-        self.textVector =  model.infer_vector(text, alpha=start_alpha, steps=infer_epoch)
+        if len(self.elemOps)!=0:
+            self.textVector =  model.infer_vector(text, alpha=start_alpha, steps=infer_epoch)-lastWinVec
+        else:
+            self.textVector = 0
 

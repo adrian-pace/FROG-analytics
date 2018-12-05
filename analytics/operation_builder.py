@@ -174,6 +174,7 @@ def build_operations_from_elem_ops(
 
         # Keep track of the the last operations to which we could maybe add
         # the next elementary operations
+        pad.operations.sort(key=pad.operationSort)
         pads[pad_name] = pad
         dic_author_current_operations_per_pad[pad_name] = dic_author_current_operations
 

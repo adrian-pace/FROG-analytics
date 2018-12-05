@@ -43,7 +43,6 @@ model = 'pre_modle/doc2vec/doc2vec.bin'
 m = g.Doc2Vec.load(model)
 start_alpha=0.01
 infer_epoch=1000
-
 for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
     for filename in filenames:
         if '.sql' in filename:
@@ -57,9 +56,10 @@ for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
 
             for pad_name, pad_vals in list_of_elem_ops_per_main.items():
                 list_of_elem_ops_per_pad[pad_name + filename[-7:-4]] = pad_vals
-
+        break
 pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,##  pads with all the operations
                                                                              config.maximum_time_between_elem_ops)
+
 
 outputDistance = {}
 outputSimilarity = {}
@@ -67,7 +67,8 @@ outputText = {}
 i = 0
 for pad_name in pads:
     i +=1
-
+    if i==200:
+        break
     paraTextPerPad = {}
     elemOpsCounter += len(elem_ops_treated[pad_name])
     pad = pads[pad_name]
@@ -82,30 +83,34 @@ for pad_name in pads:
     for para in paras:
         para.create_para_text()
     author_context = []
-    pad.PreprocessOperationByAuthor()
-    AuthorOperation = pad.AuthorOperation
-    AuthorTimeStamp = pad.AuthorTimeStamp
+
+    #------below is used to computer different author context#
+    # pad.PreprocessOperationByAuthor(compute_vector=True,model=m,start_alpha=start_alpha,infer_epoch=infer_epoch)
+    # outputDistance[pad_name] = pad.AuthorDistance
+    # outputSimilarity[pad_name] = pad.AuthorSimilarity
+    # outputText[pad_name] = pad.AuthorText
+
+    # ----bellow is compute the window-based author context
     pad.BuildWindowOperation(60000)
     pad.getTextByWin(m,start_alpha,infer_epoch)
     pad.computeDistance()
-    #pad.PlotLengthOperationTime()
+    pad.PlotLengthOperationTime()
     outputDistance[pad_name]=pad.distance
     outputSimilarity[pad_name] = pad.similarity
     outputText[pad_name] = pad.WindowOperationText
-    print(i)
-    # a = pd.DataFrame(outputDistance)
-    # b = pd.DataFrame(outputText)
-    # print(1)
+
+    print("------%d",i)
+
+
 outputTextDF = pd.DataFrame(outputText).fillna("No text!")
 outputTextDF  = outputTextDF.T
-outputTextDF.to_csv('Text1.csv', encoding='utf-8')
+outputTextDF.to_csv('Text2.csv', encoding='utf-8')
 outputDistanceDF= pd.DataFrame(outputDistance).fillna(0)
 outputDistanceDF = outputDistanceDF.T
-outputDistanceDF.to_csv('Distance1.csv',float_format='%.2f',encoding='utf-8')
+outputDistanceDF.to_csv('Distance2.csv',float_format='%.2f',encoding='utf-8')
 outputSimilarityDF= pd.DataFrame(outputSimilarity).fillna(0)
 outputSimilarityDF = outputSimilarityDF.T
-outputSimilarityDF.to_csv('similarity1.csv',float_format='%.2f',encoding='utf-8')
-
+outputSimilarityDF.to_csv('similarity2.csv',float_format='%.2f',encoding='utf-8')
 
 
 # list_of_elem_ops_per_main  = get_elem_ops_per_pad_from_db(editor='MySQL')
