@@ -1,5 +1,5 @@
 from analytics import operation_builder
-from analytics.Operations import ElementaryOperation, Paragraph, Operation
+from analytics.Operations import ElementaryOperation, Paragraph, SuperParagraph, Operation
 import config
 import numpy as np
 import warnings
@@ -25,7 +25,7 @@ class Pad:
         :param pad_name:  name of the new pad
         :param pad_name:  name of the new pad
         """
-
+        self.counter=0 #print()
         self.authors = []
         """:type: list[str]"""
 
@@ -36,8 +36,12 @@ class Pad:
 
         self.paragraphs = []
         """:type: list[Paragraph]"""
+
         self.all_paragraphs = [] # All paragraphs that have ever been added
         """:type: list[Paragraph]"""
+
+        self.superparagraphs = []
+        """:type: list[SuperParagraph]"""
 
     ###############################
     # Complete content of the Pad
@@ -87,6 +91,427 @@ class Pad:
         else:
             return -1
 
+    def delete_paragraphs(self, idx, abs_idx=None, action="just_delete"):
+        found_superpara = None
+        if abs_idx is not None:
+            self.all_paragraphs[abs_idx].is_deleted = True
+
+        # If "just_delete", then we deleted the paragraph
+        # otherwise, we splitted it into three
+        length_change = (-1) if action == "just_delete" else 2
+        remove_first = False
+        remove_last = False
+
+        for sidx, superpara in enumerate(self.superparagraphs):
+            if (idx >= superpara.start and
+                idx < superpara.start + superpara.length):
+                # This is the superpara involved
+                if idx == superpara.start:
+                    remove_first = True
+                elif idx == superpara.start + superpara.length - 1:
+                    remove_last = True
+                superpara.length = superpara.length + length_change
+                found_superpara = sidx
+
+            elif (found_superpara is not None and
+                idx < superpara.start):
+                # Next superparas start one before
+                superpara.start = superpara.start + length_change
+
+        if action=="just_delete":
+            if self.paragraphs[idx].new_line:
+                if (self.superparagraphs[found_superpara].new_line and
+                    self.superparagraphs[found_superpara].length == 1):
+                    if (found_superpara > 0 and
+                        found_superpara < len(self.superparagraphs) - 1):
+                        assert(not self.superparagraphs[found_superpara - 1].new_line)
+                        assert(not self.superparagraphs[found_superpara + 1].new_line)
+                        # Combine with the previous and next superparas
+                        superpara_id = Paragraph.compute_para_id(
+                            "merge",
+                            self.superparagraphs[found_superpara - 1].id,
+                            self.superparagraphs[found_superpara + 1].id)
+                        assert superpara_id!=""
+                        self.superparagraphs[found_superpara - 1].id = superpara_id
+                        self.superparagraphs[found_superpara - 1].length = (
+                            self.superparagraphs[found_superpara - 1].length +
+                            self.superparagraphs[found_superpara].length +
+                            self.superparagraphs[found_superpara + 1].length)
+
+                        # Delete the extra superparas
+                        del self.superparagraphs[found_superpara]
+                        del self.superparagraphs[found_superpara]
+
+                    elif found_superpara > 0:
+                        assert(not self.superparagraphs[found_superpara - 1].new_line)
+                        # Combine with previous superpara
+                        self.superparagraphs[found_superpara - 1].length = (
+                            self.superparagraphs[found_superpara - 1].length +
+                            self.superparagraphs[found_superpara].length)
+                        # Delete it
+                        del self.superparagraphs[found_superpara]
+
+                    elif found_superpara < len(self.superparagraphs) - 1:
+                        assert(not self.superparagraphs[found_superpara + 1].new_line)
+                        # Combine with next superpara
+                        self.superparagraphs[found_superpara + 1].length = (
+                            self.superparagraphs[found_superpara].length +
+                            self.superparagraphs[found_superpara + 1].length)
+                        self.superparagraphs[found_superpara + 1].start = self.superparagraphs[found_superpara].start
+                        # Delete it
+                        del self.superparagraphs[found_superpara]
+
+                    else:
+                        # Turn into non-newline superpara
+                        self.superparagraphs[found_superpara].new_line = False
+
+                if (found_superpara < len(self.superparagraphs) and
+                    self.superparagraphs[found_superpara].length == 0):
+                    assert(not self.superparagraphs[found_superpara].new_line)
+                    del self.superparagraphs[found_superpara]
+            else:
+                combined = False
+                if (self.superparagraphs[found_superpara].length == 0):
+                    if (found_superpara > 0 and found_superpara < len(self.superparagraphs) - 1):
+                        assert(self.superparagraphs[found_superpara - 1].new_line)
+                        assert(self.paragraphs[idx - 1].new_line)
+                        # Combine and delete
+                        self.superparagraphs[found_superpara - 1].length = (
+                            self.superparagraphs[found_superpara - 1].length +
+                            self.superparagraphs[found_superpara + 1].length)
+                        del self.superparagraphs[found_superpara + 1]
+                    del self.superparagraphs[found_superpara]
+                    combined = True
+
+                elif (self.superparagraphs[found_superpara].length == 1):
+                    if remove_first:
+                        # I removed the first paragraph
+                        assert(self.paragraphs[idx + 1].new_line)
+                        if found_superpara > 0:
+                            assert(self.superparagraphs[found_superpara - 1].new_line)
+                            # Combine and delete
+                            self.superparagraphs[found_superpara - 1].length = self.superparagraphs[found_superpara - 1].length + 1
+                            del self.superparagraphs[found_superpara]
+                            combined = True
+                    else:
+                        # I removed the last paragraph
+                        assert(remove_last)
+                        assert(self.paragraphs[idx - 1].new_line)
+                        if found_superpara < len(self.superparagraphs) - 1:
+                            assert(self.superparagraphs[found_superpara + 1].new_line)
+                            # Combine and delete
+                            self.superparagraphs[found_superpara + 1].length = self.superparagraphs[found_superpara + 1].length + 1
+                            self.superparagraphs[found_superpara + 1].start = self.superparagraphs[found_superpara + 1].start - 1
+                            del self.superparagraphs[found_superpara]
+                            combined = True
+
+                elif (self.superparagraphs[found_superpara].length == 2):
+                    if remove_first:
+                        assert(not self.paragraphs[idx + 2].new_line)
+                    elif remove_last:
+                        assert(not self.paragraphs[idx - 2].new_line)
+                    else:
+                        assert(self.paragraphs[idx - 1].new_line)
+                        assert(self.paragraphs[idx - 1].new_line)
+
+                    if not (remove_first or remove_last):
+                        self.superparagraphs[found_superpara].new_line = True
+
+                if not combined and (self.superparagraphs[found_superpara].length > 2 or
+                    (self.superparagraphs[found_superpara].length == 2 and
+                        (remove_first or remove_last))):
+                    if remove_first:
+                        # Check if need to combine with prev newlines
+                        if found_superpara > 0:
+                            assert(self.superparagraphs[found_superpara - 1].new_line)
+                            # Combine newline with previous superpara
+                            self.superparagraphs[found_superpara - 1].length = (
+                                self.superparagraphs[found_superpara - 1].length + 1)
+                            self.superparagraphs[found_superpara].length = (
+                                self.superparagraphs[found_superpara].length - 1)
+                            self.superparagraphs[found_superpara].start = (
+                                self.superparagraphs[found_superpara].start + 1)
+
+                    elif remove_last:
+                        # Check if need to combine with next newlines
+                        if found_superpara < len(self.superparagraphs) - 1:
+                            assert(self.superparagraphs[found_superpara + 1].new_line)
+                            # Combine with next superpara
+                            self.superparagraphs[found_superpara + 1].length = (
+                                self.superparagraphs[found_superpara + 1].length + 1)
+                            self.superparagraphs[found_superpara + 1].start = (
+                                self.superparagraphs[found_superpara + 1].start - 1)
+                            self.superparagraphs[found_superpara].length = (
+                                self.superparagraphs[found_superpara].length - 1)
+
+                    elif (self.paragraphs[idx - 1].new_line and
+                        self.paragraphs[idx + 1].new_line):
+                        sp_start1 = self.superparagraphs[found_superpara].start
+                        sp_length1 = idx - 1 - self.superparagraphs[found_superpara].start
+                        sp_start2 = sp_start1 + sp_length1 + 2
+                        sp_length2 = self.superparagraphs[found_superpara].length - sp_length1 - 2
+                        new_ids = Paragraph.compute_para_id("split", self.superparagraphs[found_superpara].id)
+                        if sp_length1 > 0 and sp_length2 > 0:
+                            self.superparagraphs[found_superpara].start = sp_start2
+                            self.superparagraphs[found_superpara].length = sp_length2
+                            self.superparagraphs[found_superpara].id = new_ids[1]
+                            new_super_para = SuperParagraph(
+                                sp_start1, sp_length1, False, new_ids[0])
+                            new_super_para_nl = SuperParagraph(
+                                sp_start1 + sp_length1, 2, True, 'x')
+                            self.superparagraphs.insert(found_superpara, new_super_para_nl)
+                            self.superparagraphs.insert(found_superpara, new_super_para)
+                        elif sp_length1 > 0:
+                            assert (self.superparagraphs[found_superpara].length - 2 == sp_length1)
+                            self.superparagraphs[found_superpara].length = sp_length1
+                            new_super_para_nl = SuperParagraph(
+                                sp_start1 + sp_length1, 2, True, 'x')
+                            self.superparagraphs.insert(found_superpara + 1, new_super_para_nl)
+                        elif sp_length2 > 0:
+                            assert (self.superparagraphs[found_superpara].length - 2 == sp_length2)
+                            assert (self.superparagraphs[found_superpara].start + 2 == sp_start2)
+                            self.superparagraphs[found_superpara].start = sp_start2
+                            self.superparagraphs[found_superpara].length = sp_length2
+                            new_super_para_nl = SuperParagraph(
+                                sp_start1 + sp_length1, 2, True, 'x')
+                            self.superparagraphs.insert(found_superpara, new_super_para_nl)
+                        else:
+                            # Should not happen
+                            assert(0==1)
+                    else:
+                        # Special case when removing many paras one after the other
+                        pass
+
+        del self.paragraphs[idx]
+
+    def insert_paragraphs(self, idx, para):
+        if len(self.superparagraphs) == 0:
+            new_super_para = SuperParagraph(0, 1, False,
+                Paragraph.compute_para_id("initial"))
+            self.superparagraphs.append(new_super_para)
+        else:
+            found_superpara = None
+            for sidx, superpara in enumerate(self.superparagraphs):
+                if (found_superpara is not None):
+                    # Next superparas need to start after
+                    superpara.start = superpara.start + 1
+                elif (idx > superpara.start and
+                    idx < superpara.start + superpara.length):
+                    if not (para.new_line or superpara.new_line):
+                        assert(para.new_line or superpara.new_line)
+                    # This is the superpara involved
+                    superpara.length = superpara.length + 1
+                    found_superpara = sidx
+                elif (superpara.new_line and para.new_line and
+                    (idx == superpara.start or
+                        idx == superpara.start + superpara.length)):
+                    # This is the superpara involved
+                    superpara.length = superpara.length + 1
+                    found_superpara = sidx
+            if found_superpara is None:
+                # We didn't find the position
+                if idx == 0:
+                    if len(self.superparagraphs) >= 2:
+                        for superpara in self.superparagraphs[1:]:
+                            superpara.start = superpara.start + 1
+                    if para.new_line and not self.superparagraphs[0].new_line:
+                        if self.paragraphs[0].new_line:
+                            self.superparagraphs[0].start = self.superparagraphs[0].start + 2
+                            self.superparagraphs[0].length = self.superparagraphs[0].length - 1
+                            new_super_para = SuperParagraph(0, 2, True, 'x')
+                            self.superparagraphs.insert(0, new_super_para)
+                        else:
+                            self.superparagraphs[0].length = self.superparagraphs[0].length + 1
+                    elif not para.new_line and self.superparagraphs[0].new_line:
+                        self.superparagraphs[0].start = self.superparagraphs[0].start + 1
+                        new_super_para = SuperParagraph(0, 1, False,
+                            Paragraph.compute_para_id("?"))
+                        self.superparagraphs.insert(0, new_super_para)
+                    elif not para.new_line and not self.superparagraphs[0].new_line:
+                        assert(self.paragraphs[0].new_line)
+                        self.superparagraphs[0].length = self.superparagraphs[0].length + 1
+                    else:
+                        assert(0==1)
+                elif idx == len(self.paragraphs):
+                    if para.new_line and not self.superparagraphs[-1].new_line:
+                        if self.paragraphs[-1].new_line:
+                            self.superparagraphs[-1].length = self.superparagraphs[-1].length - 1
+                            new_super_para = SuperParagraph(
+                                self.superparagraphs[-1].start + self.superparagraphs[-1].length,
+                                2, True, 'x')
+                            self.superparagraphs.append(new_super_para)
+                        else:
+                            self.superparagraphs[-1].length = self.superparagraphs[-1].length + 1
+                    elif not para.new_line and self.superparagraphs[-1].new_line:
+                        new_super_para = SuperParagraph(
+                            self.superparagraphs[-1].start + self.superparagraphs[-1].length,
+                            1, False, Paragraph.compute_para_id("?"))
+                        self.superparagraphs.append(new_super_para)
+                    elif not para.new_line and not self.superparagraphs[-1].new_line:
+                        assert(self.paragraphs[-1].new_line)
+                        self.superparagraphs[-1].length = self.superparagraphs[-1].length + 1
+                    else:
+                        assert(0==1)
+                else:
+                    assert(0==1)
+            else:
+                if (self.superparagraphs[found_superpara].new_line and
+                    not para.new_line):
+                    # We need to change some superparas
+                    first1 = self.superparagraphs[found_superpara].start
+                    last1 = idx - 1
+                    len1 = last1 - first1 + 1
+                    first2 = idx
+                    len2 = self.superparagraphs[found_superpara].length - len1 - 1
+                    last2 = first2 + len2 - 1
+                    print(self.superparagraphs[found_superpara].length)
+                    print('b', first1, last1, len1, first2, last2, len2)
+
+                    if len1 >= 2 and len2 >= 2:
+                        # Superpara becomes 3 superparas
+                        new_super_para = SuperParagraph(
+                            idx, 1, False, Paragraph.compute_para_id("?"))
+                        new_super_para_nl = SuperParagraph(
+                            self.superparagraphs[found_superpara].start,
+                            len1, True, 'x')
+                        self.superparagraphs[found_superpara].start = idx + 1
+                        self.superparagraphs[found_superpara].length = len2
+                        self.superparagraphs.insert(found_superpara, new_super_para)
+                        self.superparagraphs.insert(found_superpara, new_super_para_nl)
+
+                    elif len1 >= 2:
+                        print('tis')
+                        # Superpara becomes 2 superparas
+                        if (len(self.superparagraphs) - 1 > found_superpara and
+                            not self.superparagraphs[found_superpara + 1].new_line):
+                            assert(not self.paragraphs[self.superparagraphs[found_superpara + 1].start - 1].new_line)
+                            # We merge with superpara afterwards
+                            self.superparagraphs[found_superpara + 1].start = idx
+                            self.superparagraphs[found_superpara + 1].length = (len2 + 1 +
+                                self.superparagraphs[found_superpara + 1].length)
+                            self.superparagraphs[found_superpara].length = len1
+
+                        else:
+                            # We dont merge with superpara afterwards
+                            new_super_para = SuperParagraph(
+                                idx, len2 + 1, False, Paragraph.compute_para_id("?"))
+                            self.superparagraphs[found_superpara].length = len1
+                            self.superparagraphs.insert(found_superpara + 1, new_super_para)
+
+                    elif len2 >= 2:
+                        # Superpara becomes 2 superparas
+                        if (found_superpara > 0 and
+                            not self.superparagraphs[found_superpara - 1].new_line):
+                            # We merge with previous superpara
+                            self.superparagraphs[found_superpara - 1].length = (len1 + 1 +
+                                self.superparagraphs[found_superpara - 1].length)
+                            self.superparagraphs[found_superpara].length = len2
+                            self.superparagraphs[found_superpara].start = idx + 1
+                        else:
+                            # We dont merge with previous superpara
+                            new_super_para = SuperParagraph(
+                                self.superparagraphs[found_superpara].start,
+                                len1 + 1, False, Paragraph.compute_para_id("?"))
+                            self.superparagraphs[found_superpara].length = len2
+                            self.superparagraphs[found_superpara].start = idx + 1
+                            self.superparagraphs.insert(found_superpara, new_super_para)
+
+                    else:
+                        # Superpara turns into a non-newline
+                        if (len(self.superparagraphs) - 1 > found_superpara and
+                            not self.superparagraphs[found_superpara + 1].new_line and
+                            found_superpara > 0 and
+                            not self.superparagraphs[found_superpara - 1].new_line):
+                            # We merge with superparas afterwards and previous
+                            self.superparagraphs[found_superpara - 1].length = (1 +
+                                self.superparagraphs[found_superpara - 1].length +
+                                len1 + len2 +
+                                self.superparagraphs[found_superpara + 1].length)
+                            print(self.superparagraphs[found_superpara - 1].id)
+                            new_sid = Paragraph.compute_para_id("merge",
+                                reference_id1=self.superparagraphs[found_superpara - 1].id,
+                                reference_id2=self.superparagraphs[found_superpara + 1].id)
+                            self.superparagraphs[found_superpara - 1].id = new_sid
+                            assert self.superparagraphs[found_superpara - 1].id!="",self.superparagraphs[found_superpara - 1].id
+                            del self.superparagraphs[found_superpara]
+                            del self.superparagraphs[found_superpara]
+
+                        elif (len(self.superparagraphs) - 1 > found_superpara and
+                            not self.superparagraphs[found_superpara + 1].new_line):
+                            assert(not self.paragraphs[self.superparagraphs[found_superpara + 1].start].new_line)
+                            # We merge with superpara afterwards
+                            self.superparagraphs[found_superpara + 1].length = (1 +
+                                self.superparagraphs[found_superpara + 1].length +
+                                len1 + len2)
+                            self.superparagraphs[found_superpara + 1].start = self.superparagraphs[found_superpara].start
+                            del self.superparagraphs[found_superpara]
+
+                        elif (found_superpara > 0 and
+                            not self.superparagraphs[found_superpara - 1].new_line):
+                            # We merge with previous superpara
+                            self.superparagraphs[found_superpara - 1].length = (1 +
+                                self.superparagraphs[found_superpara - 1].length +
+                                len1 + len2)
+                            del self.superparagraphs[found_superpara]
+
+                        else:
+                            # We do not merge with other paras
+                            self.superparagraphs[found_superpara].length = self.superparagraphs[found_superpara].length + 1
+                            self.superparagraphs[found_superpara].new_line = False
+                            self.superparagraphs[found_superpara].id = Paragraph.compute_para_id("?")
+
+                elif (not self.superparagraphs[found_superpara].new_line and
+                    para.new_line):
+                    # We need to change some superparas
+                    orig_id = self.superparagraphs[found_superpara].id
+                    new_ids = Paragraph.compute_para_id("split",orig_id)
+                    sp_start1 = self.superparagraphs[found_superpara].start
+                    sp_last1 = idx - 1
+                    sp_start2 = idx + 1
+
+                    if self.paragraphs[idx].new_line:
+                        sp_start2 = sp_start2 + 1
+                        sp_length1 = sp_last1 - sp_start1 + 1
+                        sp_length2 = self.superparagraphs[found_superpara].length - 2 - sp_length1
+                        print(idx, sp_start1, sp_length1, sp_start2, sp_length2)
+                    else:
+                        assert(self.paragraphs[idx - 1].new_line)
+                        sp_last1 = sp_last1 - 1
+                        sp_length1 = sp_last1 - sp_start1 + 1
+                        sp_length2 = self.superparagraphs[found_superpara].length - 2 - sp_length1
+
+                    new_super_para_nl = SuperParagraph(
+                        sp_start1 + sp_length1, 2, True, 'x')
+                    new_super_para = SuperParagraph(
+                        sp_start1, sp_length1, False, new_ids[0])
+                    self.superparagraphs[found_superpara].id = new_ids[1]
+                    self.superparagraphs[found_superpara].length = sp_length2
+                    self.superparagraphs[found_superpara].start = sp_start2
+
+                    if sp_length2 == 0:
+                        del self.superparagraphs[found_superpara]
+                        new_super_para.id = orig_id # Because we are not splitting
+                    self.superparagraphs.insert(found_superpara, new_super_para_nl)
+
+                    if sp_length1 == 0:
+                        self.superparagraphs[found_superpara + 1].id = orig_id # Because we are not splitting
+                    else:
+                        self.superparagraphs.insert(found_superpara, new_super_para)
+
+        self.paragraphs.insert(idx, para)
+
+    def get_superparagraph_id(self, idx, return_idx=False):
+        for sidx, superpara in enumerate(self.superparagraphs):
+            if (idx >= superpara.start and
+                idx < superpara.start + superpara.length):
+                break
+        else:
+            assert(0==1)
+        if not return_idx:
+            return superpara.id
+        else:
+            return superpara.id, sidx
+
     def create_paragraphs_from_ops(self, new_elem_ops_sorted):
         """
         Build the paragraphs for the pad based on the existing paragraphs
@@ -115,6 +540,36 @@ class Pad:
 
         # Look at each elem_op and assign it to a new/existing paragraph
         for elem_op in new_elem_ops_sorted:
+            extrainfo = elem_op.text_to_add.replace('\n','NL').replace('\r','#R#').replace('\t','#T#') if elem_op.operation_type == "add" else elem_op.length_to_delete
+            print(' * ', elem_op.operation_type, ": ", extrainfo, elem_op.abs_position, elem_op.timestamp, elem_op.author, "(", len(self.paragraphs), ")")
+
+            if type(extrainfo) == str:
+                assert extrainfo.find('#R#') == -1
+            if (extrainfo=='NL' and elem_op.abs_position==6553 and len(self.paragraphs)==159):
+                print()
+                print()
+                print("-------------------")
+                for p in self.superparagraphs:
+                    if p.new_line:
+                        print('o', p.id, p.start, p.length, p.start+p.length)
+                        for i in range(p.start, p.start+p.length):
+                            if self.paragraphs[i].new_line:
+                                print('\to', i)
+                            else:
+                                print('\t==', i)
+                        print("----")
+                    else:
+                        assert p.id!="" and p.id!="x",p.id
+                        print('==', p.id, p.start, p.length, p.start+p.length)
+                        for i in range(p.start, p.start+p.length):
+                            if self.paragraphs[i].new_line:
+                                print('\to', i)
+                            else:
+                                print('\t==', i)
+                        print("----")
+                print("-------------------")
+                print()
+                print()
             # From where we will change the paragraph indices
             # should be infinity but this is enough since we can't add more
             # than 2 paragraphs
@@ -122,7 +577,7 @@ class Pad:
 
             # If it is a new line, create a new paragraph and insert it at
             # the right place
-            if elem_op.operation_type == "add" and "\n\n" in elem_op.text_to_add:
+            if elem_op.operation_type == "add" and "\n" in elem_op.text_to_add:
                 # To which paragraph this op corresponds ?
                 para_it_belongs_to, number_new_lines = para_it_belongs(elem_op)
 
@@ -146,11 +601,13 @@ class Pad:
                         new_paragraph = Paragraph(elem_op, new_line=True,
                             paragraph_id=new_paragraph_id)
 
-                        self.paragraphs.insert(0, new_paragraph)
+                        self.insert_paragraphs(0, new_paragraph)
                         self.all_paragraphs.insert(0, new_paragraph)
 
                         elem_op.assign_para(2 * [[0]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
+                        elem_op.assign_superparagraph_id(
+                            self.get_superparagraph_id(0))
 
                         update_indices_from = 1
 
@@ -168,13 +625,15 @@ class Pad:
                         new_paragraph = Paragraph(elem_op, new_line=True,
                             paragraph_id=new_paragraph_id)
 
-                        self.paragraphs.append(new_paragraph)
+                        self.insert_paragraphs(len(self.paragraphs), new_paragraph)
                         self.all_paragraphs.append(new_paragraph)
 
                         elem_op.assign_para(2 *
                             [[len(self.paragraphs) - number_new_lines - 2,
                               len(self.paragraphs) - number_new_lines - 1]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
+                        elem_op.assign_superparagraph_id(
+                            self.get_superparagraph_id(len(self.paragraphs) - 1))
 
                     # Find where we should insert it
                     else:
@@ -202,12 +661,14 @@ class Pad:
                             paragraph_id=new_paragraph_id)
 
                         # Insert it
-                        self.paragraphs.insert(para_idx + 1, new_paragraph)
+                        self.insert_paragraphs(para_idx + 1, new_paragraph)
                         self.all_paragraphs.insert(para_idx_absolute + 1, new_paragraph)
 
                         elem_op.assign_para(2 * [[para_idx - number_new_lines,
                                             para_idx - number_new_lines + 1]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
+                        elem_op.assign_superparagraph_id(
+                            self.get_superparagraph_id(para_idx + 1))
 
                         update_indices_from = para_idx + 2
 
@@ -226,7 +687,7 @@ class Pad:
                     new_paragraph = Paragraph(elem_op, new_line=True,
                         paragraph_id=new_paragraph_id)
 
-                    self.paragraphs.insert(para_it_belongs_to, new_paragraph)
+                    self.insert_paragraphs(para_it_belongs_to, new_paragraph)
                     self.all_paragraphs.insert(para_it_belongs_to_absolute,
                                                new_paragraph)
 
@@ -234,6 +695,8 @@ class Pad:
                         [[para_it_belongs_to - number_new_lines - 1,
                             para_it_belongs_to - number_new_lines]])
                     elem_op.assign_paragraph_id(new_paragraph_id)
+                    elem_op.assign_superparagraph_id(
+                            self.get_superparagraph_id(para_it_belongs_to))
 
                     update_indices_from = para_it_belongs_to + 1
 
@@ -253,7 +716,7 @@ class Pad:
                     new_paragraph = Paragraph(elem_op, new_line=True,
                         paragraph_id=new_paragraph_id)
 
-                    self.paragraphs.insert(para_it_belongs_to + 1,
+                    self.insert_paragraphs(para_it_belongs_to + 1,
                                            new_paragraph)
                     self.all_paragraphs.insert(para_it_belongs_to_absolute + 1,
                                                new_paragraph)
@@ -262,6 +725,8 @@ class Pad:
                         [[para_it_belongs_to - number_new_lines,
                             para_it_belongs_to - number_new_lines + 1]])
                     elem_op.assign_paragraph_id(new_paragraph_id)
+                    elem_op.assign_superparagraph_id(
+                            self.get_superparagraph_id(para_it_belongs_to + 1))
 
                     update_indices_from = para_it_belongs_to + 2
 
@@ -274,8 +739,9 @@ class Pad:
                         return_new_line_paragraph_id=True)
 
                     # We delete the old paragraph
-                    del self.paragraphs[para_it_belongs_to]
-                    self.all_paragraphs[para_it_belongs_to_absolute].is_deleted = True
+                    self.delete_paragraphs(para_it_belongs_to,
+                        abs_idx=para_it_belongs_to_absolute,
+                        action="split")
                     # Insert the second paragraph
                     self.paragraphs.insert(para_it_belongs_to, para2)
                     self.all_paragraphs.insert(para_it_belongs_to_absolute, para2)
@@ -293,6 +759,8 @@ class Pad:
                         [para_it_belongs_to - number_new_lines,
                             para_it_belongs_to - number_new_lines + 1]])
                     elem_op.assign_paragraph_id(para1.paragraph_id)
+                    elem_op.assign_superparagraph_id(
+                        self.get_superparagraph_id(para_it_belongs_to))
 
                     # From where we will update the indices
                     update_indices_from = para_it_belongs_to + 3
@@ -473,10 +941,18 @@ class Pad:
                     merged_paragraph = Paragraph.merge(self.paragraphs[merge1],
                                                        self.paragraphs[merge2],
                                                        elem_op)
+                    # Get superpara ids before removing anything
+                    sp_id1, sp_idx1 = self.get_superparagraph_id(merge1, return_idx=True)
+                    sp_id2, sp_idx2 = self.get_superparagraph_id(merge2, return_idx=True)
+
+                    if sp_id1 != sp_id2:
+                        sp_id = Paragraph.compute_para_id("merge", sp_id1, sp_id2)
+                        self.superparagraphs[sp_idx1].id = sp_id
+                        sp_id1 = sp_id
+
                     # We remove the second paragraph
                     merge2_absolute = self.get_absolute_index(merge2)
-                    del self.paragraphs[merge2]
-                    self.all_paragraphs[merge2_absolute].is_deleted = True
+                    self.delete_paragraphs(merge2, merge2_absolute)
                     # We put the merged paragraph where the first paragraph was
                     self.paragraphs[merge1] = merged_paragraph
                     merge1_absolute = self.get_absolute_index(merge1)
@@ -486,6 +962,7 @@ class Pad:
                     update_indices_from = merge2
 
                     elem_op.assign_paragraph_id(merged_paragraph.paragraph_id)
+                    elem_op.assign_superparagraph_id(sp_id1)
 
                 # We need to notify the paragraphs that are after my edit,
                 # that their position might have changed
@@ -495,10 +972,10 @@ class Pad:
                 # Remove the paragraphs we are supposed to remove
                 for idx in to_remove[::-1]:
                     elem_op.assign_paragraph_id(self.paragraphs[idx].paragraph_id)
+                    elem_op.assign_superparagraph_id(
+                            self.get_superparagraph_id(idx))
                     idx_absolute = self.get_absolute_index(idx)
-                    del self.paragraphs[idx]
-                    self.all_paragraphs[idx_absolute].is_deleted = True
-
+                    self.delete_paragraphs(idx, idx_absolute)
 
             # Keep our paragraphs as they are, just add the elem_op
             else:
@@ -514,8 +991,6 @@ class Pad:
                 # If we should create a new para for this elem_op
                 if para_it_belongs_to == -1:
                     # If we are at the start of the document
-                    # TODO: Create a function for this and the previous "-1" case?
-                    # (because the code is almost the same)
                     if elem_op.abs_position == 0:
                         if len(self.all_paragraphs):
                             new_paragraph_id = Paragraph.compute_para_id("insert_before",
@@ -526,11 +1001,13 @@ class Pad:
                         new_paragraph = Paragraph(elem_op,
                             paragraph_id=new_paragraph_id)
 
-                        self.paragraphs.insert(0, new_paragraph)
+                        self.insert_paragraphs(0, new_paragraph)
                         self.all_paragraphs.insert(0, new_paragraph)
 
                         elem_op.assign_para(2 * [[0]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
+                        elem_op.assign_superparagraph_id(
+                            self.get_superparagraph_id(0))
 
                         update_indices_from = 1
 
@@ -548,13 +1025,15 @@ class Pad:
                         new_paragraph = Paragraph(elem_op,
                             paragraph_id=new_paragraph_id)
 
-                        self.paragraphs.append(new_paragraph)
+                        self.insert_paragraphs(len(self.paragraphs), new_paragraph)
                         self.all_paragraphs.append(new_paragraph)
 
                         elem_op.assign_para([
                             [len(self.paragraphs) - number_new_lines - 1],
                             [len(self.paragraphs) - number_new_lines]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
+                        elem_op.assign_superparagraph_id(
+                            self.get_superparagraph_id(len(self.paragraphs) - 1))
 
                     # Insert the new paragraph in the good place
                     else:
@@ -562,8 +1041,8 @@ class Pad:
                         para_idx = 0
                         number_new_lines = 0
                         while (self.paragraphs[para_idx].abs_position +
-                               self.paragraphs[para_idx].length <
-                               elem_op.abs_position):
+                            self.paragraphs[para_idx].length <
+                            elem_op.abs_position):
 
                             para_idx += 1
                             if self.paragraphs[para_idx].new_line:
@@ -582,13 +1061,16 @@ class Pad:
                             paragraph_id=new_paragraph_id)
 
                         # Insert it
-                        self.paragraphs.insert(para_idx + 1, new_paragraph)
+                        self.insert_paragraphs(para_idx + 1, new_paragraph)
                         self.all_paragraphs.insert(para_idx_absolute + 1, new_paragraph)
 
                         elem_op.assign_para([
                             [para_idx - number_new_lines, para_idx - number_new_lines + 1],
                             [para_idx - number_new_lines + 1]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
+
+                        elem_op.assign_superparagraph_id(
+                            self.get_superparagraph_id(para_idx + 1))
 
                         # Update indices of the next paragraphs from here
                         update_indices_from = para_idx + 2
@@ -600,6 +1082,8 @@ class Pad:
                         [para_it_belongs_to - number_new_lines]])
                     elem_op.assign_paragraph_id(
                         self.paragraphs[para_it_belongs_to].paragraph_id)
+                    elem_op.assign_superparagraph_id(
+                        self.get_superparagraph_id(para_it_belongs_to))
                     # Add it
                     self.paragraphs[para_it_belongs_to].add_elem_op(elem_op)
                     # Update indices of the next paragraphs from here
@@ -614,26 +1098,26 @@ class Pad:
             # Assertions
             # TODO remove for production
             # Checking that the paragraph is in order
-            # assert self.paragraphs == sorted(self.paragraphs)
-            # # checking that length is not 0
-            # for i in range(0, len(self.paragraphs)):
-            #     if self.paragraphs[i].length == 0:
-            #         # print(self.pad_name, i, "\n", elem_op)
-            #         raise AssertionError
-            # # Checking that the paragraphs touch each others
-            # for i in range(1, len(self.paragraphs)):
-            #     if self.paragraphs[i - 1].abs_position \
-            #             + self.paragraphs[i - 1].length \
-            #             != self.paragraphs[i].abs_position:
-            #         # print(elem_op)
-            #         # raise AssertionError
-            # # Checking that a text paragraph is encapsulated between two
-            # # new_line paragraphs
-            # for i in range(1, len(self.paragraphs) - 1):
-            #     if not (self.paragraphs[i].new_line or
-            #             self.paragraphs[i + 1].new_line):
-            #         # print(elem_op)
-                    # raise AssertionError
+            assert self.paragraphs == sorted(self.paragraphs)
+            # checking that length is not 0
+            for i in range(0, len(self.paragraphs)):
+                if self.paragraphs[i].length == 0:
+                    # print(self.pad_name, i, "\n", elem_op)
+                    raise AssertionError
+            # Checking that the paragraphs touch each others
+            for i in range(1, len(self.paragraphs)):
+                if self.paragraphs[i - 1].abs_position \
+                        + self.paragraphs[i - 1].length \
+                        != self.paragraphs[i].abs_position:
+                    # print(elem_op)
+                    raise AssertionError
+            # Checking that a text paragraph is encapsulated between two
+            # new_line paragraphs
+            for i in range(1, len(self.paragraphs) - 1):
+                if not (self.paragraphs[i].new_line or
+                        self.paragraphs[i + 1].new_line):
+                    # print(elem_op)
+                    raise AssertionError
 
         # Find the list of authors in the pad
         for op in self.operations:
@@ -662,7 +1146,7 @@ class Pad:
                 op.type = 'delete'
             elif len(op.elem_ops) == 1 \
                     and op.elem_ops[0].operation_type == "add" \
-                and op.elem_ops[0].text_to_add == '\n\n':
+                and op.elem_ops[0].text_to_add == '\n':
                 op.type = 'jump'
             else:
                 op.type = 'edit'

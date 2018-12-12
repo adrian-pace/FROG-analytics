@@ -25,4 +25,4 @@ server_update_delay = 1
 # How often you send the metrics to the server
 send_update_delay = 5
 
-max_len_id = 15
+max_len_id = 30

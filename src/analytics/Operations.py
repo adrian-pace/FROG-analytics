@@ -1,5 +1,4 @@
 import config
-import random
 import string
 
 class ElementaryOperation:
@@ -97,6 +96,7 @@ class ElementaryOperation:
         self.deleted = False
         self.assigned_para = [[],[]]
         self.paragraph_id = ""
+        self.superparagraph_id = ""
 
     def __str__(self):
         return ("Operation: {}".format(self.operation_type) +
@@ -124,6 +124,9 @@ class ElementaryOperation:
 
     def assign_paragraph_id(self, paragraph_id):
         self.paragraph_id = paragraph_id
+
+    def assign_superparagraph_id(self, superparagraph_id):
+        self.superparagraph_id = superparagraph_id
 
     def get_length_of_op(self):
         """
@@ -421,10 +424,16 @@ class Operation:
         sorted_ops = sorted(ops, key=lambda e: e[0])
         return [op_tuple[1] for op_tuple in sorted_ops]
 
+def next_value_generator():
+    i = 1
+    while True:
+        yield str(i)
+        i += 1
 
+get_next_id_value = next_value_generator()
 
 class Paragraph:
-    def __init__(self, elem_op=None, new_line=False, paragraph=None, paragraph_id=""):
+    def __init__(self, elem_op=None, new_line=False, paragraph=None, paragraph_id="", superparagraph_id=""):
         """
         Create a new paragraph from an ElementaryOperation or a Paragraph
 
@@ -440,6 +449,7 @@ class Paragraph:
             "non-null")
 
         self.paragraph_id = paragraph_id
+        self.superparagraph_id = superparagraph_id
         self.is_deleted = False
 
         if elem_op is not None:
@@ -590,13 +600,15 @@ class Paragraph:
             self.abs_position -= elem_op.length_to_delete
             for op in self.elem_ops:
                 op.current_position -= elem_op.length_to_delete
-        # else:
-        #     # Shouldn't happen, maybe remove the condition elif or check
-        #     # that we ask the right paragraphs to update
-        #     raise AssertionError
+        else:
+            # Shouldn't happen, maybe remove the condition elif or check
+            # that we ask the right paragraphs to update
+            raise AssertionError
 
     def copy(self):
-        return Paragraph(paragraph=self, paragraph_id=self.paragraph_id)
+        return Paragraph(paragraph=self,
+            paragraph_id=self.paragraph_id,
+            superparagraph_id=self.superparagraph_id)
 
     @classmethod
     def merge(cls, first_paragraph, last_paragraph, elem_op):
@@ -744,8 +756,7 @@ class Paragraph:
         # After many operations the ID may become incredibly long.
         # One quick fix is to generate a random number and use it instead.
         # of the ID that we would use otherwise
-        random_id = ''.join(random.choice(string.digits)
-                       for _ in range(int(config.max_len_id / 2)))
+        random_id = next(get_next_id_value)
 
         if relation == "insert_before":
             assert reference_id1 is not None
@@ -839,9 +850,24 @@ class Paragraph:
 
         elif relation == "merge":
             assert reference_id1 is not None and reference_id2 is not None
-            if (len(reference_id1) > config.max_len_id or
+            if (len(reference_id1) == len(reference_id2) and
+                '.' in reference_id1 and '.' in reference_id2):
+                # Check if they are two halves being put back together
+                split_id1 = reference_id1.split('.')
+                reference_id1_1 = ''.join(split_id1[0:-1])
+                split_id2 = reference_id2.split('.')
+                reference_id2_1 = ''.join(split_id2[0:-1])
+                print(reference_id1, split_id1[-1])
+                print(reference_id2, split_id2[-1])
+                if (len(split_id1[-1]) == 1 and
+                    len(split_id2[-1]) == 1 and
+                    reference_id1_1 == reference_id2_1 and
+                    abs(ord(split_id1[-1]) - ord(split_id2[-1])) == 1):
+                    print('-->',reference_id1)
+                    return reference_id1
+            elif (len(reference_id1) > config.max_len_id or
                 len(reference_id2) > config.max_len_id):
-                return ""
+                return next(get_next_id_value)
             return "({}+{})".format(reference_id1, reference_id2)
 
         elif relation == "split":
@@ -866,6 +892,16 @@ class Paragraph:
                 return [reference_id1 + split_suffix + suf
                         for suf in split_suffixes_init]
 
+        else:
+            return next(get_next_id_value)
+
     def __lt__(self, other):
         return self.abs_position < other.abs_position
 
+
+class SuperParagraph:
+    def __init__(self, start, length, new_line, id_):
+        self.start = start
+        self.length = length
+        self.new_line = new_line
+        self.id = id_
