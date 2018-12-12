@@ -33,14 +33,18 @@ from sklearn.cluster import KMeans
 from collections import OrderedDict
 import gensim.models as g
 import pandas as pd
+import spacy
+
 
 list_of_elem_ops_per_pad = dict()
 elemOpsCounter = 0
 root_of_dbs = "data/"
 
+## this is the first method to load the pre-trained model
+# model = 'pre_modle/doc2vec/apnews_dbow/doc2vec.bin'
+# m = g.Doc2Vec.load(model)
+m = spacy.load('en_core_web_md')
 
-model = 'pre_modle/doc2vec/doc2vec.bin'
-m = g.Doc2Vec.load(model)
 start_alpha=0.01
 infer_epoch=1000
 for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
@@ -72,17 +76,19 @@ for pad_name in pads:
     paraTextPerPad = {}
     elemOpsCounter += len(elem_ops_treated[pad_name])
     pad = pads[pad_name]
-    # create the paragraphs
-    pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
-    #pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
+    text = pad.text_by_ops()
 
-    paras = pad.paragraphs
-    text = pad.get_text()
+    # create the paragraphs
+    # pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
+    # pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
+
+    # paras = pad.paragraphs
+    # text = pad.get_text()
     ## real-time print the text of each paragraph
 
-    for para in paras:
-        para.create_para_text()
-    author_context = []
+    # for para in paras:
+    #     para.create_para_text()
+    # author_context = []
 
     #------below is used to computer different author context#
     # pad.PreprocessOperationByAuthor(compute_vector=True,model=m,start_alpha=start_alpha,infer_epoch=infer_epoch)
@@ -91,26 +97,27 @@ for pad_name in pads:
     # outputText[pad_name] = pad.AuthorText
 
     # ----bellow is compute the window-based author context
-    pad.BuildWindowOperation(60000)
-    pad.getTextByWin(m,start_alpha,infer_epoch)
-    pad.computeDistance()
-    pad.PlotLengthOperationTime()
-    outputDistance[pad_name]=pad.distance
-    outputSimilarity[pad_name] = pad.similarity
-    outputText[pad_name] = pad.WindowOperationText
+    # pad.BuildWindowOperation(60000)
+    # pad.getTextByWin()
+    # pad.getTextByWin(m,start_alpha,infer_epoch)
+    # pad.computeDistance()
+    # pad.PlotLengthOperationTime()
+    # outputDistance[pad_name]=pad.distance
+    # outputSimilarity[pad_name] = pad.similarity
+    # outputText[pad_name] = pad.WindowOperationText
 
     print("------%d",i)
 
 
 outputTextDF = pd.DataFrame(outputText).fillna("No text!")
 outputTextDF  = outputTextDF.T
-outputTextDF.to_csv('Text2.csv', encoding='utf-8')
+outputTextDF.to_csv('Text-s.csv', encoding='utf-8')
 outputDistanceDF= pd.DataFrame(outputDistance).fillna(0)
 outputDistanceDF = outputDistanceDF.T
-outputDistanceDF.to_csv('Distance2.csv',float_format='%.2f',encoding='utf-8')
+outputDistanceDF.to_csv('Distance-s.csv',float_format='%.2f',encoding='utf-8')
 outputSimilarityDF= pd.DataFrame(outputSimilarity).fillna(0)
 outputSimilarityDF = outputSimilarityDF.T
-outputSimilarityDF.to_csv('similarity2.csv',float_format='%.2f',encoding='utf-8')
+outputSimilarityDF.to_csv('similarity-s.csv',float_format='%.2f',encoding='utf-8')
 
 
 # list_of_elem_ops_per_main  = get_elem_ops_per_pad_from_db(editor='MySQL')

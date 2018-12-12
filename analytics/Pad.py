@@ -1169,6 +1169,7 @@ class Pad:
 
 
     def PlotLengthOperationTime(self):
+        ## plot the different operations By different author on same time period .
         timeLengActor = {}
         for op in self.operations:
             if op.author not in timeLengActor.keys():
@@ -1220,7 +1221,8 @@ class Pad:
             if endTimeWinList[-1] ==0.0:
                 endTimeWinList[-1] = self.windowOperation[groupNum][0].startTime
             allTextBefore = self.get_text(endTimeWinList[-1])
-            lastWinVec = model.infer_vector(allTextBefore, alpha=start_alpha, steps=infer_epoch)
+            # lastWinVec = model.infer_vector(allTextBefore, alpha=start_alpha, steps=infer_epoch)
+            lastWinVec = model(allTextBefore).vector
             for winOp in self.windowOperation[groupNum]:
                 winOp.createWindowText(model,start_alpha,infer_epoch,allTextBefore,lastWinVec)
                 print(t)
@@ -1244,8 +1246,8 @@ class Pad:
                      self.windowOperation[groupNum][0].textVector - self.windowOperation[groupNum][1].textVector),3)
 
                 similar = 1-spatial.distance.cosine(self.windowOperation[groupNum][0].textVector, self.windowOperation[groupNum][1].textVector)
-                if dis<0.2:
-                    dis=0
+                # if dis<0.2:
+                #     dis=0
                 self.distance[groupNum] = dis
                 self.similarity[groupNum] = similar
 
@@ -1253,8 +1255,20 @@ class Pad:
 
     def windowSort(self,win):
         return win.startTime
+
     def operationSort(self,op):
         return op.timestamp_start
+
+    def getTextByWin(self):
+        for groupNum in self.windowOperation.keys():
+            for winOp in self.windowOperation[groupNum]:
+                winOp.Text_by_ops()
+    def text_by_ops(self):
+        text = ''
+        for op in self.operations:
+            op.get_op_text()
+            text = text[:op.position_start_of_op] + op.text + text[op.position_start_of_op:]
+        self.text = text
 
 
 class WindowOperation:
@@ -1310,7 +1324,15 @@ class WindowOperation:
                              elem_op.length_to_delete:])
         self.text = text
         if len(self.elemOps)!=0:
-            self.textVector =  model.infer_vector(text, alpha=start_alpha, steps=infer_epoch)-lastWinVec
+            # self.textVector =  model.infer_vector(text, alpha=start_alpha, steps=infer_epoch)-lastWinVec
+            self.textVector = model(text).vector-lastWinVec
         else:
             self.textVector = 0
+
+    def Text_by_ops(self):
+        text = ''
+        for op in self.operations:
+            op.get_text_by_ops()
+            text = text[:op.position_start_of_op]+op.text
+        self.text = text
 

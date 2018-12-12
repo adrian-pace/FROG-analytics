@@ -201,6 +201,8 @@ class Operation:
         self.context = dict()
         #:type: dict('synchronous')
 
+        self.text = ''
+
     def add_elem_op(self, elem_op):
         """
         Add an ElementaryOperation to the list of elem_ops.
@@ -270,6 +272,28 @@ class Operation:
             elem_op.abs_position + elem_op.length_to_delete < self.position_start_of_op):
             self.position_start_of_op -= elem_op.length_to_delete
             self.position_first_op -= elem_op.length_to_delete
+
+    def get_op_text(self):
+        text = ''
+        for elem_id, elem_op in enumerate(self.elem_ops):
+            if elem_id ==0:
+                start_position = elem_op.abs_position
+            position = elem_op.abs_position - start_position
+            if elem_op.operation_type == 'add':
+                # We add to the end of the ext
+                if ('*' in elem_op.text_to_add or '*' in text or
+                        len(self.elem_ops) - 1 == elem_id):
+                    pass
+                if len(text) == position:
+                    text += elem_op.text_to_add
+                else:
+                    text = (text[:position] +
+                            elem_op.text_to_add +
+                            text[position:])
+        self.text = text
+
+
+
 
     @classmethod
     def sort_ops(cls, ops_list):
