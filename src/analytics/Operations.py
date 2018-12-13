@@ -322,6 +322,11 @@ class Operation:
         else:
             return None
 
+    def get_superparagraph(self):
+        return list(set(
+            [elem_op.superparagraph_id for elem_op in self.elem_ops
+            if elem_op.superparagraph_id not in ["", "x"]]))
+
     def get_text_added(self):
         """
         Get text added from the elem_ops.
@@ -388,6 +393,7 @@ class Operation:
                     self.get_assigned_para(),
                     self.get_paragraph_history(),
                     self.get_paragraph_original(),
+                    self.get_superparagraph(),
                     self.context["proportion_pad"],
                     self.context["proportion_paragraph"]]))
 
@@ -430,7 +436,8 @@ def next_value_generator():
         yield str(i)
         i += 1
 
-get_next_id_value = next_value_generator()
+get_next_para_id_value = next_value_generator()
+get_next_superpara_id_value = next_value_generator()
 
 class Paragraph:
     def __init__(self, elem_op=None, new_line=False, paragraph=None, paragraph_id="", superparagraph_id=""):
@@ -756,12 +763,12 @@ class Paragraph:
         # After many operations the ID may become incredibly long.
         # One quick fix is to generate a random number and use it instead.
         # of the ID that we would use otherwise
-        random_id = next(get_next_id_value)
+        next_id = next(get_next_para_id_value)
 
         if relation == "insert_before":
             assert reference_id1 is not None
             if len(reference_id1) > config.max_len_id:
-                return random_id
+                return next_id
 
             for first_number_idx, c in enumerate(reference_id1):
                 if c.isdigit():
@@ -785,7 +792,7 @@ class Paragraph:
         elif relation == "insert_after":
             assert reference_id1 is not None
             if len(reference_id1) > config.max_len_id:
-                return random_id
+                return next_id
 
             # We check if the reference_id ends in "_" followed by an int
             after_suffix_idx = reference_id1.rfind(after_suffix)
@@ -806,7 +813,7 @@ class Paragraph:
             assert reference_id1 is not None and reference_id2 is not None
             if (len(reference_id1) > config.max_len_id or
                 len(reference_id2) > config.max_len_id):
-                return random_id
+                return next_id
             # Same as for "insert_after":
             after_suffix_idx = reference_id1.rfind(after_suffix)
             after_paragraph_id_number = reference_id1[after_suffix_idx + 1:]
@@ -857,23 +864,20 @@ class Paragraph:
                 reference_id1_1 = ''.join(split_id1[0:-1])
                 split_id2 = reference_id2.split('.')
                 reference_id2_1 = ''.join(split_id2[0:-1])
-                print(reference_id1, split_id1[-1])
-                print(reference_id2, split_id2[-1])
                 if (len(split_id1[-1]) == 1 and
                     len(split_id2[-1]) == 1 and
                     reference_id1_1 == reference_id2_1 and
                     abs(ord(split_id1[-1]) - ord(split_id2[-1])) == 1):
-                    print('-->',reference_id1)
                     return reference_id1
             elif (len(reference_id1) > config.max_len_id or
                 len(reference_id2) > config.max_len_id):
-                return next(get_next_id_value)
+                return next(get_next_para_id_value)
             return "({}+{})".format(reference_id1, reference_id2)
 
         elif relation == "split":
             assert reference_id1 is not None
             if len(reference_id1) > config.max_len_id:
-                return [random_id + split_suffix + suf
+                return [next_id + split_suffix + suf
                         for suf in split_suffixes_init]
 
             # See if reference_id1 finishes in "." followed by letters
@@ -893,7 +897,7 @@ class Paragraph:
                         for suf in split_suffixes_init]
 
         else:
-            return next(get_next_id_value)
+            return next(get_next_superpara_id_value)
 
     def __lt__(self, other):
         return self.abs_position < other.abs_position

@@ -38,11 +38,13 @@ def run(list_of_elem_ops_per_pad,
                     "type_overall_score_edit","user_type_score_write",
                     "user_type_score_paste","user_type_score_delete",
                     "user_type_score_edit"]
+
     if generate_csv:
         header = separator_char.join(["docID","author","posStart","posEnd",
                                       "timeStart","timeEnd","atomicOpCount",
                                       "type","textAdded","deletionLength",
                                       "paragraph","paragraphHistory","paragraphOriginal",
+                                      "superparagraph",
                                       "proportionPad","proportionParagraph"])
         print(header)
     elif generate_csv_summary:
@@ -69,11 +71,11 @@ def run(list_of_elem_ops_per_pad,
 
             if generate_csv:
                 # Option 1: Use the name of the pad as the pad ID
-                # pad.display_csv(separator_char=separator_char)
+                pad.display_csv(separator_char=separator_char)
 
                 # Option 2: Use a custom string as the pad ID
-                pad.display_csv(separator_char=separator_char,
-                                pad_id='id{}'.format(pad_id))
+                # pad.display_csv(separator_char=separator_char,
+                #                 pad_id='id{}'.format(pad_id))
 
             elif generate_csv_summary:
                 pad_metrics = pad.compute_metrics()
