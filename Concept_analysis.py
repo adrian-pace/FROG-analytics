@@ -34,7 +34,7 @@ from collections import OrderedDict
 import gensim.models as g
 import pandas as pd
 import spacy
-
+import sent2vec
 
 list_of_elem_ops_per_pad = dict()
 elemOpsCounter = 0
@@ -43,10 +43,13 @@ root_of_dbs = "data/"
 ## this is the first method to load the pre-trained model
 # model = 'pre_modle/doc2vec/apnews_dbow/doc2vec.bin'
 # m = g.Doc2Vec.load(model)
-m = spacy.load('en_core_web_md')
+# start_alpha=0.01
+# infer_epoch=1000
+# m = spacy.load('en_core_web_md')
+model = sent2vec.Sent2vecModel()
+model_name = 'pre_modle/sent2vec/wiki_unigrams.bin'
+model.load_model(model_name)
 
-start_alpha=0.01
-infer_epoch=1000
 for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
     for filename in filenames:
         if '.sql' in filename:
@@ -76,10 +79,10 @@ for pad_name in pads:
     paraTextPerPad = {}
     elemOpsCounter += len(elem_ops_treated[pad_name])
     pad = pads[pad_name]
-    text = pad.text_by_ops()
+    # text = pad.text_by_ops()
 
     # create the paragraphs
-    # pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
+    pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
     # pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
 
     # paras = pad.paragraphs
@@ -97,14 +100,13 @@ for pad_name in pads:
     # outputText[pad_name] = pad.AuthorText
 
     # ----bellow is compute the window-based author context
-    # pad.BuildWindowOperation(60000)
-    # pad.getTextByWin()
-    # pad.getTextByWin(m,start_alpha,infer_epoch)
-    # pad.computeDistance()
-    # pad.PlotLengthOperationTime()
-    # outputDistance[pad_name]=pad.distance
-    # outputSimilarity[pad_name] = pad.similarity
-    # outputText[pad_name] = pad.WindowOperationText
+    pad.BuildWindowOperation(60000)
+    pad.getTextByWin(model)
+    pad.computeDistance()
+    pad.PlotLengthOperationTime()
+    outputDistance[pad_name]=pad.distance
+    outputSimilarity[pad_name] = pad.similarity
+    outputText[pad_name] = pad.WindowOperationText
 
     print("------%d",i)
 

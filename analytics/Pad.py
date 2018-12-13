@@ -5,7 +5,13 @@ from analytics.Operations import ElementaryOperation, Paragraph, Operation
 import numpy as np
 import config
 import matplotlib.pyplot as plt
+import math
 import nltk
+import spacy
+from nltk.corpus import stopwords
+Stoplist = set(stopwords.words('english'))
+
+nlp = spacy.load('en_core_web_md')
 
 def get_colors():
     colors = []
@@ -14,6 +20,14 @@ def get_colors():
     for i in range(90, 97):
         colors.append('\033[' + str(i) + 'm')
     return colors
+
+def cleanText(text):
+    cleanedText = []
+    doc = nlp(text)
+    for word in doc:
+        if word.text.lower() not in Stoplist and not word.is_punct and not word.like_num and not word.like_url:
+            cleanedText.append(word.lemma_)
+    return cleanedText
 
 
 class Pad:
@@ -1213,23 +1227,22 @@ class Pad:
                 self.windowOperation[i].append(tmpWindowOperation)
 
 
-    def getTextByWin(self, model,start_alpha,infer_epoch):
-        endTimeWinList = [0.0] # used to store the last window end time in order to recover the text
-        endTime = 0.0
-        t = 0
+    def getTextByWin(self,model):
+        # endTimeWinList = [0.0] # used to store the last window end time in order to recover the text
+        # endTime = 0.0
+
         for groupNum in self.windowOperation.keys():
-            if endTimeWinList[-1] ==0.0:
-                endTimeWinList[-1] = self.windowOperation[groupNum][0].startTime
-            allTextBefore = self.get_text(endTimeWinList[-1])
-            # lastWinVec = model.infer_vector(allTextBefore, alpha=start_alpha, steps=infer_epoch)
-            lastWinVec = model(allTextBefore).vector
+            # if endTimeWinList[-1] ==0.0:
+            #     endTimeWinList[-1] = self.windowOperation[groupNum][0].startTime
+            # allTextBefore = self.get_text(endTimeWinList[-1])
+
+            # lastWinVec = model(allTextBefore).vector
             for winOp in self.windowOperation[groupNum]:
-                winOp.createWindowText(model,start_alpha,infer_epoch,allTextBefore,lastWinVec)
-                print(t)
-                t +=1
-                if endTime<winOp.endTime:
-                    endTime = winOp.endTime
-            endTimeWinList.append(endTime)
+                # winOp.createWindowText(model,start_alpha,infer_epoch,allTextBefore,lastWinVec) this is used to compute all the text before
+                winOp.createWindowText(model)
+            #     if endTime<winOp.endTime:
+            #         endTime = winOp.endTime
+            # endTimeWinList.append(endTime)
 
 
 
@@ -1245,11 +1258,13 @@ class Pad:
                 dis = round(np.linalg.norm(
                      self.windowOperation[groupNum][0].textVector - self.windowOperation[groupNum][1].textVector),3)
 
-                similar = 1-spatial.distance.cosine(self.windowOperation[groupNum][0].textVector, self.windowOperation[groupNum][1].textVector)
+                similarity = 1-spatial.distance.cosine(self.windowOperation[groupNum][0].textVector, self.windowOperation[groupNum][1].textVector)
                 # if dis<0.2:
                 #     dis=0
                 self.distance[groupNum] = dis
-                self.similarity[groupNum] = similar
+                if math.isnan(similarity):
+                    similarity = 0
+                self.similarity[groupNum] = similarity
 
                 self.WindowOperationText[groupNum] = ["-----user1:-----"+text1,"-----user2-----"+text2]
 
@@ -1259,15 +1274,15 @@ class Pad:
     def operationSort(self,op):
         return op.timestamp_start
 
-    def getTextByWin(self):
-        for groupNum in self.windowOperation.keys():
-            for winOp in self.windowOperation[groupNum]:
-                winOp.Text_by_ops()
+
+
     def text_by_ops(self):
         text = ''
         for op in self.operations:
             op.get_op_text()
-            text = text[:op.position_start_of_op] + op.text + text[op.position_start_of_op:]
+            leng = len(text)
+            text = text + op.text
+            # text = text[:op.position_start_of_op] + op.text + text[op.position_start_of_op:]
         self.text = text
 
 
@@ -1304,35 +1319,37 @@ class WindowOperation:
         return (self.author==other.author) and (self.groupNum==other.groupNum)
 
 
-    def createWindowText(self,model,start_alpha,infer_epoch,allTextBefore,lastWinVec):
-        elem_ops_ordered = self.elemOps
-        text = allTextBefore
-        for elem_id, elem_op in enumerate(elem_ops_ordered):
-            if elem_op.operation_type == 'add':
-                if ('*' in elem_op.text_to_add or '*' in text or
-                        len(elem_ops_ordered) - 1 == elem_id):
-                    pass
-                if len(text) == elem_op.abs_position:
-                    text += elem_op.text_to_add
-                else:
-                    text = (text[:elem_op.abs_position] +
-                            elem_op.text_to_add +
-                            text[elem_op.abs_position:])
-            elif elem_op.operation_type == 'del':
-                text = (text[:elem_op.abs_position] +
-                        text[elem_op.abs_position +
-                             elem_op.length_to_delete:])
-        self.text = text
-        if len(self.elemOps)!=0:
-            # self.textVector =  model.infer_vector(text, alpha=start_alpha, steps=infer_epoch)-lastWinVec
-            self.textVector = model(text).vector-lastWinVec
-        else:
-            self.textVector = 0
-
-    def Text_by_ops(self):
+    def createWindowText(self,model):
+        # elem_ops_ordered = self.elemOps
+        # text = allTextBefore
+        # for elem_id, elem_op in enumerate(elem_ops_ordered):
+        #     if elem_op.operation_type == 'add':
+        #         if ('*' in elem_op.text_to_add or '*' in text or
+        #                 len(elem_ops_ordered) - 1 == elem_id):
+        #             pass
+        #         if len(text) == elem_op.abs_position:
+        #             text += elem_op.text_to_add
+        #         else:
+        #             text = (text[:elem_op.abs_position] +
+        #                     elem_op.text_to_add +
+        #                     text[elem_op.abs_position:])
+        #     elif elem_op.operation_type == 'del':
+        #         text = (text[:elem_op.abs_position] +
+        #                 text[elem_op.abs_position +
+        #                      elem_op.length_to_delete:])
+        # self.text = text
+        # if len(self.elemOps)!=0:
+        #     # self.textVector =  model.infer_vector(text, alpha=start_alpha, steps=infer_epoch)-lastWinVec
+        #     self.textVector = model(text).vector-lastWinVec
+        # else:
+        #     self.textVector = 0
         text = ''
         for op in self.operations:
-            op.get_text_by_ops()
-            text = text[:op.position_start_of_op]+op.text
-        self.text = text
+            op.get_op_text()
+            if op.text != '\n':
+                text +=  op.text + ' '
+        self.text =  text
+        cleaned_text = ' '.join(cleanText(text))
+        self.textVector = model.embed_sentence(cleaned_text)
+
 

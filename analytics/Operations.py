@@ -290,6 +290,10 @@ class Operation:
                     text = (text[:position] +
                             elem_op.text_to_add +
                             text[position:])
+            elif elem_op.operation_type == 'del' and position<len(text) and position>=0:
+                text = (text[:position] +
+                        text[position +
+                             elem_op.length_to_delete:])
         self.text = text
 
 
