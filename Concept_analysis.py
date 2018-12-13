@@ -33,7 +33,6 @@ from sklearn.cluster import KMeans
 from collections import OrderedDict
 import gensim.models as g
 import pandas as pd
-import spacy
 import sent2vec
 
 list_of_elem_ops_per_pad = dict()
@@ -103,7 +102,8 @@ for pad_name in pads:
     pad.BuildWindowOperation(60000)
     pad.getTextByWin(model)
     pad.computeDistance()
-    pad.PlotLengthOperationTime()
+    # pad.PlotLengthOperationTime()
+    pad.PlotSimilarityDistribution()
     outputDistance[pad_name]=pad.distance
     outputSimilarity[pad_name] = pad.similarity
     outputText[pad_name] = pad.WindowOperationText

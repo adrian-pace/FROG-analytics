@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import math
 import nltk
 import spacy
+import seaborn as sns
+
 from nltk.corpus import stopwords
 Stoplist = set(stopwords.words('english'))
 
@@ -1204,6 +1206,17 @@ class Pad:
         plt.show()
 
 
+    def PlotSimilarityDistribution(self):
+        group = list(self.similarity.keys())
+        similarity = list(self.similarity.values())
+        sns.lineplot(group, similarity)
+        plt.show()
+
+
+
+
+
+
     def BuildWindowOperation(self,timeInterval=100000):
         i = 1
         for op in self.operations:
@@ -1250,6 +1263,7 @@ class Pad:
         for groupNum in self.windowOperation.keys():
             if len(self.windowOperation[groupNum])<2:
                 self.distance[groupNum]=0
+                self.similarity[groupNum] = 0
             else:
                 text1 = self.windowOperation[groupNum][0].text
                 text2 = self.windowOperation[groupNum][1].text
