@@ -943,10 +943,51 @@ class Pad:
             print(para.__str__(verbose))
             print("\n")
 
+
+    def get_text_length(self): 
+        lines = [
+            "Welcome to your Task Pad!  Use this pad to write your answer:",
+            "1) You and your partners need to reach consensus when you're finished and all click 'Submit'.",
+            "2) Avoid chatting in this space.  Use the chat for that!",
+            "3) Remember, we're looking for a report of the best supported claims.",
+            "4) Use the evidence you have (you'll need to decide how much to read) to create a summary for the minister.",
+            "5) Use boldface font to create headings.",
+            "6) You can insert URLs for references, or use in-line citations like this: (Templaar, 2014).",
+            "Good luck!",
+            "Welcome to Etherpad!",
+            "This pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!",
+            "Get involved with Etherpad at http://etherpad.org"
+        ]
+
+        text = self.get_text()
+        for line in lines:
+            text = text.replace(line+'\n', '')
+            text = text.replace(line, '')
+
+        return len(text)
+
+    def get_all_text_added_length(self):
+        count = 0
+        write_count = 0
+        paste_count = 0
+        for operation in self.operations:
+            if(operation.author=='Etherpad_admin'):
+                continue
+            length = operation.get_length_of_op()
+            if length > 0:
+                count += length
+                if(operation.type != 'paste'):
+                    write_count += length
+                if(operation.type == 'paste'):
+                    paste_count += length
+        return [count,write_count,paste_count]
+
+
     ###############################
     # Metrics
     ###############################
     def compute_metrics(self):
+        [length_all, length_all_write,length_all_paste] = self.get_all_text_added_length()
         metrics_dict = {
             "user_participation_paragraph_score": self.user_participation_paragraph_score(),
             "prop_score": self.prop_score(),
@@ -962,6 +1003,10 @@ class Pad:
             "user_type_score_paste": self.user_type_score('paste'),
             "user_type_score_delete": self.user_type_score('delete'),
             "user_type_score_edit": self.user_type_score('edit'),
+            "length": self.get_text_length(),
+            "length_all": length_all,
+            "length_all_write": length_all_write,
+            "length_all_paste": length_all_paste
         }
         return metrics_dict
 

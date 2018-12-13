@@ -37,7 +37,7 @@ def run(list_of_elem_ops_per_pad,
                     "type_overall_score_paste","type_overall_score_delete",
                     "type_overall_score_edit","user_type_score_write",
                     "user_type_score_paste","user_type_score_delete",
-                    "user_type_score_edit"]
+                    "user_type_score_edit","length","length_all", "length_all_write","length_all_paste"]
     if generate_csv:
         header = separator_char.join(["docID","author","posStart","posEnd",
                                       "timeStart","timeEnd","atomicOpCount",
