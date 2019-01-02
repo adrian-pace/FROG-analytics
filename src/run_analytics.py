@@ -44,20 +44,20 @@ def run(list_of_elem_ops_per_pad,
                     "user_type_score_write",
                     "user_type_score_paste",
                     "user_type_score_delete",
-                    "user_type_score_edit"
-                    # "added_chars"
-                    # "deleted_chars"
-                    # "paragraph_average_length"
-                    # "superparagraph_average_length"
-                    # "average_paragraphs_per_superparagraph"
-                    # "window_type_score_write"
-                    # "window_type_score_paste"
-                    # "window_type_score_delete"
-                    # "window_type_score_edit"
-                    # "window_user_type_score_write"
-                    # "window_user_type_score_paste"
-                    # "window_user_type_score_delete"
-                    # "window_user_type_score_edit"
+                    "user_type_score_edit",
+                    "added_chars",
+                    "deleted_chars",
+                    "paragraph_average_length",
+                    "superparagraph_average_length",
+                    "average_paragraphs_per_superparagraph",
+                    "window_type_overall_score_write",
+                    "window_type_overall_score_paste",
+                    "window_type_overall_score_delete",
+                    "window_type_overall_score_edit",
+                    "window_user_type_score_write",
+                    "window_user_type_score_paste",
+                    "window_user_type_score_delete",
+                    "window_user_type_score_edit"
                     ]
 
     if generate_csv:

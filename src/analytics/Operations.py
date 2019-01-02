@@ -440,7 +440,9 @@ get_next_para_id_value = next_value_generator()
 get_next_superpara_id_value = next_value_generator()
 
 class Paragraph:
-    def __init__(self, elem_op=None, new_line=False, paragraph=None, paragraph_id="", superparagraph_id=""):
+    def __init__(self,
+        elem_op=None, new_line=False, paragraph=None,
+        paragraph_id="", superparagraph_id=""):
         """
         Create a new paragraph from an ElementaryOperation or a Paragraph
 
@@ -909,3 +911,4 @@ class SuperParagraph:
         self.length = length
         self.new_line = new_line
         self.id = id_
+        # self.authors = []
