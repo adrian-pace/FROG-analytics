@@ -448,10 +448,14 @@ class Paragraph:
 
         :param elem_op: First elementary operation that we add
         :type elem_op: ElementaryOperation
+        :param new_line: Is this paragraph only a newline?
+        :type new_line: bool
         :param paragraph: paragraph we copy from
         :type paragraph: Paragraph
-        :param new_line: Is this paragraph only a newline ?
-        :type new_line: bool
+        :param paragraph_id: id for the paragraph
+        :type paragraph_id: string
+        :param superparagraph_id: id for the superparagraph
+        :type superparagraph: string
         """
         assert elem_op is not None or paragraph is not None, ("Error"
             "creating new Paragraph. Either elem_op or paragraph must be"
@@ -572,7 +576,7 @@ class Paragraph:
         Get the sum of absolute value of the lengths of the elementary
         operation contained in the paragraph
 
-        :return:
+        :return: abs_length
         """
         abs_length = 0
         for op in self.operations:
@@ -615,6 +619,12 @@ class Paragraph:
             raise AssertionError
 
     def copy(self):
+        """
+        Return a copy of the current paragraph
+
+        :return: a copy of itself
+        :rtype: Paragraph
+        """
         return Paragraph(paragraph=self,
             paragraph_id=self.paragraph_id,
             superparagraph_id=self.superparagraph_id)
@@ -672,11 +682,12 @@ class Paragraph:
         :param paragraph_to_split: paragraph to split
         :type paragraph_to_split: Paragraph
         :param position: position at which we split the paragraph in two
+        :param return_new_line_paragraph_id: whether to return paragraph ids
         :return: the 2 new paragraphs
         :rtype: (Paragraph,Paragraph)
         """
         new_paragraph_ids = Paragraph.compute_para_id("split",
-                                            paragraph_to_split.paragraph_id)
+            paragraph_to_split.paragraph_id)
 
         para1 = paragraph_to_split.copy()
         para1.paragraph_id = new_paragraph_ids[0]
@@ -698,7 +709,7 @@ class Paragraph:
             length = elem_op.get_length_of_op()
 
             # TODO review because position moves. Maybe keep track of the
-            # effective position ?
+            # effective position?
             # if elem_op.current_position + length <= position:
             #     para1.elem_ops.append(elem_op)
             #     if not (elem_op.belong_to_operation in para1.operations):
@@ -724,6 +735,37 @@ class Paragraph:
 
     @classmethod
     def compute_para_id(cls, relation, reference_id1=None, reference_id2=None):
+        """
+        Returns a paragraph id based on the parameters received.
+        The rules based on the value of "relation" are:
+            * initial: "0"
+            * merge (id1, id2):
+                0, 1 -> (0+1)
+                0.A, 0.B -> 0.A
+                0.C, 0.D -> 0.C
+                0.A, 0.C -> (0.A+0.C)
+                0.A.B, 0.A.C -> 0.A.B
+                0.A, 0.B.C -> (0.A+0.B.C)
+            * split (id1, id2?):
+            * insert_before (id):
+                0 -> -1
+                -1 -> -2
+                2 -> 1
+                1 -> 0
+                0.A.B_1_3 -> -1
+            * insert_after (id):
+                -1 -> -1_0
+                0 -> 0_0
+                0_2 -> 0_3
+            * insert_between (id1, id2):
+                either inserts before id2 or after id1
+
+
+        :param relation:
+        :param reference_id1:
+        :param reference_id2:
+        :return: the new id for the paragraph
+        """
         def compute_new_end_chars(end_chars):
             """Used when splitting
             For example, it makes it possible to use suffixes 0.D, 0.E, 0.F
@@ -911,4 +953,6 @@ class SuperParagraph:
         self.length = length
         self.new_line = new_line
         self.id = id_
-        # self.authors = []
+        self.authors = []
+
+    def add_author(self)
