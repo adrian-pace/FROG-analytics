@@ -11,6 +11,7 @@ def run(list_of_elem_ops_per_pad,
     show_visualization=False,
     generate_csv=False,
     generate_csv_summary=False,
+    start_time=0,
     figs_save_location=config.figs_save_location,
     maximum_time_between_elem_ops=config.maximum_time_between_elem_ops,
     length_edit=config.length_edit,
@@ -99,7 +100,7 @@ def run(list_of_elem_ops_per_pad,
                 #                 pad_id='id{}'.format(pad_id))
 
             elif generate_csv_summary:
-                pad_metrics = pad.compute_metrics()
+                pad_metrics = pad.compute_metrics(start_time=start_time)
                 pad_metrics_string = separator_char.join([
                     format(pad_metrics[metric]) for metric in metric_names])
 
@@ -214,6 +215,10 @@ if __name__ == "__main__":
                            help="Generate a csv file containing the summarized information for all pads",
                            default=False)
 
+    cl_parser.add_argument("--start_time",
+                           help="Define the start time for the time window to generate the csv summary",
+                           default=0, type=int)
+
     cl_parser.add_argument("-viz", "--visualization",
                            action="store_true",
                            help="Display the visualization",
@@ -271,4 +276,5 @@ if __name__ == "__main__":
             texts=args.texts,
             show_visualization=args.visualization,
             generate_csv=args.generate_csv,
-            generate_csv_summary=args.generate_csv_summary)
+            generate_csv_summary=args.generate_csv_summary,
+            start_time=args.start_time)
