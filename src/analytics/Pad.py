@@ -1526,7 +1526,7 @@ class Pad:
         return colored_text + get_colors()[0]
 
     def display_csv(self,
-        separator_char='\t', string_delimiter='',
+        separator_char='\t', string_delimiter='"',
         pad_id=None):
         """
         Print all operations' descriptors in csv format, with one line per

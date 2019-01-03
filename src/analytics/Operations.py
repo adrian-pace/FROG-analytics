@@ -369,7 +369,12 @@ class Operation:
         :return: number of coauthors averaged over elemops
         :rtype:float
         """
-        return np.mean([elem_op.n_authors for elem_op in self.elem_ops])
+        coauthors_length = [elem_op.n_authors for elem_op in self.elem_ops
+            if elem_op.n_authors > -1]
+        if len(coauthors_length) > 0:
+            return np.mean(coauthors_length)
+        else:
+            return None
 
     def get_text_added(self):
         """
@@ -430,8 +435,12 @@ class Operation:
             :rtype:string
             """
             # we need string_delimiter if separator_char is included in a field
-            if type(field) == str and separator_char in field:
-                return string_delimiter + field + string_delimiter
+            if type(field) == str:
+                field = field.replace(string_delimiter, "")
+                if separator_char in field:
+                    return string_delimiter + field + string_delimiter
+                else:
+                    return format(field)
             else:
                 return format(field)
 

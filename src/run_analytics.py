@@ -65,7 +65,7 @@ def run(list_of_elem_ops_per_pad,
                                       "timeStart","timeEnd","atomicOpCount",
                                       "type","textAdded","deletionLength",
                                       "paragraph","paragraphHistory","paragraphOriginal",
-                                      "superparagraph",
+                                      "superparagraph", "coauthorNumber",
                                       "proportionPad","proportionParagraph"])
         print(header)
     elif generate_csv_summary:
