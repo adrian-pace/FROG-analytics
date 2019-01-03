@@ -1,4 +1,5 @@
 import config
+import numpy as np
 import string
 
 class ElementaryOperation:
@@ -97,6 +98,7 @@ class ElementaryOperation:
         self.assigned_para = [[],[]]
         self.paragraph_id = ""
         self.superparagraph_id = ""
+        self.n_authors = -1
 
     def __str__(self):
         return ("Operation: {}".format(self.operation_type) +
@@ -127,6 +129,9 @@ class ElementaryOperation:
 
     def assign_superparagraph_id(self, superparagraph_id):
         self.superparagraph_id = superparagraph_id
+
+    def assign_number_coauthors(self, n_authors):
+        self.n_authors = n_authors
 
     def get_length_of_op(self):
         """
@@ -261,7 +266,16 @@ class Operation:
         return length
 
     def get_assigned_para(self, get_para_before=True, get_min_para=True):
+        """
+        Get the paragraph that this operation is assigned to.
+        If the operation is assigned to several paragraphs
+        (very likely for operations composed of several elementary operations)
+        flags can be used to specify which paragraph should be returned.
 
+        :param get_para_before:
+        :param get_min_para:
+        :return: int (position of the Paragraph)
+        """
         paras_before = []
         paras_after = []
 
@@ -283,6 +297,11 @@ class Operation:
             return None
 
     def get_paragraph_history(self):
+        """
+        Gets the first Paragraph id for the elementary operations in this
+        Operation.
+        :return: Paragraph id (string)
+        """
         paras_hists = []
         for elem_op in self.elem_ops:
             paras_hists.append(elem_op.paragraph_id)
@@ -293,7 +312,16 @@ class Operation:
             return None
 
     def get_paragraph_original(self):
+        """
+        From a complex Paragraph id, get the original paragraph.
+        The difference with get_paragraph_history is that this function
+        returns a 'simplified' version of the id, to make it easier
+        to find matches when comparing ids.
+        """
         def remove_split_suffix(p_id):
+            """
+            Auxiliary function to remove split suffix from Paragraph id.
+            """
             new_p_id = p_id
             while True:
                 if "." in p_id:
@@ -323,9 +351,25 @@ class Operation:
             return None
 
     def get_superparagraph(self):
-        return list(set(
+        """
+        Get the list of superparagraphs that this operation affects to
+        :rtype:list of strings
+        """
+        return list(sorted(set(
             [elem_op.superparagraph_id for elem_op in self.elem_ops
-            if elem_op.superparagraph_id not in ["", "x"]]))
+            if elem_op.superparagraph_id not in ["", "x"]])))
+
+    def get_coauthor_number(self):
+        """
+        Returns the average number of Superparagraph coauthors for the
+        elementary operations in this Operation.
+        The number of Superparagraph coauthors is the number of authors (other
+        than the Operation's author) that have contributed to the
+        SuperParagraphs that the current Operation modifies.
+        :return: number of coauthors averaged over elemops
+        :rtype:float
+        """
+        return np.mean([elem_op.n_authors for elem_op in self.elem_ops])
 
     def get_text_added(self):
         """
@@ -369,7 +413,22 @@ class Operation:
                 "\nContext: {}".format(self.context))
 
     def get_line(self, separator_char='\t', string_delimiter=''):
+        """
+        Get the line containing the Operation measures in csv format.
+
+        :param separator_char:
+        :param string_delimiter:
+
+        :return: csv line
+        :rtype:string
+        """
         def format_delimiter(field):
+            """
+            If needed, add the string delimiter characters to the string.
+            :param field:
+            :return: formatted field
+            :rtype:string
+            """
             # we need string_delimiter if separator_char is included in a field
             if type(field) == str and separator_char in field:
                 return string_delimiter + field + string_delimiter
@@ -377,25 +436,26 @@ class Operation:
                 return format(field)
 
         return separator_char.join(map(lambda x: format_delimiter(x), [
-                    self.author,
-                    self.position_start_of_op,
-                    (self.position_start_of_op + self.get_length_of_op()),
-                    self.timestamp_start,
-                    self.timestamp_end,
-                    len(self.elem_ops),
-                    self.type,
-                    # In get_text_added(), remove '\n' from the text because
-                    # there may be problems reading the csv file
-                    self.get_text_added().replace("\n", "") if self.type != "jump" else None,
-                    # If no problems, comment previous line and uncomment the following:
-                    # self.get_text_added() if self.type != "jump" else None,
-                    self.get_deletion_length(),
-                    self.get_assigned_para(),
-                    self.get_paragraph_history(),
-                    self.get_paragraph_original(),
-                    self.get_superparagraph(),
-                    self.context["proportion_pad"],
-                    self.context["proportion_paragraph"]]))
+            self.author,
+            self.position_start_of_op,
+            (self.position_start_of_op + self.get_length_of_op()),
+            self.timestamp_start,
+            self.timestamp_end,
+            len(self.elem_ops),
+            self.type,
+            # In get_text_added(), remove '\n' from the text because
+            # there may be problems reading the csv file
+            self.get_text_added().replace("\n", "") if self.type != "jump" else None,
+            # If no problems, comment previous line and uncomment the following:
+            # self.get_text_added() if self.type != "jump" else None,
+            self.get_deletion_length(),
+            self.get_assigned_para(),
+            self.get_paragraph_history(),
+            self.get_paragraph_original(),
+            self.get_superparagraph(),
+            self.get_coauthor_number(),
+            self.context["proportion_pad"],
+            self.context["proportion_paragraph"]]))
 
     def update_indices(self, elem_op):
         """
@@ -431,6 +491,9 @@ class Operation:
         return [op_tuple[1] for op_tuple in sorted_ops]
 
 def next_value_generator():
+    """
+    Int values generator
+    """
     i = 1
     while True:
         yield str(i)
@@ -490,7 +553,7 @@ class Paragraph:
 
     def add_elem_op(self, elem_op):
         """
-        add an elementary operation (and its parent operation) to the paragraph
+        Add an elementary operation (and its parent operation) to the paragraph
 
         :param elem_op: elementary operation to add
         :type elem_op: ElementaryOperation
@@ -596,7 +659,7 @@ class Paragraph:
 
     def update_indices(self, elem_op):
         """
-        Move the position of the paragraph if a edit happens before it
+        Move the position of the paragraph if an edit happens before it
 
         :param elem_op: the element we check
         :type elem_op: ElementaryOperation
@@ -638,6 +701,9 @@ class Paragraph:
         :type first_paragraph: Paragraph
         :param last_paragraph:
         :type last_paragraph: Paragraph
+        :param elem_op:
+        :type elem_op: ElementaryOperation
+
         :return: the merged paragraph
         :rtype: Paragraph
         """
@@ -677,7 +743,7 @@ class Paragraph:
     def split(cls, paragraph_to_split, position,
         return_new_line_paragraph_id=False):
         """
-        split the paragraph in two on the position passed as parameter
+        Split the paragraph in two on the position passed as parameter
 
         :param paragraph_to_split: paragraph to split
         :type paragraph_to_split: Paragraph
@@ -770,6 +836,8 @@ class Paragraph:
             """Used when splitting
             For example, it makes it possible to use suffixes 0.D, 0.E, 0.F
             instead of 0.C.A, 0.C.B, 0.C.C
+            :param end_chars: End characters (e.g. "A", "D", "AB"...)
+            :return: Array with three new end Strings for the three splits
             """
             assert len(end_chars)
             char_increments = [1,2,3]
@@ -948,6 +1016,16 @@ class Paragraph:
 
 
 class SuperParagraph:
+    """
+    A SuperParagraph. It groups multiple Paragraphs such that new_line
+    SuperParagraphs contain at least 2 new_line Paragraphs
+    and non-new_line SuperParagraphs may consist of:
+        1. Only one new_line Paragraph
+        2. Only one text Paragraph
+        3. A sequence of any length (> 0) of text Paragraphs separated by
+        new_line Paragraphs (it also may start or end in new_line or text)
+    we consider as a single operation.
+    """
     def __init__(self, start, length, new_line, id_):
         self.start = start
         self.length = length
@@ -955,4 +1033,16 @@ class SuperParagraph:
         self.id = id_
         self.authors = []
 
-    def add_author(self)
+    def add_author(self, author):
+        """
+        Add an author to the current SuperParagraph
+
+        :param author: Author to be added to the SuperParagraph
+        :type author: string
+
+        :return: the number of coauthors (number of authors - 1)
+        :rtype: int
+        """
+        if author not in self.authors:
+            self.authors.append(author)
+        return len(self.authors) - 1

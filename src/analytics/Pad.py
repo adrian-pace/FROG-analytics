@@ -701,7 +701,8 @@ class Pad:
                 # (i.e. the index of the paragraph in all_paragraphs)
                 para_it_belongs_to_absolute = -1
                 if para_it_belongs_to != -1:
-                    para_it_belongs_to_absolute = self.get_absolute_index(para_it_belongs_to)
+                    para_it_belongs_to_absolute = self.get_absolute_index(
+                        para_it_belongs_to)
 
                 # If it is supposed to be in a paragraph which is a new line
                 # or at the end of paragraph
@@ -722,9 +723,8 @@ class Pad:
 
                         elem_op.assign_para(2 * [[0]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
-                        elem_op.assign_superparagraph_id(
-                            self.get_superparagraph_id(0))
-
+                        got_superpara_id, got_sidx = self.get_superparagraph_id(
+                            0, return_idx=True)
                         update_indices_from = 1
 
                     # Is it the last op?
@@ -748,8 +748,8 @@ class Pad:
                             [[len(self.paragraphs) - number_new_lines - 2,
                               len(self.paragraphs) - number_new_lines - 1]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
-                        elem_op.assign_superparagraph_id(
-                            self.get_superparagraph_id(len(self.paragraphs) - 1))
+                        got_superpara_id, got_sidx = self.get_superparagraph_id(
+                            len(self.paragraphs) - 1, return_idx=True)
 
                     # Find where we should insert it
                     else:
@@ -783,8 +783,8 @@ class Pad:
                         elem_op.assign_para(2 * [[para_idx - number_new_lines,
                                             para_idx - number_new_lines + 1]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
-                        elem_op.assign_superparagraph_id(
-                            self.get_superparagraph_id(para_idx + 1))
+                        got_superpara_id, got_sidx = self.get_superparagraph_id(
+                            para_idx + 1, return_idx=True)
 
                         update_indices_from = para_idx + 2
 
@@ -811,9 +811,8 @@ class Pad:
                         [[para_it_belongs_to - number_new_lines - 1,
                             para_it_belongs_to - number_new_lines]])
                     elem_op.assign_paragraph_id(new_paragraph_id)
-                    elem_op.assign_superparagraph_id(
-                            self.get_superparagraph_id(para_it_belongs_to))
-
+                    got_superpara_id, got_sidx = self.get_superparagraph_id(
+                        para_it_belongs_to, return_idx=True)
                     update_indices_from = para_it_belongs_to + 1
 
                 # or if it is at the end of a non-newline para:
@@ -841,9 +840,8 @@ class Pad:
                         [[para_it_belongs_to - number_new_lines,
                             para_it_belongs_to - number_new_lines + 1]])
                     elem_op.assign_paragraph_id(new_paragraph_id)
-                    elem_op.assign_superparagraph_id(
-                            self.get_superparagraph_id(para_it_belongs_to + 1))
-
+                    got_superpara_id, got_sidx = self.get_superparagraph_id(
+                        para_it_belongs_to + 1, return_idx=True)
                     update_indices_from = para_it_belongs_to + 2
 
                 # We split the paragraph in two, where there is the newline
@@ -875,11 +873,15 @@ class Pad:
                         [para_it_belongs_to - number_new_lines,
                             para_it_belongs_to - number_new_lines + 1]])
                     elem_op.assign_paragraph_id(para1.paragraph_id)
-                    elem_op.assign_superparagraph_id(
-                        self.get_superparagraph_id(para_it_belongs_to))
+                    got_superpara_id, got_sidx = self.get_superparagraph_id(
+                        para_it_belongs_to, return_idx=True)
 
                     # From where we will update the indices
                     update_indices_from = para_it_belongs_to + 3
+
+                elem_op.assign_superparagraph_id(got_superpara_id)
+                n_authors = self.superparagraphs[got_sidx].add_author(elem_op.author)
+                elem_op.assign_number_coauthors(n_authors)
 
                 # We need to notify the paragraphs that are after my edit,
                 # that their position might have changed
@@ -1057,11 +1059,12 @@ class Pad:
                     not (merge1 in to_remove or merge2 in to_remove)):
                     # Merged paragraph
                     merged_paragraph = Paragraph.merge(self.paragraphs[merge1],
-                                                       self.paragraphs[merge2],
-                                                       elem_op)
+                       self.paragraphs[merge2], elem_op)
                     # Get superpara ids before removing anything
-                    sp_id1, sp_idx1 = self.get_superparagraph_id(merge1, return_idx=True)
-                    sp_id2, sp_idx2 = self.get_superparagraph_id(merge2, return_idx=True)
+                    sp_id1, sp_idx1 = self.get_superparagraph_id(merge1,
+                        return_idx=True)
+                    sp_id2, sp_idx2 = self.get_superparagraph_id(merge2,
+                        return_idx=True)
 
                     if sp_id1 != sp_id2:
                         sp_id = Paragraph.compute_para_id("merge", sp_id1, sp_id2)
@@ -1081,6 +1084,8 @@ class Pad:
 
                     elem_op.assign_paragraph_id(merged_paragraph.paragraph_id)
                     elem_op.assign_superparagraph_id(sp_id1)
+                    n_authors = self.superparagraphs[sp_idx1].add_author(elem_op.author)
+                    elem_op.assign_number_coauthors(n_authors)
 
                 # We need to notify the paragraphs that are after my edit,
                 # that their position might have changed
@@ -1090,8 +1095,12 @@ class Pad:
                 # Remove the paragraphs we are supposed to remove
                 for idx in to_remove[::-1]:
                     elem_op.assign_paragraph_id(self.paragraphs[idx].paragraph_id)
-                    elem_op.assign_superparagraph_id(
-                            self.get_superparagraph_id(idx))
+                    got_superpara_id, got_sidx = self.get_superparagraph_id(
+                        idx, return_idx=True)
+                    elem_op.assign_superparagraph_id(got_superpara_id)
+                    n_authors = self.superparagraphs[got_sidx].add_author(elem_op.author)
+                    elem_op.assign_number_coauthors(n_authors)
+
                     idx_absolute = self.get_absolute_index(idx)
                     self.delete_paragraphs(idx, idx_absolute)
 
@@ -1104,7 +1113,8 @@ class Pad:
                 # (i.e. the index of the paragraph in all_paragraphs)
                 para_it_belongs_to_absolute = -1
                 if para_it_belongs_to != -1:
-                    para_it_belongs_to_absolute = self.get_absolute_index(para_it_belongs_to)
+                    para_it_belongs_to_absolute = self.get_absolute_index(
+                        para_it_belongs_to)
 
                 # If we should create a new para for this elem_op
                 if para_it_belongs_to == -1:
@@ -1124,8 +1134,8 @@ class Pad:
 
                         elem_op.assign_para(2 * [[0]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
-                        elem_op.assign_superparagraph_id(
-                            self.get_superparagraph_id(0))
+                        got_superpara_id, got_sidx = self.get_superparagraph_id(
+                            0, return_idx=True)
 
                         update_indices_from = 1
 
@@ -1150,8 +1160,8 @@ class Pad:
                             [len(self.paragraphs) - number_new_lines - 1],
                             [len(self.paragraphs) - number_new_lines]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
-                        elem_op.assign_superparagraph_id(
-                            self.get_superparagraph_id(len(self.paragraphs) - 1))
+                        got_superpara_id, got_sidx = self.get_superparagraph_id(
+                            len(self.paragraphs) - 1, return_idx=True)
 
                     # Insert the new paragraph in the good place
                     else:
@@ -1186,9 +1196,8 @@ class Pad:
                             [para_idx - number_new_lines, para_idx - number_new_lines + 1],
                             [para_idx - number_new_lines + 1]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
-
-                        elem_op.assign_superparagraph_id(
-                            self.get_superparagraph_id(para_idx + 1))
+                        got_superpara_id, got_sidx = self.get_superparagraph_id(
+                            para_idx + 1, return_idx=True)
 
                         # Update indices of the next paragraphs from here
                         update_indices_from = para_idx + 2
@@ -1200,12 +1209,19 @@ class Pad:
                         [para_it_belongs_to - number_new_lines]])
                     elem_op.assign_paragraph_id(
                         self.paragraphs[para_it_belongs_to].paragraph_id)
-                    elem_op.assign_superparagraph_id(
-                        self.get_superparagraph_id(para_it_belongs_to))
+
+                    got_superpara_id, got_sidx = self.get_superparagraph_id(
+                        para_it_belongs_to, return_idx=True)
+
+
                     # Add it
                     self.paragraphs[para_it_belongs_to].add_elem_op(elem_op)
                     # Update indices of the next paragraphs from here
                     update_indices_from = para_it_belongs_to + 1
+
+                elem_op.assign_superparagraph_id(got_superpara_id)
+                n_authors = self.superparagraphs[got_sidx].add_author(elem_op.author)
+                elem_op.assign_number_coauthors(n_authors)
 
                 # We need to notify the paragraphs that are after my edit,
                 # that their position might have changed
