@@ -8,8 +8,9 @@ import matplotlib.pyplot as plt
 import math
 import nltk
 import spacy
-import seaborn as sns
+from scipy import optimize
 import matplotlib.cm as cm
+
 from itertools import combinations
 
 from nltk.corpus import stopwords
@@ -1235,6 +1236,13 @@ class Pad:
         Plot windows' similarity distribution
         :return:  None
         '''
+        def f_1(x, A, B):
+            return A * x + B
+
+        def f_2(x, A, B, C):
+            return A * x * x + B * x + C
+
+
         fig, ax = plt.subplots(nrows=1, ncols=1)
         flag = False
         for author_pair in self.similarity.keys():
@@ -1244,8 +1252,20 @@ class Pad:
                 # no similarity
                 continue
             else:
-                ax.plot(list(similarity_dict.keys()),list(similarity_dict.values()),label = author_pair)
-                ax.set_ylim(0.0, 1.0)
+                xdata = np.array(list(similarity_dict.keys()))
+                ydata = np.array(list(similarity_dict.values()))
+                if xdata.size>=2:
+                    ax.scatter(xdata,ydata)
+                    popt1, pcov1 = optimize.curve_fit(f_1, xdata, ydata)
+                    ax.plot(xdata, f_1(xdata, *popt1), label='fit degree 1' + author_pair)
+                    ax.set_ylim(0.0, 1.0)
+                    ax.legend()
+                if xdata.size>=3:
+                    popt2, pcov2 = optimize.curve_fit(f_2, xdata, ydata)
+                #ax.plot(xdata,ydata,label = author_pair)
+                    ax.plot(xdata, f_2(xdata, *popt2), label='fit degree 2' + author_pair)
+                    ax.set_ylim(0.0, 1.0)
+                    ax.legend()
                 flag = True
         # plt.show()
         if flag:
@@ -1332,18 +1352,23 @@ class Pad:
                         self.distance[key][groupNum] = dis
                         self.similarity[key]={}
                         self.similarity[key][groupNum] = similarity
-                        self.Window_operation_text[key] = {}
-                        self.Window_operation_text[key][groupNum] = ["-----user1:-----" + text1,
+                        self.window_operation_text[key] = {}
+                        self.window_operation_text[key][groupNum] = ["-----user1:-----" + text1,
                                                            "-----user2-----" + text2]
                     else:
                         self.distance[key][groupNum] = dis
                         self.similarity[key][groupNum] = similarity
-                        self.Window_pperation_text[key][groupNum] = ["-----user1:-----" + text1,
+                        self.window_operation_text[key][groupNum] = ["-----user1:-----" + text1,
                                                                    "-----user2-----" + text2]
 
 
 
     def windowSort(self,win):
+        '''
+        sort function which is used to sort windows
+        :param win:
+        :return:  start time of window
+        '''
         return win.start_time
 
     def operationSort(self,op):
@@ -1413,7 +1438,17 @@ class Pad:
 
 
 class WindowOperation:
+    '''
+    create a new operation based on windows
+    '''
     def __init__(self,groupNum,author,ops,time_interval=1000000):
+        '''
+
+        :param groupNum: the group that window belongs to
+        :param author: the author of this window
+        :param ops: the operations in the window
+        :param time_interval: time interval of the window
+        '''
         self.groupNum = groupNum
         self.author = author
         self.operations = ops
@@ -1430,8 +1465,10 @@ class WindowOperation:
         self.operations.append(op)
 
     def generateElemOps(self):
-        ## used to sort the elem_operation
-        ## and define the end time of the window
+        '''
+        used to sort the elem_operation and define the end time of the window
+        :return: None
+        '''
         for op in self.operations:
             if self.endTime<op.timestamp_end:
                 self.endTime= op.timestamp_end
