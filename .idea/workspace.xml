@@ -2,8 +2,6 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="abe2f9b1-f53b-4ba8-8a76-6e5bac5b1539" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Concept_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/Concept_analysis.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ResponseClustering" beforeDir="false" afterPath="$PROJECT_DIR$/ResponseClustering" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analytics/Pad.py" beforeDir="false" afterPath="$PROJECT_DIR$/analytics/Pad.py" afterDir="false" />
     </list>
@@ -48,8 +46,8 @@
       <file leaf-file-name="Operations.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/analytics/Operations.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="6688">
-              <caret line="352" column="8" selection-start-line="352" selection-start-column="8" selection-end-line="352" selection-end-column="8" />
+            <state relative-caret-position="1541">
+              <caret line="162" column="6" selection-start-line="162" selection-end-line="162" selection-end-column="6" />
               <folding>
                 <element signature="e#21139#21259#0" />
               </folding>
@@ -57,11 +55,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Pad.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Pad.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="268">
-              <caret line="1220" column="37" selection-start-line="1220" selection-start-column="37" selection-end-line="1220" selection-end-column="37" />
+            <state relative-caret-position="-1518">
+              <caret line="588" column="56" lean-forward="true" selection-start-line="588" selection-start-column="56" selection-end-line="588" selection-end-column="56" />
               <folding>
                 <element signature="e#0#25#0" expanded="true" />
               </folding>
@@ -69,11 +67,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Concept_analysis.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Concept_analysis.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Concept_analysis.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-192">
-              <caret line="139" column="13" selection-start-line="139" selection-start-column="13" selection-end-line="139" selection-end-column="13" />
+            <state relative-caret-position="2299">
+              <caret line="154" column="80" lean-forward="true" selection-start-line="154" selection-start-column="80" selection-end-line="154" selection-end-column="80" />
               <folding>
                 <element signature="e#0#61#0" expanded="true" />
               </folding>
@@ -92,15 +90,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>adm</find>
-      <find>class</find>
-      <find />
-      <find>color</find>
-      <find>display</find>
-      <find>getTextBywin</find>
-      <find>generateElemOps</find>
-      <find>self.windowOpe</find>
-      <find>sort</find>
       <find>model</find>
       <find>model.in</find>
       <find>create_pa</find>
@@ -117,11 +106,20 @@
       <find>get_text</find>
       <find>startTIme</find>
       <find>windowoperation</find>
-      <find>startTime</find>
       <find>self.authors</find>
       <find>similarity</find>
       <find>distance</find>
       <find>savefi</find>
+      <find>author_operation</find>
+      <find>AuthorTimeStamp</find>
+      <find>AuthorVectors</find>
+      <find>AuthorText</find>
+      <find>AuthorDistance</find>
+      <find>AuthorSimilarity</find>
+      <find>startTime</find>
+      <find>windowOperation</find>
+      <find>difference</find>
+      <find>class</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -136,8 +134,8 @@
         <option value="$PROJECT_DIR$/analytics/operation_builder.py" />
         <option value="$PROJECT_DIR$/helper.py" />
         <option value="$PROJECT_DIR$/analytics/Operations.py" />
-        <option value="$PROJECT_DIR$/analytics/Pad.py" />
         <option value="$PROJECT_DIR$/Concept_analysis.py" />
+        <option value="$PROJECT_DIR$/analytics/Pad.py" />
       </list>
     </option>
   </component>
@@ -760,32 +758,32 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
+    <entry file="file://$PROJECT_DIR$/Concept_analysis.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="268">
-          <caret line="1220" column="37" selection-start-line="1220" selection-start-column="37" selection-end-line="1220" selection-end-column="37" />
+        <state relative-caret-position="2299">
+          <caret line="154" column="80" lean-forward="true" selection-start-line="154" selection-start-column="80" selection-end-line="154" selection-end-column="80" />
           <folding>
-            <element signature="e#0#25#0" expanded="true" />
+            <element signature="e#0#61#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/analytics/Operations.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6688">
-          <caret line="352" column="8" selection-start-line="352" selection-start-column="8" selection-end-line="352" selection-end-column="8" />
+        <state relative-caret-position="1541">
+          <caret line="162" column="6" selection-start-line="162" selection-end-line="162" selection-end-column="6" />
           <folding>
             <element signature="e#21139#21259#0" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Concept_analysis.py">
+    <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-192">
-          <caret line="139" column="13" selection-start-line="139" selection-start-column="13" selection-end-line="139" selection-end-column="13" />
+        <state relative-caret-position="-1518">
+          <caret line="588" column="56" lean-forward="true" selection-start-line="588" selection-start-column="56" selection-end-line="588" selection-end-column="56" />
           <folding>
-            <element signature="e#0#61#0" expanded="true" />
+            <element signature="e#0#25#0" expanded="true" />
           </folding>
         </state>
       </provider>

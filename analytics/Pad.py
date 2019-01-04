@@ -18,6 +18,10 @@ Stoplist = set(stopwords.words('english'))
 nlp = spacy.load('en_core_web_md')
 
 def get_colors():
+    '''
+
+    :return:  color list
+    '''
     colors = []
     for i in range(30, 38):
         colors.append('\033[' + str(i) + 'm')
@@ -26,11 +30,15 @@ def get_colors():
     return colors
 
 def cleanText(text):
+    '''
+    :param text: the text that need to be cleaned
+    :return:  cleaned text
+    '''
     cleaned_text = []
     doc = nlp(text)
     for word in doc:
         if word.text.lower() not in Stoplist and not word.is_punct and not word.like_num and not word.like_url:
-            cleaned_text.append(word.lemma_)
+            cleaned_text.append(word.lemma_) ## add the prototype of the word
     return cleaned_text
 
 
@@ -57,17 +65,17 @@ class Pad:
 
         self.paragraphs = []
 
-        self.AuthorOperation= {}
-        self.AuthorTimeStamp = {}
-        self.AuthorVectors = {}
-        self.AuthorText = {}
-        self.AuthorDistance ={}
-        self.AuthorSimilarity = {}
-        self.startTime = float('inf')
-        self.windowOperation = {}
+        self.author_operation= {}
+        self.author_timeStamp = {}
+        self.author_vectors = {}
+        self.author_text = {}
+        self.author_distance ={}
+        self.author_similarity = {}
+        self.start_time = float('inf')
+        self.window_operation = {}
         self.distance={}
         self.similarity = {}
-        self.WindowOperationText={}
+        self.window_operation_text={}
         """:type: list[Paragraph]"""
 
     ###############################
@@ -137,8 +145,8 @@ class Pad:
             # From where we will change the paragraph indices
             # should be infinity but this is enough since we can't add more
             # than 2 paragraphs
-            if self.startTime>elem_op.timestamp:
-                self.startTime = elem_op.timestamp
+            if self.start_time>elem_op.timestamp:
+                self.start_time = elem_op.timestamp
 
             update_indices_from = len(self.paragraphs) + 3
 
@@ -1106,39 +1114,48 @@ class Pad:
         return text
 
 
-    def PreprocessOperationByAuthor(self,compute_vector=False,model=None,start_alpha=None,infer_epoch=None):
+    def PreprocessOperationByAuthor(self,compute_vector=False,model=None):
+        '''
+        group operations by author and compute distance or similarity of different authors' text
+
+        :param compute_vector: whether to compute vector
+        :param model:  the pretrained model
+        :return: None
+        '''
         for op in self.operations:
             if op.author=="Etherpad_admin":
-                continue
-            if op.author not in self.AuthorOperation.keys():
-                self.AuthorOperation[op.author] = [op]
+                continue # ignore the Etherpad_admin edit
+            if op.author not in self.author_operation.keys():
+                self.author_operation[op.author] = [op]
             else:
-                self.AuthorOperation[op.author].append(op)
+                self.author_operation[op.author].append(op)
 
-            if op.author not in self.AuthorTimeStamp.keys():
-                self.AuthorTimeStamp[op.author] = [[op.timestamp_start, op.timestamp_end]]
+            if op.author not in self.author_timeStamp.keys():
+                self.author_timeStamp[op.author] = [[op.timestamp_start, op.timestamp_end]]
             else:
-                self.AuthorTimeStamp[op.author].append([op.timestamp_start, op.timestamp_end])
-        PadText = self.get_text()
-        PadVec = model.infer_vector(PadText, alpha=start_alpha, steps=infer_epoch)
-        self.AuthorVectors["pad"] = PadVec
-        self.AuthorText["pad"] = PadText
+                self.author_timeStamp[op.author].append([op.timestamp_start, op.timestamp_end])
+
+        pad_text =' '.join(cleanText(self.get_text())) # compute the sec2vec need to clean text at first
+        pad_vec = model.embed_sentence(pad_text)
+        self.author_vectors["pad"] = pad_vec
+        self.author_text["pad"] = pad_text
         if compute_vector==True:
             authorNum=0
             for author in self.authors:
                 if author!="Etherpad_admin":
                     authorNum+=1
-                    authorText = self.get_text_by_author(author)
-                    authorVec = model.infer_vector(authorText, alpha=start_alpha, steps=infer_epoch)
-                    self.AuthorVectors[author] = authorVec
-                    self.AuthorText[authorNum] = authorText
-            AuthorList = list(self.AuthorVectors.keys())
+                    author_text = ' '.join(cleanText(self.get_text_by_author(author)))
+                    author_vec = model.embed_sentence(author_text)
+                    self.author_vectors[author] = author_vec
+                    self.author_text[authorNum] = author_text
+            AuthorList = list(self.author_vectors.keys())
+
             for i in range(len(AuthorList)-1):
                 for j in range(i+1,len(AuthorList)):
                     author1 = AuthorList[i]
                     author2  = AuthorList[j]
                     if AuthorList[i]=='pad':
-                        Author1 = 'pad'
+                        Author1 = 'pad' # pad is the total text
                         Author2 = str(j)
                     elif AuthorList[j]=='pad':
                         Author2 = 'pad'
@@ -1146,18 +1163,23 @@ class Pad:
                     else:
                         Author2 = str(j)
                         Author1 = str(i)
+                    # compute the distance and similarity between different authors
+                    self.author_distance[Author1+' VS '+Author2] = np.linalg.norm(
+                     self.author_vectors[author1]- self.author_vectors[author2])
 
-                    self.AuthorDistance[Author1+' VS '+Author2] = np.linalg.norm(
-                     self.AuthorVectors[author1]- self.AuthorVectors[author2])
-
-                    self.AuthorSimilarity[Author1 + ' VS ' + Author2] = 1 - spatial.distance.cosine(self.AuthorVectors[author1],
-                                                              self.AuthorVectors[author2])
+                    self.author_similarity[Author1 + ' VS ' + Author2] = 1 - spatial.distance.cosine(self.author_vectors[author1],
+                                                              self.author_vectors[author2])
 
 
     def get_text_by_author(self,author):
+        '''
+        recover the text wrote by author
+        :param author:
+        :return: author's text
+        '''
         elemOps=[]
-        AuthorOperation = self.AuthorOperation[author]
-        for op in AuthorOperation:
+        author_operation = self.author_operation[author]
+        for op in author_operation:
             elemOps.extend(op.elem_ops)
         elemOps = ElementaryOperation.sort_elem_ops(elemOps)
         text = ""
@@ -1209,79 +1231,89 @@ class Pad:
 
 
     def PlotSimilarityDistribution(self):
+        '''
+        Plot windows' similarity distribution
+        :return:  None
+        '''
         fig, ax = plt.subplots(nrows=1, ncols=1)
         flag = False
         for author_pair in self.similarity.keys():
+            # author_pair is each two authors
             similarity_dict = self.similarity[author_pair]
             if sum(list(similarity_dict.values()))==0:
+                # no similarity
                 continue
             else:
-
                 ax.plot(list(similarity_dict.keys()),list(similarity_dict.values()),label = author_pair)
                 ax.set_ylim(0.0, 1.0)
                 flag = True
         # plt.show()
         if flag:
+            # if we have similarity then plot it.
             fig.savefig('similarity_dis_img/'+self.pad_name+'.png')
             plt.close(fig)
 
-    def BuildWindowOperation(self,timeInterval=100000):
+    def BuildWindowOperation(self,time_interval=100000):
+        '''
+        build windows of the whole pad
+        :param time_interval:  setting the time interval of
+        :return: None
+        '''
         i = 1
         for op in self.operations:
             if op.author=='Etherpad_admin':
                 continue
-            differenceTime = op.timestamp_end-self.startTime
-            while(differenceTime>timeInterval*i):
+            difference_time = op.timestamp_end-self.start_time
+            while(difference_time>time_interval*i):
                 ## last window is finished then we need to sort the operation
-                if self.windowOperation.keys() and i in self.windowOperation.keys():
-                    for win in self.windowOperation[i]:
+                if self.window_operation.keys() and i in self.window_operation.keys():
+                    for win in self.window_operation[i]:
                         win.generateElemOps()
-                    self.windowOperation[i].sort(key=self.windowSort)
+                    self.window_operation[i].sort(key=self.windowSort)
                 i +=1
-            tmpWindowOperation = WindowOperation(i,op.author,[op],timeInterval)
-            if i not in self.windowOperation.keys(): ## the
-                self.windowOperation[i] = [tmpWindowOperation]
 
-            elif tmpWindowOperation in self.windowOperation[i]:
-                self.windowOperation[i][self.windowOperation[i].index(tmpWindowOperation)].addOperation(op)
+            tmp_window_operation = WindowOperation(i,op.author,[op],time_interval)
+            if i not in self.window_operation.keys(): ## the
+                self.window_operation[i] = [tmp_window_operation]
+
+            elif tmp_window_operation in self.window_operation[i]:
+                self.window_operation[i][self.window_operation[i].index(tmp_window_operation)].addOperation(op)
             else:
-                self.windowOperation[i].append(tmpWindowOperation)
+                self.window_operation[i].append(tmp_window_operation)
 
 
     def getTextByWin(self,model):
-        # endTimeWinList = [0.0] # used to store the last window end time in order to recover the text
-        # endTime = 0.0
+        '''
+        recover each window's text
+        :param model:  pretrained model
+        :return:
+        '''
 
-        for groupNum in self.windowOperation.keys():
-            # if endTimeWinList[-1] ==0.0:
-            #     endTimeWinList[-1] = self.windowOperation[groupNum][0].startTime
-            # allTextBefore = self.get_text(endTimeWinList[-1])
-
-            # lastWinVec = model(allTextBefore).vector
-            for winOp in self.windowOperation[groupNum]:
-                # winOp.createWindowText(model,start_alpha,infer_epoch,allTextBefore,lastWinVec) this is used to compute all the text before
+        for groupNum in self.window_operation.keys():
+            for winOp in self.window_operation[groupNum]:
                 winOp.createWindowText(model)
-            #     if endTime<winOp.endTime:
-            #         endTime = winOp.endTime
-            # endTimeWinList.append(endTime)
+
 
 
 
     def computeDistance(self):
-        for groupNum in self.windowOperation.keys():
-            # self.distance[groupNum] = {}
-            # self.similarity[groupNum] = {}
-            # self.WindowOperationText[groupNum] = {}
-            if len(self.windowOperation[groupNum])<2:
+        '''
+        compute the distance between different authors
+        :return: None
+        '''
+
+        for groupNum in self.window_operation.keys():
+
+            if len(self.window_operation[groupNum])<2:
                 continue
             else:
-                index_list = [i for i in range(len(self.windowOperation[groupNum]))]
+                index_list = [i for i in range(len(self.window_operation[groupNum]))]
                 tuples = list(combinations(index_list,2))
                 for ind,tuple in enumerate(tuples):
                     index1 = tuple[0]
                     index2 = tuple[1]
-                    win1 = self.windowOperation[groupNum][index1]
-                    win2 = self.windowOperation[groupNum][index2]
+                    win1 = self.window_operation[groupNum][index1]
+                    win2 = self.window_operation[groupNum][index2]
                     text1 = win1.text
                     text2 = win2.text
                     author1 = win1.author
@@ -1300,19 +1332,19 @@ class Pad:
                         self.distance[key][groupNum] = dis
                         self.similarity[key]={}
                         self.similarity[key][groupNum] = similarity
-                        self.WindowOperationText[key] = {}
-                        self.WindowOperationText[key][groupNum] = ["-----user1:-----" + text1,
+                        self.Window_operation_text[key] = {}
+                        self.Window_operation_text[key][groupNum] = ["-----user1:-----" + text1,
                                                            "-----user2-----" + text2]
                     else:
                         self.distance[key][groupNum] = dis
                         self.similarity[key][groupNum] = similarity
-                        self.WindowOperationText[key][groupNum] = ["-----user1:-----" + text1,
+                        self.Window_pperation_text[key][groupNum] = ["-----user1:-----" + text1,
                                                                    "-----user2-----" + text2]
 
 
 
     def windowSort(self,win):
-        return win.startTime
+        return win.start_time
 
     def operationSort(self,op):
         return op.timestamp_start
@@ -1357,15 +1389,18 @@ class Pad:
         return result
 
     def PlotTextAdded(self):
+        '''
+        plot the length of added text according to author
+        :return: None
+        '''
         author_text_length = {}
-        for group,wins in self.windowOperation.items():
+        for group,wins in self.window_operation.items():
             for win in wins:
                 if win.author not in author_text_length.keys():
                     author_text_length[win.author] = {group:win.text_added_len}
                 else:
                     author_text_length[win.author][group]=win.text_added_len
 
-        #print('a')
         Sum = {}
         colors = iter(cm.rainbow(np.linspace(0, 1, len(author_text_length.keys())+1)))
         for author in author_text_length.keys():
@@ -1378,13 +1413,13 @@ class Pad:
 
 
 class WindowOperation:
-    def __init__(self,groupNum,author,ops,timeInterval=1000000):
+    def __init__(self,groupNum,author,ops,time_interval=1000000):
         self.groupNum = groupNum
         self.author = author
         self.operations = ops
         self.elemOps = []
-        self.startTime =  float('inf')
-        self.timeInterval = timeInterval
+        self.start_time =  float('inf')
+        self.time_interval = time_interval
         self.text = ''
         self.textVector=[]
         self.endTime = 0.0
@@ -1400,8 +1435,8 @@ class WindowOperation:
         for op in self.operations:
             if self.endTime<op.timestamp_end:
                 self.endTime= op.timestamp_end
-            if self.startTime>op.timestamp_start:
-                self.startTime = op.timestamp_start
+            if self.start_time>op.timestamp_start:
+                self.start_time = op.timestamp_start
             self.elemOps.extend(op.elem_ops)
         self.elemOps = ElementaryOperation.sort_elem_ops(self.elemOps)
 
