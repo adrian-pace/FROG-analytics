@@ -9,6 +9,8 @@ import math
 import nltk
 import spacy
 import seaborn as sns
+import matplotlib.cm as cm
+from itertools import combinations
 
 from nltk.corpus import stopwords
 Stoplist = set(stopwords.words('english'))
@@ -24,12 +26,12 @@ def get_colors():
     return colors
 
 def cleanText(text):
-    cleanedText = []
+    cleaned_text = []
     doc = nlp(text)
     for word in doc:
         if word.text.lower() not in Stoplist and not word.is_punct and not word.like_num and not word.like_url:
-            cleanedText.append(word.lemma_)
-    return cleanedText
+            cleaned_text.append(word.lemma_)
+    return cleaned_text
 
 
 class Pad:
@@ -1207,15 +1209,21 @@ class Pad:
 
 
     def PlotSimilarityDistribution(self):
-        group = list(self.similarity.keys())
-        similarity = list(self.similarity.values())
-        sns.lineplot(group, similarity)
-        plt.show()
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+        flag = False
+        for author_pair in self.similarity.keys():
+            similarity_dict = self.similarity[author_pair]
+            if sum(list(similarity_dict.values()))==0:
+                continue
+            else:
 
-
-
-
-
+                ax.plot(list(similarity_dict.keys()),list(similarity_dict.values()),label = author_pair)
+                ax.set_ylim(0.0, 1.0)
+                flag = True
+        # plt.show()
+        if flag:
+            fig.savefig('similarity_dis_img/'+self.pad_name+'.png')
+            plt.close(fig)
 
     def BuildWindowOperation(self,timeInterval=100000):
         i = 1
@@ -1261,26 +1269,47 @@ class Pad:
 
     def computeDistance(self):
         for groupNum in self.windowOperation.keys():
+            # self.distance[groupNum] = {}
+            # self.similarity[groupNum] = {}
+            # self.WindowOperationText[groupNum] = {}
             if len(self.windowOperation[groupNum])<2:
-                self.distance[groupNum]=0
-                self.similarity[groupNum] = 0
+                continue
             else:
-                text1 = self.windowOperation[groupNum][0].text
-                text2 = self.windowOperation[groupNum][1].text
+                index_list = [i for i in range(len(self.windowOperation[groupNum]))]
+                tuples = list(combinations(index_list,2))
+                for ind,tuple in enumerate(tuples):
+                    index1 = tuple[0]
+                    index2 = tuple[1]
+                    win1 = self.windowOperation[groupNum][index1]
+                    win2 = self.windowOperation[groupNum][index2]
+                    text1 = win1.text
+                    text2 = win2.text
+                    author1 = win1.author
+                    author2 = win2.author
+                    dis = round(np.linalg.norm(win1.textVector - win2.textVector),3)
+                    similarity = 1-spatial.distance.cosine(win1.textVector, win2.textVector)
+                    # if dis<0.2:
+                    #     dis=0
+                    if math.isnan(similarity):
+                        similarity = 0
+                    authors = [author1,author2]
+                    authors.sort()
+                    key = '--VS--'.join(authors)
+                    if key not in self.distance.keys():
+                        self.distance[key]= {}
+                        self.distance[key][groupNum] = dis
+                        self.similarity[key]={}
+                        self.similarity[key][groupNum] = similarity
+                        self.WindowOperationText[key] = {}
+                        self.WindowOperationText[key][groupNum] = ["-----user1:-----" + text1,
+                                                           "-----user2-----" + text2]
+                    else:
+                        self.distance[key][groupNum] = dis
+                        self.similarity[key][groupNum] = similarity
+                        self.WindowOperationText[key][groupNum] = ["-----user1:-----" + text1,
+                                                                   "-----user2-----" + text2]
 
-                # self.distance[groupNum]  = [np.linalg.norm(self.windowOperation[groupNum][0].textVector-self.windowOperation[groupNum][1].textVector),text1,text2]
-                dis = round(np.linalg.norm(
-                     self.windowOperation[groupNum][0].textVector - self.windowOperation[groupNum][1].textVector),3)
 
-                similarity = 1-spatial.distance.cosine(self.windowOperation[groupNum][0].textVector, self.windowOperation[groupNum][1].textVector)
-                # if dis<0.2:
-                #     dis=0
-                self.distance[groupNum] = dis
-                if math.isnan(similarity):
-                    similarity = 0
-                self.similarity[groupNum] = similarity
-
-                self.WindowOperationText[groupNum] = ["-----user1:-----"+text1,"-----user2-----"+text2]
 
     def windowSort(self,win):
         return win.startTime
@@ -1299,6 +1328,54 @@ class Pad:
             # text = text[:op.position_start_of_op] + op.text + text[op.position_start_of_op:]
         self.text = text
 
+    def merge(slef,d1, d2, merge_fn=lambda x, y: y):
+        """
+        Merges two dictionaries, non-destructively, combining
+        values on duplicate keys as defined by the optional merge
+        function.  The default behavior replaces the values in d1
+        with corresponding values in d2.  (There is no other generally
+        applicable merge strategy, but often you'll have homogeneous
+        types in your dicts, so specifying a merge technique can be
+        valuable.)
+
+        Examples:
+
+        >>> d1
+        {'a': 1, 'c': 3, 'b': 2}
+        >>> merge(d1, d1)
+        {'a': 1, 'c': 3, 'b': 2}
+        >>> merge(d1, d1, lambda x,y: x+y)
+        {'a': 2, 'c': 6, 'b': 4}
+
+        """
+        result = dict(d1)
+        for k, v in d2.items():
+            if k in result:
+                result[k] = merge_fn(result[k], v)
+            else:
+                result[k] = v
+        return result
+
+    def PlotTextAdded(self):
+        author_text_length = {}
+        for group,wins in self.windowOperation.items():
+            for win in wins:
+                if win.author not in author_text_length.keys():
+                    author_text_length[win.author] = {group:win.text_added_len}
+                else:
+                    author_text_length[win.author][group]=win.text_added_len
+
+        #print('a')
+        Sum = {}
+        colors = iter(cm.rainbow(np.linspace(0, 1, len(author_text_length.keys())+1)))
+        for author in author_text_length.keys():
+            Sum = self.merge(Sum,author_text_length[author], merge_fn=lambda x, y: x+y)
+            plt.scatter(author_text_length[author].keys(),author_text_length[author].values(),color=next(colors))
+        plt.scatter(Sum.keys(), Sum.values(), color=next(colors))
+        plt.show()
+
+
+
 
 class WindowOperation:
     def __init__(self,groupNum,author,ops,timeInterval=1000000):
@@ -1311,6 +1388,7 @@ class WindowOperation:
         self.text = ''
         self.textVector=[]
         self.endTime = 0.0
+        self.text_added_len = 0
 
 
     def addOperation(self,op):
@@ -1331,6 +1409,7 @@ class WindowOperation:
     def __eq__(self, other):
 
         return (self.author==other.author) and (self.groupNum==other.groupNum)
+
 
 
     def createWindowText(self,model):
@@ -1362,6 +1441,7 @@ class WindowOperation:
             op.get_op_text()
             if op.text != '\n':
                 text +=  op.text + ' '
+                self.text_added_len = len(op.text)  # compute the length of text added
         self.text =  text
         cleaned_text = ' '.join(cleanText(text))
         self.textVector = model.embed_sentence(cleaned_text)

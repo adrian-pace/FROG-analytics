@@ -35,6 +35,14 @@ import gensim.models as g
 import pandas as pd
 import sent2vec
 
+
+def numberOperation(x):
+    num = 0
+    for win in x:
+        num +=len(win.operations)
+    return num
+
+
 list_of_elem_ops_per_pad = dict()
 elemOpsCounter = 0
 root_of_dbs = "data/"
@@ -70,18 +78,21 @@ pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(lis
 outputDistance = {}
 outputSimilarity = {}
 outputText = {}
+outputWindowOps = {}
+outputNumWin = {}
+winLength = {}
+operationNum = {}
+average = {}
 i = 0
 for pad_name in pads:
     i +=1
-    if i==200:
-        break
     paraTextPerPad = {}
     elemOpsCounter += len(elem_ops_treated[pad_name])
     pad = pads[pad_name]
     # text = pad.text_by_ops()
 
     # create the paragraphs
-    pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
+    pad.create_paragraphs_from_ops(elem_ops_treated[pad_name]) # we need to set starttime by this function
     # pad.build_operation_context(config.delay_sync, config.time_to_reset_day, config.time_to_reset_break)
 
     # paras = pad.paragraphs
@@ -99,27 +110,52 @@ for pad_name in pads:
     # outputText[pad_name] = pad.AuthorText
 
     # ----bellow is compute the window-based author context
-    pad.BuildWindowOperation(60000)
-    pad.getTextByWin(model)
+    pad.BuildWindowOperation(200000)
+    pad.getTextByWin(model)   # this is used to compute the length and build text for each win
+
+    # ---- below is used to compute the added text length
+    #pad.PlotTextAdded()
+
+
     pad.computeDistance()
     # pad.PlotLengthOperationTime()
     pad.PlotSimilarityDistribution()
-    outputDistance[pad_name]=pad.distance
-    outputSimilarity[pad_name] = pad.similarity
-    outputText[pad_name] = pad.WindowOperationText
+
+    # winList = []
+    # for wins in pad.windowOperation.values():
+    #     winList.append(numberOperation(wins))
+    # outputWindowOps[pad_name] =winList
+    # operationNum[pad_name] = sum(winList)
+    # if len(winList)==0:
+    #     average[pad_name] = 0
+    # else:
+    #     average[pad_name] = sum(winList)/len(winList)
+
+    # outputDistance[pad_name]=pad.
+    # outputSimilarity[pad_name] = pad.similarity
+    # outputText[pad_name] = pad.WindowOperationText
 
     print("------%d",i)
+    if(i==200):
+        break
 
+    # winLength[pad_name] = len(winList)
 
-outputTextDF = pd.DataFrame(outputText).fillna("No text!")
-outputTextDF  = outputTextDF.T
-outputTextDF.to_csv('Text-s.csv', encoding='utf-8')
-outputDistanceDF= pd.DataFrame(outputDistance).fillna(0)
-outputDistanceDF = outputDistanceDF.T
-outputDistanceDF.to_csv('Distance-s.csv',float_format='%.2f',encoding='utf-8')
-outputSimilarityDF= pd.DataFrame(outputSimilarity).fillna(0)
-outputSimilarityDF = outputSimilarityDF.T
-outputSimilarityDF.to_csv('similarity-s.csv',float_format='%.2f',encoding='utf-8')
+outputWin = pd.DataFrame.from_dict(outputWindowOps,orient='index').fillna("No")
+outputWin = outputWin.reset_index()
+outputWin['winNum']= outputWin['index'].map(winLength)
+outputWin['opsNum'] = outputWin['index'].map(operationNum)
+outputWin['averageOps'] = outputWin['index'].map(average)
+outputWin.to_csv('winNum-120.csv', encoding='utf-8')
+# outputTextDF = pd.DataFrame.from_dict(outputWindowOps,orient='index').fillna("No win!")
+# outputTextDF  = outputTextDF.T
+# outputTextDF.to_csv('Text-s.csv', encoding='utf-8')
+# outputDistanceDF= pd.DataFrame(outputDistance).fillna(0)
+# outputDistanceDF = outputDistanceDF.T
+# outputDistanceDF.to_csv('Distance-s.csv',float_format='%.2f',encoding='utf-8')
+# outputSimilarityDF= pd.DataFrame(outputSimilarity).fillna(0)
+# outputSimilarityDF = outputSimilarityDF.T
+# outputSimilarityDF.to_csv('similarity-s.csv',float_format='%.2f',encoding='utf-8')
 
 
 # list_of_elem_ops_per_main  = get_elem_ops_per_pad_from_db(editor='MySQL')
@@ -133,5 +169,4 @@ df = pd.DataFrame({'Paragraph': paragraph,
                        'Authors': paragraph
                        })
 print("There are %s pads with a total of %s elementary operations" % (str(len(pads)), str(elemOpsCounter)))
-
 
