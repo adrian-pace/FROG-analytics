@@ -5,3 +5,7 @@
 5. paragraph semantic analysis 
 6. docuviz tool 
 7. write the report about what I did before (even for some method useless??you did) and the slide 
+
+As I’ve discussed with you, the main purpose of this report is to document what you have done, which choices you made and why, what you tried which didn’t work out etc, for future students who will continue this work. However, we could also consider it as part of the paper… Since you have to spend some time writing this report anyway, if you try to focus on things that I can copy and paste into the paper - very clear explanations of the different algorithms you implemented, how the program works, perhaps with diagrams - maybe pseudo-code that shows how you determine paragraph splits, any interesting diagrams and visualizations from the data samples (I can also look at the CSCL paper for this), any literature review of papers you’ve read which are relevant to your work, where we’re doing things differently etc - I think you get the idea?
+
+So again, if you can put as much of this kind of stuff into the report as you can in a few pages, and I get both of your reports, I can see if it’s enough to get a five page polished paper out of.
