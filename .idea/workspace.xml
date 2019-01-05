@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="abe2f9b1-f53b-4ba8-8a76-6e5bac5b1539" name="Default" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ResponseClustering" beforeDir="false" afterPath="$PROJECT_DIR$/ResponseClustering" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/analytics/Pad.py" beforeDir="false" afterPath="$PROJECT_DIR$/analytics/Pad.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plottest.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/plottest.ipynb" afterDir="false" />
@@ -16,7 +17,7 @@
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/FROG_analytics$text.coverage" NAME="text Coverage Results" MODIFIED="1542027185078" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/FROG_analytics$helper.coverage" NAME="helper Coverage Results" MODIFIED="1544457974239" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/FROG_analytics$Concept_analysis.coverage" NAME="Concept_analysis Coverage Results" MODIFIED="1546642019583" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/FROG_analytics$Concept_analysis.coverage" NAME="Concept_analysis Coverage Results" MODIFIED="1546694652037" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/FROG_analytics$main_belgians_evolution.coverage" NAME="main belgians_evolution Coverage Results" MODIFIED="1541765623853" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="DatabaseView">
@@ -38,7 +39,7 @@
       <file leaf-file-name="operation_builder.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/analytics/operation_builder.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="80">
+            <state relative-caret-position="-838">
               <caret line="192" column="38" selection-start-line="192" selection-start-column="29" selection-end-line="192" selection-end-column="38" />
             </state>
           </provider>
@@ -47,7 +48,7 @@
       <file leaf-file-name="Operations.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/analytics/Operations.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1541">
+            <state relative-caret-position="55">
               <caret line="162" column="6" selection-start-line="162" selection-end-line="162" selection-end-column="6" />
               <folding>
                 <element signature="e#21139#21259#0" />
@@ -56,11 +57,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Pad.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Pad.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="253">
-              <caret line="1257" column="43" selection-start-line="1257" selection-start-column="43" selection-end-line="1257" selection-end-column="43" />
+            <state relative-caret-position="418">
+              <caret line="60" lean-forward="true" selection-start-line="60" selection-end-line="60" />
               <folding>
                 <element signature="e#0#25#0" expanded="true" />
               </folding>
@@ -68,11 +69,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Concept_analysis.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Concept_analysis.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Concept_analysis.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="107">
-              <caret line="124" column="47" lean-forward="true" selection-start-line="124" selection-start-column="47" selection-end-line="124" selection-end-column="47" />
+            <state relative-caret-position="36">
+              <caret line="121" column="23" selection-start-line="121" selection-start-column="23" selection-end-line="121" selection-end-column="23" />
               <folding>
                 <element signature="e#0#61#0" expanded="true" />
               </folding>
@@ -160,6 +161,7 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
+      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -171,7 +173,6 @@
           <select />
         </subPane>
       </pane>
-      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -179,7 +180,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
-    <property name="settings.editor.selected.configurable" value="editor.preferences.fonts.default" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -329,17 +330,17 @@
       <window_info anchor="bottom" id="TODO" order="6" weight="0.32930845" />
       <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.50082463" side_tool="true" weight="0.39956093" />
       <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49917537" weight="0.1701427" />
       <window_info anchor="bottom" id="Version Control" order="7" sideWeight="0.49917537" weight="0.32930845" />
       <window_info anchor="bottom" id="Python Console" order="7" sideWeight="0.49972513" weight="0.32930845" />
+      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49917537" weight="0.1701427" />
       <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.49972513" weight="0.32930845" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.081913136" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.08246289" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="right" id="Database" order="3" weight="0.32985157" />
       <window_info anchor="right" content_ui="combo" id="SciView" order="3" weight="0.51786697" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49917537" weight="0.3402854" />
       <window_info id="Favorites" order="2" side_tool="true" />
+      <window_info active="true" anchor="bottom" id="Debug" order="3" sideWeight="0.49917537" visible="true" weight="0.3402854" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -377,7 +378,7 @@
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Concept_analysis.py</url>
           <line>143</line>
-          <option name="timeStamp" value="209" />
+          <option name="timeStamp" value="219" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -387,7 +388,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="218" />
+      <option name="time" value="220" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
@@ -409,6 +410,16 @@
     </watches-manager>
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/Concept_analysis.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="2014">
+          <caret line="124" column="47" lean-forward="true" selection-start-line="124" selection-start-column="47" selection-end-line="124" selection-end-column="47" />
+          <folding>
+            <element signature="e#0#61#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/text.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="361">
@@ -726,27 +737,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/analytics/operation_builder.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="80">
-          <caret line="192" column="38" selection-start-line="192" selection-start-column="29" selection-end-line="192" selection-end-column="38" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$USER_HOME$/.local/lib/python3.6/site-packages/matplotlib/axes/_base.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="191">
           <caret line="3599" selection-start-line="3599" selection-end-line="3599" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/analytics/Operations.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1541">
-          <caret line="162" column="6" selection-start-line="162" selection-end-line="162" selection-end-column="6" />
-          <folding>
-            <element signature="e#21139#21259#0" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -764,25 +758,39 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$USER_HOME$/.local/lib/python3.6/site-packages/numpy/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
+    <entry file="file://$PROJECT_DIR$/analytics/operation_builder.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="253">
-          <caret line="1257" column="43" selection-start-line="1257" selection-start-column="43" selection-end-line="1257" selection-end-column="43" />
+        <state relative-caret-position="-838">
+          <caret line="192" column="38" selection-start-line="192" selection-start-column="29" selection-end-line="192" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/analytics/Operations.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="55">
+          <caret line="162" column="6" selection-start-line="162" selection-end-line="162" selection-end-column="6" />
           <folding>
-            <element signature="e#0#25#0" expanded="true" />
+            <element signature="e#21139#21259#0" />
           </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Concept_analysis.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="107">
-          <caret line="124" column="47" lean-forward="true" selection-start-line="124" selection-start-column="47" selection-end-line="124" selection-end-column="47" />
+        <state relative-caret-position="36">
+          <caret line="121" column="23" selection-start-line="121" selection-start-column="23" selection-end-line="121" selection-end-column="23" />
           <folding>
             <element signature="e#0#61#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="418">
+          <caret line="60" lean-forward="true" selection-start-line="60" selection-end-line="60" />
+          <folding>
+            <element signature="e#0#25#0" expanded="true" />
           </folding>
         </state>
       </provider>

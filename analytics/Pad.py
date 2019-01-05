@@ -53,7 +53,7 @@ class Pad:
         Create a pad
 
         :param pad_name:  name of the new pad
-        :param pad_name:  name of the new pad
+
         """
 
         self.authors = []
@@ -1255,17 +1255,18 @@ class Pad:
                 xdata = np.array(list(similarity_dict.keys()))
                 ydata = np.array(list(similarity_dict.values()))
                 if xdata.size>=2:
+                    ax.plot(xdata,ydata,label='curve')
                     ax.scatter(xdata,ydata)
                     popt1, pcov1 = optimize.curve_fit(f_1, xdata, ydata)
-                    ax.plot(xdata, f_1(xdata, *popt1), label='fit degree 1' + author_pair)
+                    ax.plot(xdata, f_1(xdata, *popt1), label='linear fit with ' + 'k='+str(round(popt1[0],3)))
                     ax.set_ylim(0.0, 1.0)
                     ax.legend()
-                if xdata.size>=3:
-                    popt2, pcov2 = optimize.curve_fit(f_2, xdata, ydata)
-                #ax.plot(xdata,ydata,label = author_pair)
-                    ax.plot(xdata, f_2(xdata, *popt2), label='fit degree 2' + author_pair)
-                    ax.set_ylim(0.0, 1.0)
-                    ax.legend()
+                # if xdata.size>=3:
+                #     popt2, pcov2 = optimize.curve_fit(f_2, xdata, ydata)
+                # #ax.plot(xdata,ydata,label = author_pair)
+                #     ax.plot(xdata, f_2(xdata, *popt2), label='fit degree 2' + author_pair)
+                #     ax.set_ylim(0.0, 1.0)
+                #     ax.legend()
                 flag = True
         # plt.show()
         if flag:
