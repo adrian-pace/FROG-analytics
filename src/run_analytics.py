@@ -23,13 +23,18 @@ def run(list_of_elem_ops_per_pad,
     print_text=False,
     print_text_colored_by_authors=False,
     print_text_colored_by_ops=False,
-    print_metrics_text=True):
+    print_metrics_text=True,
+    pads=None,
+    elem_ops_treated=None):
 
-    # Build the operations from the ElementaryOperation
-    # (i.e. for each pad, create a Pad object containing the (non-elem) ops)
-    pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(
-        list_of_elem_ops_per_pad,
-        maximum_time_between_elem_ops)
+    pads_is_None = pads is None
+
+    if pads_is_None:
+        # Build the operations from the ElementaryOperation
+        # (i.e. for each pad, create a Pad object containing the (non-elem) ops)
+        pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(
+            list_of_elem_ops_per_pad,
+            maximum_time_between_elem_ops)
 
     separator_char = '\t' # For the csv files
     metric_names = ["user_participation_paragraph_score",
@@ -79,7 +84,8 @@ def run(list_of_elem_ops_per_pad,
     for pad_name, pad in pads.items():
         try:
             # create the paragraphs
-            pad.create_paragraphs_from_ops(pad.get_elem_ops(True))
+            if pads_is_None:
+                pad.create_paragraphs_from_ops(pad.get_elem_ops(True))
             # classify the operations of the pad
             pad.classify_operations(
                 length_edit=length_edit,
@@ -100,7 +106,11 @@ def run(list_of_elem_ops_per_pad,
                 #                 pad_id='id{}'.format(pad_id))
 
             elif generate_csv_summary:
-                pad_metrics = pad.compute_metrics(start_time=start_time)
+                if type(start_time) == dict:
+                    st_t = start_time[pad_name]
+                else:
+                    st_t = start_time
+                pad_metrics = pad.compute_metrics(start_time=st_t)
                 pad_metrics_string = separator_char.join([
                     format(pad_metrics[metric]) for metric in metric_names])
 
@@ -176,7 +186,7 @@ def run(list_of_elem_ops_per_pad,
             break
 
 
-    if verbosity:
+    if verbosity and elem_ops_treated is not None:
         print(
             "{} pad(s) contain a total of {} elementary operations".format(
                 len(pads),
