@@ -1607,6 +1607,9 @@ class Pad:
 
         count_chars_dict = self.count_chars(None, start_time=start_time)
 
+        [length_all, length_all_write, length_all_paste] = (
+            self.get_all_text_added_length())
+
         # Generate dictionary with computed metrics
         metrics_dict = {
             # Overall metrics:
@@ -1625,6 +1628,10 @@ class Pad:
             "user_type_score_paste": user_type_score_dict['paste'],
             "user_type_score_delete": user_type_score_dict['delete'],
             "user_type_score_edit": user_type_score_dict['edit'],
+            "length": self.get_text_length(),
+            "length_all": length_all,
+            "length_all_write": length_all_write,
+            "length_all_paste": length_all_paste,
 
             # Time-window metrics:
             "added_chars": count_chars_dict['add'],
@@ -1650,6 +1657,14 @@ class Pad:
                 window_user_type_score_dict['delete']),
             "window_user_type_score_edit": (
                 window_user_type_score_dict['edit']),
+            "type_overall_score_write": self.type_overall_score('write'),
+            "type_overall_score_paste": self.type_overall_score('paste'),
+            "type_overall_score_delete": self.type_overall_score('delete'),
+            "type_overall_score_edit": self.type_overall_score('edit'),
+            "user_type_score_write": self.user_type_score('write'),
+            "user_type_score_paste": self.user_type_score('paste'),
+            "user_type_score_delete": self.user_type_score('delete'),
+            "user_type_score_edit": self.user_type_score('edit')
         }
         return metrics_dict
 
@@ -2029,6 +2044,30 @@ class Pad:
             return type_scores
         else:
             return type_scores[op_type]
+
+    def get_text_length(self):
+        text = self.get_text()
+        for line in config.default_lines:
+            text = text.replace(line+'\n', '')
+            text = text.replace(line, '')
+
+        return len(text)
+
+    def get_all_text_added_length(self):
+        count = 0
+        write_count = 0
+        paste_count = 0
+        for operation in self.operations:
+            if(operation.author=='Etherpad_admin'):
+                continue
+            length = operation.get_length_of_op()
+            if length > 0:
+                count += length
+                if(operation.type != 'paste'):
+                    write_count += length
+                if(operation.type == 'paste'):
+                    paste_count += length
+        return [count,write_count,paste_count]
 
     def count_chars(self, op_type=None, start_time=0):
         """

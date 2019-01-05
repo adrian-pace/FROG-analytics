@@ -26,3 +26,17 @@ server_update_delay = 1
 send_update_delay = 5
 # Maximum length for paragraph/superparagraph ids
 max_len_id = 30
+
+default_lines = [
+            "Welcome to your Task Pad!  Use this pad to write your answer:",
+            "1) You and your partners need to reach consensus when you're finished and all click 'Submit'.",
+            "2) Avoid chatting in this space.  Use the chat for that!",
+            "3) Remember, we're looking for a report of the best supported claims.",
+            "4) Use the evidence you have (you'll need to decide how much to read) to create a summary for the minister.",
+            "5) Use boldface font to create headings.",
+            "6) You can insert URLs for references, or use in-line citations like this: (Templaar, 2014).",
+            "Good luck!",
+            "Welcome to Etherpad!",
+            "This pad text is synchronized as you type, so that everyone viewing this page sees the same text. This allows you to collaborate seamlessly on documents!",
+            "Get involved with Etherpad at http://etherpad.org"
+        ]
