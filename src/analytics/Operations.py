@@ -273,7 +273,11 @@ class Operation:
             self.position_start_of_op -= elem_op.length_to_delete
             self.position_first_op -= elem_op.length_to_delete
 
-    def get_op_text(self):
+    def getOpText(self):
+        '''
+        obtain the text of each operation
+        :return:  None
+        '''
         text = ''
         for elem_id, elem_op in enumerate(self.elem_ops):
             if elem_id ==0:

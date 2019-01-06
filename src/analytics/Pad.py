@@ -1178,33 +1178,11 @@ class Pad:
         :param author:
         :return: author's text
         '''
-        elemOps=[]
+        text = ''
         author_operation = self.author_operation[author]
         for op in author_operation:
-            elemOps.extend(op.elem_ops)
-        elemOps = ElementaryOperation.sort_elem_ops(elemOps)
-        text = ""
-        for elem_id, elem_op in enumerate(elemOps):
-            if elem_id == 0:
-                start_position = elem_op.abs_position
-            position = elem_op.abs_position - start_position
-            if elem_op.operation_type == 'add':
-                # We add to the end of the ext
-                if ('*' in elem_op.text_to_add or '*' in text or
-                        len(elemOps) - 1 == elem_id):
-                    pass
-                if len(text) == position:
-                    text += elem_op.text_to_add
-                else:
-                    text = (text[:position] +
-                            elem_op.text_to_add +
-                            text[position:])
-            elif elem_op.operation_type == 'del':
-                text = (text[:position] +
-                        text[position +
-                             elem_op.length_to_delete:])
-            else:
-                raise AttributeError("Undefined elementary operation")
+            if op.text != '\n':
+                text += op.text + ' '
         return text
 
 
@@ -1230,6 +1208,16 @@ class Pad:
             plt.scatter(timeLengActor[author][0],timeLengActor[author][1],cmap=jet)
         plt.show()
 
+    def RejectOutliers(data, m=2):
+        '''
+        this is used to remove outliers points
+        :param m: parameter to control outliers
+        :return: list after removing outliers and remained index
+        '''
+        data = np.array(data)
+        mean = np.mean(data)
+        std = np.std(data)
+        return data[abs(data - np.mean(data)) < m * np.std(data)], np.nonzero(abs(data - np.mean(data)) < m * np.std(data))
 
     def PlotSimilarityDistribution(self):
         '''
@@ -1252,9 +1240,10 @@ class Pad:
                 # no similarity
                 continue
             else:
-                xdata = np.array(list(similarity_dict.keys()))
-                ydata = np.array(list(similarity_dict.values()))
-                if xdata.size>=2:
+                xdata = list(similarity_dict.values())
+                if len(xdata)>=2:
+                    ydata, indexes = self.RejectOutliers(list(similarity_dict.values()))
+                    xdata = np.array(list(similarity_dict.keys()))[indexes]
                     ax.plot(xdata,ydata,label='curve')
                     ax.scatter(xdata,ydata)
                     popt1, pcov1 = optimize.curve_fit(f_1, xdata, ydata)
@@ -1273,6 +1262,7 @@ class Pad:
             # if we have similarity then plot it.
             fig.savefig('similarity_dis_img/'+self.pad_name+'.png')
             plt.close(fig)
+
 
     def BuildWindowOperation(self,time_interval=100000):
         '''
@@ -1309,7 +1299,6 @@ class Pad:
         :param model:  pretrained model
         :return:
         '''
-
         for groupNum in self.window_operation.keys():
             for winOp in self.window_operation[groupNum]:
                 winOp.createWindowText(model)
@@ -1380,7 +1369,7 @@ class Pad:
     def text_by_ops(self):
         text = ''
         for op in self.operations:
-            op.get_op_text()
+            op.getOpText()
             leng = len(text)
             text = text + op.text
             # text = text[:op.position_start_of_op] + op.text + text[op.position_start_of_op:]
@@ -1413,6 +1402,7 @@ class Pad:
             else:
                 result[k] = v
         return result
+
 
     def PlotTextAdded(self):
         '''
@@ -1484,34 +1474,15 @@ class WindowOperation:
         return (self.author==other.author) and (self.groupNum==other.groupNum)
 
 
-
     def createWindowText(self,model):
-        # elem_ops_ordered = self.elemOps
-        # text = allTextBefore
-        # for elem_id, elem_op in enumerate(elem_ops_ordered):
-        #     if elem_op.operation_type == 'add':
-        #         if ('*' in elem_op.text_to_add or '*' in text or
-        #                 len(elem_ops_ordered) - 1 == elem_id):
-        #             pass
-        #         if len(text) == elem_op.abs_position:
-        #             text += elem_op.text_to_add
-        #         else:
-        #             text = (text[:elem_op.abs_position] +
-        #                     elem_op.text_to_add +
-        #                     text[elem_op.abs_position:])
-        #     elif elem_op.operation_type == 'del':
-        #         text = (text[:elem_op.abs_position] +
-        #                 text[elem_op.abs_position +
-        #                      elem_op.length_to_delete:])
-        # self.text = text
-        # if len(self.elemOps)!=0:
-        #     # self.textVector =  model.infer_vector(text, alpha=start_alpha, steps=infer_epoch)-lastWinVec
-        #     self.textVector = model(text).vector-lastWinVec
-        # else:
-        #     self.textVector = 0
+        '''
+        create text based on window
+        :param model: pra-trained model
+        :return: None
+        '''
         text = ''
         for op in self.operations:
-            op.get_op_text()
+            op.getOpText()
             if op.text != '\n':
                 text +=  op.text + ' '
                 self.text_added_len = len(op.text)  # compute the length of text added

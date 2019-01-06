@@ -3,8 +3,9 @@
   <component name="ChangeListManager">
     <list default="true" id="abe2f9b1-f53b-4ba8-8a76-6e5bac5b1539" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/ResponseClustering" beforeDir="false" afterPath="$PROJECT_DIR$/ResponseClustering" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/workToDo.txt" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/works.text" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/analytics/Operations.py" beforeDir="false" afterPath="$PROJECT_DIR$/analytics/Operations.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/analytics/Pad.py" beforeDir="false" afterPath="$PROJECT_DIR$/analytics/Pad.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plottest.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/plottest.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/works.txt" beforeDir="false" afterPath="$PROJECT_DIR$/works.txt" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -17,7 +18,7 @@
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/FROG_analytics$text.coverage" NAME="text Coverage Results" MODIFIED="1542027185078" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/FROG_analytics$helper.coverage" NAME="helper Coverage Results" MODIFIED="1544457974239" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
-    <SUITE FILE_PATH="coverage/FROG_analytics$Concept_analysis.coverage" NAME="Concept_analysis Coverage Results" MODIFIED="1546694652037" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/FROG_analytics$Concept_analysis.coverage" NAME="Concept_analysis Coverage Results" MODIFIED="1546793274848" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/FROG_analytics$main_belgians_evolution.coverage" NAME="main belgians_evolution Coverage Results" MODIFIED="1541765623853" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
   </component>
   <component name="DatabaseView">
@@ -36,10 +37,10 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="operation_builder.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="operation_builder.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/analytics/operation_builder.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-838">
+            <state relative-caret-position="354">
               <caret line="192" column="38" selection-start-line="192" selection-start-column="29" selection-end-line="192" selection-end-column="38" />
             </state>
           </provider>
@@ -48,20 +49,17 @@
       <file leaf-file-name="Operations.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/analytics/Operations.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-6975">
-              <caret line="162" column="6" selection-start-line="162" selection-end-line="162" selection-end-column="6" />
-              <folding>
-                <element signature="e#21139#21259#0" />
-              </folding>
+            <state relative-caret-position="-1064">
+              <caret line="275" column="13" selection-start-line="275" selection-start-column="13" selection-end-line="275" selection-end-column="13" />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Pad.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Pad.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="456">
-              <caret line="60" lean-forward="true" selection-start-line="60" selection-end-line="60" />
+            <state relative-caret-position="226">
+              <caret line="1234" column="45" lean-forward="true" selection-start-line="1234" selection-start-column="45" selection-end-line="1234" selection-end-column="45" />
               <folding>
                 <element signature="e#0#25#0" expanded="true" />
               </folding>
@@ -72,8 +70,8 @@
       <file leaf-file-name="Concept_analysis.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Concept_analysis.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="36">
-              <caret line="121" column="23" selection-start-line="121" selection-start-column="23" selection-end-line="121" selection-end-column="23" />
+            <state relative-caret-position="319">
+              <caret line="121" selection-start-line="121" selection-end-line="121" />
               <folding>
                 <element signature="e#0#61#0" expanded="true" />
               </folding>
@@ -92,9 +90,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>get_</find>
-      <find>class operation</find>
-      <find>self.type</find>
       <find>jump</find>
       <find>type</find>
       <find>write</find>
@@ -122,6 +117,9 @@
       <find>operationsort</find>
       <find>class</find>
       <find>class pad</find>
+      <find>get_op</find>
+      <find>get_op_text</find>
+      <find>sort</find>
     </findStrings>
   </component>
   <component name="Git.Settings">
@@ -135,8 +133,8 @@
         <option value="$PROJECT_DIR$/text.py" />
         <option value="$PROJECT_DIR$/analytics/operation_builder.py" />
         <option value="$PROJECT_DIR$/helper.py" />
-        <option value="$PROJECT_DIR$/analytics/Operations.py" />
         <option value="$PROJECT_DIR$/Concept_analysis.py" />
+        <option value="$PROJECT_DIR$/analytics/Operations.py" />
         <option value="$PROJECT_DIR$/analytics/Pad.py" />
       </list>
     </option>
@@ -161,7 +159,6 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
@@ -173,6 +170,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -334,13 +332,13 @@
       <window_info anchor="bottom" id="Python Console" order="7" sideWeight="0.49972513" weight="0.32930845" />
       <window_info anchor="bottom" id="Run" order="2" sideWeight="0.49917537" weight="0.1701427" />
       <window_info anchor="bottom" id="Terminal" order="7" sideWeight="0.49972513" weight="0.32930845" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.08246289" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.08301265" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="right" id="Database" order="3" weight="0.32985157" />
       <window_info anchor="right" content_ui="combo" id="SciView" order="3" weight="0.51786697" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" sideWeight="0.49917537" visible="true" weight="0.3402854" />
+      <window_info active="true" anchor="bottom" id="Debug" order="3" sideWeight="0.49917537" visible="true" weight="0.35126236" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -377,8 +375,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Concept_analysis.py</url>
-          <line>143</line>
+          <line>142</line>
           <option name="timeStamp" value="219" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Concept_analysis.py</url>
+          <line>121</line>
+          <option name="timeStamp" value="224" />
         </line-breakpoint>
       </breakpoints>
       <default-breakpoints>
@@ -388,7 +391,7 @@
           </properties>
         </breakpoint>
       </default-breakpoints>
-      <option name="time" value="220" />
+      <option name="time" value="225" />
     </breakpoint-manager>
     <watches-manager>
       <configuration name="PythonConfigurationType">
@@ -405,6 +408,7 @@
         <watch expression="self.operations" />
         <watch expression="winOp.timeInterval" />
         <watch expression="op.context" />
+        <watch expression="text" />
         <watch expression="text" />
       </configuration>
     </watches-manager>
@@ -758,40 +762,37 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
+    <entry file="file://$PROJECT_DIR$/analytics/operation_builder.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="456">
-          <caret line="60" lean-forward="true" selection-start-line="60" selection-end-line="60" />
-          <folding>
-            <element signature="e#0#25#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="354">
+          <caret line="192" column="38" selection-start-line="192" selection-start-column="29" selection-end-line="192" selection-end-column="38" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/analytics/Operations.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1064">
+          <caret line="275" column="13" selection-start-line="275" selection-start-column="13" selection-end-line="275" selection-end-column="13" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/Concept_analysis.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="36">
-          <caret line="121" column="23" selection-start-line="121" selection-start-column="23" selection-end-line="121" selection-end-column="23" />
+        <state relative-caret-position="319">
+          <caret line="121" selection-start-line="121" selection-end-line="121" />
           <folding>
             <element signature="e#0#61#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/analytics/Operations.py">
+    <entry file="file://$PROJECT_DIR$/analytics/Pad.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-6975">
-          <caret line="162" column="6" selection-start-line="162" selection-end-line="162" selection-end-column="6" />
+        <state relative-caret-position="226">
+          <caret line="1234" column="45" lean-forward="true" selection-start-line="1234" selection-start-column="45" selection-end-line="1234" selection-end-column="45" />
           <folding>
-            <element signature="e#21139#21259#0" />
+            <element signature="e#0#25#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/analytics/operation_builder.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-838">
-          <caret line="192" column="38" selection-start-line="192" selection-start-column="29" selection-end-line="192" selection-end-column="38" />
         </state>
       </provider>
     </entry>
