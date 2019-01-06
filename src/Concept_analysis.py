@@ -5,33 +5,8 @@ from analytics import operation_builder
 from analytics.parser import *
 from analytics.visualization import *
 import os
-from concept import *
-from helpers import *
-from lsa import *
-from ontology import *
-#from responses_processing import *
-#from tags_processing import *
-#from topic_modelling import *
-from visualization import *
-from preprocessing import *
-from french_preprocessing import *
-#from dashboard import *
 import warnings
 warnings.filterwarnings('ignore')
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import gensim
-import time
-import requests
-import csv
-import json
-from gensim.models import Word2Vec
-from sklearn.metrics.pairwise import cosine_similarity
-from sklearn.manifold import TSNE
-from sklearn.cluster import KMeans
-from collections import OrderedDict
-import gensim.models as g
 import pandas as pd
 import sent2vec
 
@@ -45,16 +20,10 @@ def numberOperation(x):
 
 list_of_elem_ops_per_pad = dict()
 elemOpsCounter = 0
-root_of_dbs = "data/"
+root_of_dbs = "../data/"
 
-## this is the first method to load the pre-trained model
-# model = 'pre_modle/doc2vec/apnews_dbow/doc2vec.bin'
-# m = g.Doc2Vec.load(model)
-# start_alpha=0.01
-# infer_epoch=1000
-# m = spacy.load('en_core_web_md')
 model = sent2vec.Sent2vecModel()
-model_name = 'pre_modle/sent2vec/wiki_unigrams.bin'
+model_name = '../pre_modle/sent2vec/wiki_unigrams.bin'
 model.load_model(model_name)
 
 for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
@@ -65,7 +34,6 @@ for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
             list_of_elem_ops_per_main = get_elem_ops_per_pad_from_db(
                 path_to_db=path_to_db,
                  editor='sql_dump'
-                # editor = 'etherpad'
             )# we got the ElementOperations of each pad at beginining
 
             for pad_name, pad_vals in list_of_elem_ops_per_main.items():

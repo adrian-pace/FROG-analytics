@@ -1208,7 +1208,7 @@ class Pad:
             plt.scatter(timeLengActor[author][0],timeLengActor[author][1],cmap=jet)
         plt.show()
 
-    def RejectOutliers(data, m=2):
+    def RejectOutliers(self,data, m=2):
         '''
         this is used to remove outliers points
         :param m: parameter to control outliers
@@ -1240,8 +1240,8 @@ class Pad:
                 # no similarity
                 continue
             else:
-                xdata = list(similarity_dict.values())
-                if len(xdata)>=2:
+                ydata = list(similarity_dict.values())
+                if len(ydata)>=2:
                     ydata, indexes = self.RejectOutliers(list(similarity_dict.values()))
                     xdata = np.array(list(similarity_dict.keys()))[indexes]
                     ax.plot(xdata,ydata,label='curve')
@@ -1260,7 +1260,7 @@ class Pad:
         # plt.show()
         if flag:
             # if we have similarity then plot it.
-            fig.savefig('similarity_dis_img/'+self.pad_name+'.png')
+            fig.savefig('../similarity_dis_img/'+self.pad_name+'.png')
             plt.close(fig)
 
 
