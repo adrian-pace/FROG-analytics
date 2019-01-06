@@ -1586,6 +1586,49 @@ class Pad:
             print(para.__str__(verbose))
             print("\n")
 
+    def get_paragraphs_text(self, splitter=None, remove_default=True):
+        """
+        Returns an array containing one string for each of the paragraphs in
+        the pad. If splitter is specified, it is used for splitting the
+        paragraphs (e.g. '\n', '\n\n', '\n\n\n'...).
+
+        If no splitter is specified, the function tries to split by double
+        new lines. If with this splitting the average length of the paragraphs
+        obtained is longer than config.max_length_paragraph, paragraphs are
+        split by single new lines instead.
+
+        :param splitter: characters that separate paragraphs (e.g. '\n')
+        :return: dictionary with text split by paragraphs
+        """
+        all_text = self.get_text()
+        if remove_default:
+            for default_line in config.default_lines:
+                if default_line not in all_text:
+                    break
+                else:
+                    all_text = all_text.replace(default_line, "", 1)
+
+        if splitter is None:
+            superparagraphs_text = [
+                superpara.strip() for superpara in
+                all_text.split("\n\n") if
+                superpara.strip() != ""]
+            mean_size = np.mean([len(sp) for sp in superparagraphs_text])
+
+            if mean_size > config.max_length_paragraph:
+                superparagraphs_text = [
+                    superpara.strip() for superpara in
+                    all_text.split("\n") if
+                    superpara.strip() != ""]
+
+        else:
+            superparagraphs_text = [
+                superpara.strip() for superpara in
+                all_text.split(splitter) if
+                superpara.strip() != ""]
+
+        return superparagraphs_text
+
     ###############################
     # Metrics
     ###############################
@@ -2159,22 +2202,23 @@ class Pad:
 
         new_pad = Pad(self.pad_name)
         elem_ops = []
-        elem_ops_aux = []
-        ignore_array = []
+        # elem_ops_aux = []
+        # ignore_array = []
         for elem_op in self.get_elem_ops(True):
             if elem_op.timestamp <= timestamp_threshold:
                 if not elem_op.belong_to_operation in new_pad.operations:
                     new_pad.operations.append(elem_op.belong_to_operation)
-                elem_ops_aux.append(elem_op)
-            elif elem_op.belong_to_operation in new_pad.operations:
-                ignore_array.append(elem_op.belong_to_operation)
+                elem_ops.append(elem_op)
+                # elem_ops_aux.append(elem_op)
+            # elif elem_op.belong_to_operation in new_pad.operations:
+            #     ignore_array.append(elem_op.belong_to_operation)
 
-        for eo in elem_ops_aux:
-            if eo.belong_to_operation not in ignore_array:
-                elem_ops.append(eo)
-            else:
-                new_pad.operations.remove(eo.belong_to_operation)
-                break
+        # for eo in elem_ops_aux:
+        #     if eo.belong_to_operation not in ignore_array:
+        #         elem_ops.append(eo)
+        #     else:
+        #         new_pad.operations.remove(eo.belong_to_operation)
+        #         break
 
 
         pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(
