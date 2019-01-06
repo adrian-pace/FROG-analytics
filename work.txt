@@ -1,9 +1,0 @@
---12.06
-1. use the pre-train model sen2vec
-2. word2vec  find most commonly words and keep the context word remove the common word,
-3. write some examples for three class : length and classfication of doc
-4. use our algortim to check it is corret
-5. with different window size
-6. shape of the whole doc by the value of distance
-7. show our result is beeter than the people before.
-
