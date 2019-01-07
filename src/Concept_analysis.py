@@ -82,7 +82,7 @@ for pad_name in pads:
     pad.getTextByWin(model)   # this is used to compute the length and build text for each win
 
     # ---- below is used to compute the added text length
-    #pad.PlotTextAdded()
+    pad.PlotTextAdded()
 
 
     pad.computeDistance()

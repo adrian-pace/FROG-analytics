@@ -1403,6 +1403,11 @@ class Pad:
                 result[k] = v
         return result
 
+    def SortDict(self,dict):
+        keys = list(dict.keys())
+        keys.sort()
+        values = [dict[key] for key in keys]
+        return keys,values
 
     def PlotTextAdded(self):
         '''
@@ -1421,8 +1426,10 @@ class Pad:
         colors = iter(cm.rainbow(np.linspace(0, 1, len(author_text_length.keys())+1)))
         for author in author_text_length.keys():
             Sum = self.merge(Sum,author_text_length[author], merge_fn=lambda x, y: x+y)
-            plt.scatter(author_text_length[author].keys(),author_text_length[author].values(),color=next(colors))
-        plt.scatter(Sum.keys(), Sum.values(), color=next(colors))
+            plt.scatter(author_text_length[author].keys(),author_text_length[author].values(),color=next(colors),label=author)
+        sum_keys,sum_values = self.SortDict(Sum)
+        plt.plot(sum_keys, sum_values, color=next(colors),label='Total added length')
+        plt.legend()
         plt.show()
 
 
