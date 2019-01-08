@@ -37,35 +37,45 @@ def run(list_of_elem_ops_per_pad,
             maximum_time_between_elem_ops)
 
     separator_char = '\t' # For the csv files
-    metric_names = ["user_participation_paragraph_score",
-                    "prop_score",
-                    "sync_score",
-                    "alternating_score",
-                    "break_score_day",
-                    "break_score_short",
-                    "type_overall_score_write",
-                    "type_overall_score_paste",
-                    "type_overall_score_delete",
-                    "type_overall_score_edit",
-                    "user_type_score_write",
-                    "user_type_score_paste",
-                    "user_type_score_delete",
-                    "user_type_score_edit",
-                    "added_chars",
-                    "length", "length_all", "length_all_write", "length_all_paste",
-                    "deleted_chars",
-                    "paragraph_average_length",
-                    "superparagraph_average_length",
-                    "average_paragraphs_per_superparagraph",
-                    "window_type_overall_score_write",
-                    "window_type_overall_score_paste",
-                    "window_type_overall_score_delete",
-                    "window_type_overall_score_edit",
-                    "window_user_type_score_write",
-                    "window_user_type_score_paste",
-                    "window_user_type_score_delete",
-                    "window_user_type_score_edit"
-                    ]
+
+    # I define this array here so that it is easier to comment out
+    # what we're not interested in
+    metric_names = [
+        # From the beginning
+        "user_participation_paragraph_score",
+        "prop_score",
+        "sync_score",
+        "alternating_score",
+        "break_score_day",
+        "break_score_short",
+        "type_overall_score_write",
+        "type_overall_score_paste",
+        "type_overall_score_delete",
+        "type_overall_score_edit",
+        "user_type_score_write",
+        "user_type_score_paste",
+        "user_type_score_delete",
+        "user_type_score_edit",
+        # From starting timestamp
+        "window_sync_score",
+        "window_break_score_day",
+        "window_break_score_short",
+        "window_type_overall_score_write",
+        "window_type_overall_score_paste",
+        "window_type_overall_score_delete",
+        "window_type_overall_score_edit",
+        "window_user_type_score_write",
+        "window_user_type_score_paste",
+        "window_user_type_score_delete",
+        "window_user_type_score_edit",
+        # Other measures
+        # "added_chars",
+        # "length", "length_all", "length_all_write", "length_all_paste",
+        # "deleted_chars",
+        # "paragraph_average_length",
+        # "superparagraph_average_length",
+        # "average_paragraphs_per_superparagraph",
+    ]
 
     if generate_csv:
         header = separator_char.join(["docID","author","posStart","posEnd",

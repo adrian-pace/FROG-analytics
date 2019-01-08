@@ -1671,19 +1671,11 @@ class Pad:
             "user_type_score_paste": user_type_score_dict['paste'],
             "user_type_score_delete": user_type_score_dict['delete'],
             "user_type_score_edit": user_type_score_dict['edit'],
-            "length": self.get_text_length(),
-            "length_all": length_all,
-            "length_all_write": length_all_write,
-            "length_all_paste": length_all_paste,
-
             # Time-window metrics:
-            "added_chars": count_chars_dict['add'],
-            "deleted_chars": count_chars_dict['del'],
-            "paragraph_average_length": self.paragraph_average_length(),
-            "superparagraph_average_length": (
-                self.superparagraph_average_length()),
-            "average_paragraphs_per_superparagraph": (
-                self.average_paragraphs_per_superparagraph()),
+            "window_sync_score": self.sync_score(start_time=start_time)[0],
+            "window_break_score_day": self.break_score('day', start_time=start_time),
+            "window_break_score_short": self.break_score(
+                'short', start_time=start_time),
             "window_type_overall_score_write": (
                 window_type_overall_score_dict['write']),
             "window_type_overall_score_paste": (
@@ -1700,14 +1692,18 @@ class Pad:
                 window_user_type_score_dict['delete']),
             "window_user_type_score_edit": (
                 window_user_type_score_dict['edit']),
-            "type_overall_score_write": self.type_overall_score('write'),
-            "type_overall_score_paste": self.type_overall_score('paste'),
-            "type_overall_score_delete": self.type_overall_score('delete'),
-            "type_overall_score_edit": self.type_overall_score('edit'),
-            "user_type_score_write": self.user_type_score('write'),
-            "user_type_score_paste": self.user_type_score('paste'),
-            "user_type_score_delete": self.user_type_score('delete'),
-            "user_type_score_edit": self.user_type_score('edit')
+            # Other measures
+            "length": self.get_text_length(),
+            "length_all": length_all,
+            "length_all_write": length_all_write,
+            "length_all_paste": length_all_paste,
+            "added_chars": count_chars_dict['add'],
+            "deleted_chars": count_chars_dict['del'],
+            "paragraph_average_length": self.paragraph_average_length(),
+            "superparagraph_average_length": (
+                self.superparagraph_average_length()),
+            "average_paragraphs_per_superparagraph": (
+                self.average_paragraphs_per_superparagraph()),
         }
         return metrics_dict
 
@@ -1813,7 +1809,10 @@ class Pad:
 
         # Compute the overall participation
         overall_length = sum(author_lengths)
-        proportions = author_lengths / overall_length
+        if overall_length:
+            proportions = author_lengths / overall_length
+        else:
+            proportions = np.zeros(len(authors))
         return authors, proportions
 
     @staticmethod
@@ -1847,7 +1846,7 @@ class Pad:
             considerate_admin=considerate_admin)
         return self.compute_entropy_prop(proportions, len(authors))
 
-    def sync_score(self):
+    def sync_score(self, start_time=0):
         """
         Compute the synchronous and asynchronous scores.
 
@@ -1858,13 +1857,14 @@ class Pad:
         prop_async = 0
         len_pad_no_admin = sum(
             [abs(op.get_length_of_op()) if op.author != 'Etherpad_admin' else 0
-             for op in self.operations]
+             for op in self.operations if op.timestamp_start >= start_time]
         )
         for op in self.operations:
-            if op.context['synchronous_in_pad']:
-                prop_sync += abs(op.get_length_of_op()) / len_pad_no_admin
-            elif op.author != 'Etherpad_admin':
-                prop_async += abs(op.get_length_of_op()) / len_pad_no_admin
+            if op.timestamp_start >= start_time and len_pad_no_admin:
+                    if op.context['synchronous_in_pad']:
+                        prop_sync += abs(op.get_length_of_op()) / len_pad_no_admin
+                    elif op.author != 'Etherpad_admin':
+                        prop_async += abs(op.get_length_of_op()) / len_pad_no_admin
         return prop_sync, prop_async
 
     def prop_paragraphs(self):
@@ -1958,32 +1958,34 @@ class Pad:
             # If no paragraph, we choose to return a score of zero
             return 0
 
-    def break_score(self, break_type):
+    def break_score(self, break_type, start_time=0):
         """
         Compute the breaking score, i.e. the score that tells whether a pad is
         written only in one time or with multiple accesses.
 
         :param break_type: string that is either 'short' for short breaks or
             'day' for daily ones.
+        :param start_time: start time from which to consider operations
 
         :return: The score is the number of breaks over the whole pad divided
             by the time spent on the pad. Between 0 and 1.
         """
         # Compute the time spent in s
         operations = Operation.sort_ops(self.operations)
-        first_timestamp = operations[0].timestamp_start
+        first_timestamp = max(operations[0].timestamp_start, start_time)
         last_timestamp = operations[len(operations) - 1].timestamp_end
         time_spent = (last_timestamp - first_timestamp) / 1000  # in s
 
         # Compute the number of breaks according to the type
         num_break = 0
         for op in self.operations:
-            if break_type == 'short':
-                if op.context['first_op_break']:
-                    num_break += 1
-            elif break_type == 'day':
-                if op.context['first_op_day']:
-                    num_break += 1
+            if op.timestamp_start >= start_time:
+                if break_type == 'short':
+                    if op.context['first_op_break']:
+                        num_break += 1
+                elif break_type == 'day':
+                    if op.context['first_op_day']:
+                        num_break += 1
         # Calculate the final score
         if time_spent >= 1:
             return num_break / time_spent
