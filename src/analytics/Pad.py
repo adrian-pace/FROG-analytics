@@ -751,9 +751,8 @@ class Pad:
 
                         self.all_paragraphs.append(new_paragraph)
 
-                        elem_op.assign_para(2 *
-                            [[len(self.paragraphs) - number_new_lines - 2,
-                              len(self.paragraphs) - number_new_lines - 1]])
+                        elem_op.assign_para(2*
+                            [[number_new_lines - number_new_lines - 1]])
                         elem_op.assign_paragraph_id(new_paragraph_id)
                         got_superpara_id, got_sidx = self.get_superparagraph_id(
                             len(self.paragraphs) - 1, return_idx=True)
@@ -789,6 +788,7 @@ class Pad:
                             ignore_assertions=ignore_assertions)
                         self.all_paragraphs.insert(para_idx_absolute + 1, new_paragraph)
 
+                        # TODO: Make sure that `para_idx - number_new_lines + 1` exists
                         elem_op.assign_para(2 * [[para_idx - number_new_lines,
                                             para_idx - number_new_lines + 1]])
                         elem_op.assign_paragraph_id(new_paragraph_id)

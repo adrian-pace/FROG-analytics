@@ -272,8 +272,10 @@ class Operation:
         (very likely for operations composed of several elementary operations)
         flags can be used to specify which paragraph should be returned.
 
-        :param get_para_before:
-        :param get_min_para:
+        :param get_para_before: if we are interested in the paragraphs before
+            or after applying this Operation's changes
+        :param get_min_para: get the minimum paragraph number
+            (if False, the maximum is returned instead)
         :return: int (position of the Paragraph)
         """
         paras_before = []

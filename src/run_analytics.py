@@ -90,12 +90,11 @@ def run(list_of_elem_ops_per_pad,
             # classify the operations of the pad
             pad.classify_operations(
                 length_edit=length_edit,
-                length_delete=length_delete
-            )
+                length_delete=length_delete)
             # find the context of the operation of the pad
             pad.build_operation_context(delay_sync,
-                                        time_to_reset_day,
-                                        time_to_reset_break)
+                time_to_reset_day,
+                time_to_reset_break)
             pad_id += 1
 
             if generate_csv:
