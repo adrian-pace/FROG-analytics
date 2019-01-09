@@ -38,9 +38,10 @@ def cleanText(text):
     cleaned_text = []
     doc = nlp(text)
     for word in doc:
-        if word.text.lower() not in Stoplist and not word.is_punct and not word.like_num and not word.like_url:
-            cleaned_text.append(word.lemma_) ## add the prototype of the word
-    return cleaned_text
+        if not word.is_punct:
+            if word.text.lower() not in Stoplist and not word.like_num and not word.like_url:
+                cleaned_text.append(word.lemma_) ## add the prototype of the word
+    return ' '.join(cleaned_text)
 
 
 class Pad:
@@ -77,6 +78,7 @@ class Pad:
         self.distance={}
         self.similarity = {}
         self.window_operation_text={}
+        self.fitting_slope = -1000
         """:type: list[Paragraph]"""
 
     ###############################
@@ -1219,18 +1221,18 @@ class Pad:
         std = np.std(data)
         return data[abs(data - np.mean(data)) < m * np.std(data)], np.nonzero(abs(data - np.mean(data)) < m * np.std(data))
 
-    def PlotSimilarityDistribution(self):
+    def PlotSimilarityDistribution(self,savefig):
         '''
-        Plot windows' similarity distribution
-        :return:  None
+        Plot windows' similarity distribution and compute fitting slope
+        :para savefig: bool, whether to save figures.
+        :return:
         '''
         def f_1(x, A, B):
             return A * x + B
 
         def f_2(x, A, B, C):
             return A * x * x + B * x + C
-
-
+        k = 0
         fig, ax = plt.subplots(nrows=1, ncols=1)
         flag = False
         for author_pair in self.similarity.keys():
@@ -1247,6 +1249,7 @@ class Pad:
                     ax.plot(xdata,ydata,label='curve')
                     ax.scatter(xdata,ydata)
                     popt1, pcov1 = optimize.curve_fit(f_1, xdata, ydata)
+                    self.fitting_slope = round(popt1[0],3)
                     ax.plot(xdata, f_1(xdata, *popt1), label='linear fit with ' + 'k='+str(round(popt1[0],3)))
                     ax.set_ylim(0.0, 1.0)
                     ax.legend()
@@ -1258,10 +1261,44 @@ class Pad:
                 #     ax.legend()
                 flag = True
         # plt.show()
-        if flag:
+        if flag and savefig:
             # if we have similarity then plot it.
             fig.savefig('../similarity_dis_img/'+self.pad_name+'.png')
             plt.close(fig)
+
+
+    def selectTimeInterval(self,time_interval_list,valid_window_threshold,group_num_thresold):
+        '''
+        find the best time interval
+        :param time_interval_list:  list of time interval
+        :param valid_window_threshold: lower bound for number of words in a window
+        :param group_num_thresold: lower bound for number of window groups in a pad
+        :return: list of valid winndow percentage
+        '''
+        percentages = []
+        for time_interval in time_interval_list:
+            self.BuildWindowOperation(time_interval)
+            self.getTextByWin(False,None)
+            valid_num = 0
+
+            if len(self.window_operation.keys())<group_num_thresold:
+                percentages.append(0)
+                continue
+            for group_num in self.window_operation.keys():
+                flag = True
+                if len(self.window_operation[group_num])<2:
+                    continue
+                for winOp in self.window_operation[group_num]:
+                    if winOp.text_added_len <valid_window_threshold:
+                        flag = False
+                        break
+                if flag:
+                    valid_num +=1
+            percentages.append(valid_num*1.0/len(self.window_operation.keys()))
+        return percentages
+
+
+
 
 
     def BuildWindowOperation(self,time_interval=100000):
@@ -1271,6 +1308,7 @@ class Pad:
         :return: None
         '''
         i = 1
+        self.window_operation={}
         for op in self.operations:
             if op.author=='Etherpad_admin':
                 continue
@@ -1293,15 +1331,16 @@ class Pad:
                 self.window_operation[i].append(tmp_window_operation)
 
 
-    def getTextByWin(self,model):
+    def getTextByWin(self,vector_flag,model):
         '''
         recover each window's text
         :param model:  pretrained model
+        "param vector_flag: whether to compute vector
         :return:
         '''
-        for groupNum in self.window_operation.keys():
-            for winOp in self.window_operation[groupNum]:
-                winOp.createWindowText(model)
+        for group_num in self.window_operation.keys():
+            for winOp in self.window_operation[group_num]:
+                winOp.createWindowText(vector_flag,model)
 
 
 
@@ -1422,13 +1461,13 @@ class Pad:
                 else:
                     author_text_length[win.author][group]=win.text_added_len
 
-        Sum = {}
+        #Sum = {}
         colors = iter(cm.rainbow(np.linspace(0, 1, len(author_text_length.keys())+1)))
         for author in author_text_length.keys():
-            Sum = self.merge(Sum,author_text_length[author], merge_fn=lambda x, y: x+y)
+            #Sum = self.merge(Sum,author_text_length[author], merge_fn=lambda x, y: x+y)
             plt.scatter(author_text_length[author].keys(),author_text_length[author].values(),color=next(colors),label=author)
-        sum_keys,sum_values = self.SortDict(Sum)
-        plt.plot(sum_keys, sum_values, color=next(colors),label='Total added length')
+        #sum_keys,sum_values = self.SortDict(Sum)
+        #plt.plot(sum_keys, sum_values, color=next(colors),label='Total added length')
         plt.legend()
         plt.show()
 
@@ -1481,20 +1520,23 @@ class WindowOperation:
         return (self.author==other.author) and (self.groupNum==other.groupNum)
 
 
-    def createWindowText(self,model):
+    def createWindowText(self,vector_flag,model):
         '''
-        create text based on window
-        :param model: pra-trained model
-        :return: None
+
+        :param vector_flag:  whether to compute vector
+        :param model:  pre-trained model
+        :return:
         '''
         text = ''
         for op in self.operations:
             op.getOpText()
             if op.text != '\n':
-                text +=  op.text + ' '
-                self.text_added_len = len(op.text)  # compute the length of text added
+                text +=  op.text + ' '  # compute the length of text added
         self.text =  text
-        cleaned_text = ' '.join(cleanText(text))
-        self.textVector = model.embed_sentence(cleaned_text)
+        #a = text.split()
+        self.text_added_len = len(text.split())
+        if vector_flag:
+            cleaned_text = cleanText(text)
+            self.textVector = model.embed_sentence(cleaned_text)
 
 

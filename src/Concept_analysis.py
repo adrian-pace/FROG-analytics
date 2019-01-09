@@ -38,7 +38,7 @@ for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
 
             for pad_name, pad_vals in list_of_elem_ops_per_main.items():
                 list_of_elem_ops_per_pad[pad_name + filename[-7:-4]] = pad_vals
-        break
+            break
 pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(list_of_elem_ops_per_pad,##  pads with all the operations
                                                                              config.maximum_time_between_elem_ops)
 
@@ -52,6 +52,20 @@ winLength = {}
 operationNum = {}
 average = {}
 i = 0
+
+
+
+pad_slope = {}
+for pad_name in pads.keys():
+    pad = pads[pad_name]
+    pad.create_paragraphs_from_ops(elem_ops_treated[pad_name])
+    pad.BuildWindowOperation(200000)
+    pad.getTextByWin(True,model)
+    pad.computeDistance()
+    slope = pad.PlotSimilarityDistribution(False)
+    pad_slope[pad_name] = slope
+
+
 for pad_name in pads:
     i +=1
     paraTextPerPad = {}
@@ -79,7 +93,7 @@ for pad_name in pads:
 
     # ----bellow is compute the window-based author context
     pad.BuildWindowOperation(200000)
-    pad.getTextByWin(model)   # this is used to compute the length and build text for each win
+    pad.getTextByWin(True,model)   # this is used to compute the length and build text for each win
 
     # ---- below is used to compute the added text length
     pad.PlotTextAdded()
@@ -87,7 +101,7 @@ for pad_name in pads:
 
     pad.computeDistance()
     # pad.PlotLengthOperationTime()
-    pad.PlotSimilarityDistribution()
+    pad.PlotSimilarityDistribution(True)
 
     # winList = []
     # for wins in pad.windowOperation.values():
