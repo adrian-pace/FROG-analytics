@@ -491,7 +491,35 @@ class Paragraph:
     def copy(self):
         return Paragraph(paragraph=self)
 
-    # def get_para_text(self,until_timestamp=None):
+    # # def get_para_text(self,until_timestamp=None):
+    # #     elem_ops_ordered = self.elem_ops
+    # #     elem_ops_ordered = ElementaryOperation.sort_elem_ops(elem_ops_ordered)
+    # #     text = ""
+    # #     for elem_id, elem_op in enumerate(elem_ops_ordered):
+    # #         if elem_id==0:
+    # #             start_position = elem_op.abs_position
+    # #         position = elem_op.abs_position-start_position
+    # #         if until_timestamp is not None and elem_op.timestamp > until_timestamp:
+    # #             return text
+    # #         if elem_op.operation_type == 'add':
+    # #             # We add to the end of the ext
+    # #             if ('*' in elem_op.text_to_add or '*' in text or
+    # #                     len(elem_ops_ordered) - 1 == elem_id):
+    # #                 pass
+    # #             if len(text) == position:
+    # #                 text += elem_op.text_to_add
+    # #             else:
+    # #                 text = (text[:position] +
+    # #                         elem_op.text_to_add +
+    # #                         text[position:])
+    # #         elif elem_op.operation_type == 'del':
+    # #             text = (text[:position] +
+    # #                     text[position +
+    # #                          elem_op.length_to_delete:])
+    # #         else:
+    # #             raise AttributeError("Undefined elementary operation")
+    # #     return text
+    # def create_para_text(self):
     #     elem_ops_ordered = self.elem_ops
     #     elem_ops_ordered = ElementaryOperation.sort_elem_ops(elem_ops_ordered)
     #     text = ""
@@ -499,8 +527,6 @@ class Paragraph:
     #         if elem_id==0:
     #             start_position = elem_op.abs_position
     #         position = elem_op.abs_position-start_position
-    #         if until_timestamp is not None and elem_op.timestamp > until_timestamp:
-    #             return text
     #         if elem_op.operation_type == 'add':
     #             # We add to the end of the ext
     #             if ('*' in elem_op.text_to_add or '*' in text or
@@ -518,33 +544,7 @@ class Paragraph:
     #                          elem_op.length_to_delete:])
     #         else:
     #             raise AttributeError("Undefined elementary operation")
-    #     return text
-    def create_para_text(self):
-        elem_ops_ordered = self.elem_ops
-        elem_ops_ordered = ElementaryOperation.sort_elem_ops(elem_ops_ordered)
-        text = ""
-        for elem_id, elem_op in enumerate(elem_ops_ordered):
-            if elem_id==0:
-                start_position = elem_op.abs_position
-            position = elem_op.abs_position-start_position
-            if elem_op.operation_type == 'add':
-                # We add to the end of the ext
-                if ('*' in elem_op.text_to_add or '*' in text or
-                        len(elem_ops_ordered) - 1 == elem_id):
-                    pass
-                if len(text) == position:
-                    text += elem_op.text_to_add
-                else:
-                    text = (text[:position] +
-                            elem_op.text_to_add +
-                            text[position:])
-            elif elem_op.operation_type == 'del':
-                text = (text[:position] +
-                        text[position +
-                             elem_op.length_to_delete:])
-            else:
-                raise AttributeError("Undefined elementary operation")
-            self.paraText[elem_op.timestamp] = text
+    #         self.paraText[elem_op.timestamp] = text
 
 
     @classmethod

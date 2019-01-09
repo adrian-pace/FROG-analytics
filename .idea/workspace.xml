@@ -2,9 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="abe2f9b1-f53b-4ba8-8a76-6e5bac5b1539" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Concept_analysis.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/Concept_analysis.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/analytics/Pad.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/analytics/Pad.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/analytics/Operations.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/analytics/Operations.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -36,7 +34,7 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="Concept_analysis.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="Concept_analysis.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/Concept_analysis.py">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="295">
@@ -44,15 +42,6 @@
               <folding>
                 <element signature="e#0#61#0" expanded="true" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="apport_python_hook.py" pinned="false" current-in-tab="false">
-        <entry file="file:///usr/lib/python3/dist-packages/apport_python_hook.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="297">
-              <caret line="46" selection-start-line="46" selection-end-line="46" />
             </state>
           </provider>
         </entry>
@@ -87,11 +76,11 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="Operations.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="Operations.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/analytics/Operations.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3762">
-              <caret line="198" column="69" selection-start-line="198" selection-start-column="65" selection-end-line="198" selection-end-column="69" />
+            <state relative-caret-position="384">
+              <caret line="599" column="38" selection-start-line="599" selection-start-column="38" selection-end-line="599" selection-end-column="38" />
             </state>
           </provider>
         </entry>
@@ -155,6 +144,7 @@
         <option value="$PROJECT_DIR$/analytics/Pad.py" />
         <option value="$PROJECT_DIR$/src/analytics/Pad.py" />
         <option value="$PROJECT_DIR$/src/Concept_analysis.py" />
+        <option value="$PROJECT_DIR$/src/analytics/Operations.py" />
       </list>
     </option>
   </component>
@@ -167,7 +157,7 @@
   <component name="NodePackageJsonFileManager">
     <packageJsonPaths />
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="55" />
     <option name="y" value="29" />
     <option name="width" value="933" />
@@ -389,7 +379,7 @@
       <window_info anchor="right" content_ui="combo" id="SciView" order="3" weight="0.51786697" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info active="true" anchor="bottom" id="Debug" order="3" sideWeight="0.49917537" visible="true" weight="0.40834248" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.49917537" weight="0.40834248" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
@@ -568,24 +558,10 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/analytics/Operations.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3762">
-          <caret line="198" column="69" selection-start-line="198" selection-start-column="65" selection-end-line="198" selection-end-column="69" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/analytics/parser.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="6194">
           <caret line="332" selection-start-line="332" selection-end-line="332" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/analytics/Pad.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="162">
-          <caret line="1263" selection-start-line="1263" selection-end-line="1263" />
         </state>
       </provider>
     </entry>
@@ -603,6 +579,20 @@
           <folding>
             <element signature="e#0#61#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/analytics/Pad.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="162">
+          <caret line="1263" selection-start-line="1263" selection-end-line="1263" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/analytics/Operations.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="384">
+          <caret line="599" column="38" selection-start-line="599" selection-start-column="38" selection-end-line="599" selection-end-column="38" />
         </state>
       </provider>
     </entry>

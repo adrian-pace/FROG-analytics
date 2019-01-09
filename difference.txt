@@ -1,0 +1,11 @@
+PS: I think it is easy to see what I wrote in the file since I will define the name of function likecleanText, WindowSelect----> combine of several words with uppercase letter.
+
+and below I will introduce the differences between your and mine. Hopely this can help you.
+In the Pad.py file:
+ 	before class Pad, I add a function cleanText,	
+	in the class pad: I defined some variable for pad, you can find them in def _init_()
+			  function: PreprocessOperationByAuthor,  get_text_by_author, PlotLengthOper			      ationTime, RejectOutliers, PlotSimilarityDistribution, selectTimeInterval\			  BuildWindowOperation, getTextByWin,computeDistance, windowSort, merge,Plot			      TextAdded, 
+	And all things in Class WindowOperation.
+In the Operation.py:
+	in class operation:
+		I add self.text valuable in def _init(), function getOpText,  
