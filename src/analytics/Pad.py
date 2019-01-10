@@ -1,10 +1,22 @@
 from analytics import operation_builder
 from analytics.Operations import ElementaryOperation, Paragraph, SuperParagraph, Operation
 import config
+from itertools import combinations
+import math
+import matplotlib.cm as cm
+import matplotlib.pyplot as plt
+import nltk
+from nltk.corpus import stopwords
 import numpy as np
+from scipy import optimize
+from scipy import spatial
+import spacy
 import warnings
 
 def get_colors():
+    '''
+    :return:  color list
+    '''
     colors = []
     for i in range(30, 38):
         colors.append('\033[' + str(i) + 'm')
@@ -12,6 +24,23 @@ def get_colors():
         colors.append('\033[' + str(i) + 'm')
     return colors
 
+
+Stoplist = set(stopwords.words('english'))
+nlp = spacy.load('en_core_web_md')
+
+def cleanText(text):
+    '''
+    :param text: the text that needs to be cleaned
+    :return:  cleaned text
+    '''
+    cleaned_text = []
+    doc = nlp(text)
+    for word in doc:
+        if not word.is_punct:
+            if (word.text.lower() not in Stoplist and
+                not word.like_num and not word.like_url):
+                cleaned_text.append(word.lemma_) ## add the prototype of the word
+    return ' '.join(cleaned_text)
 
 class Pad:
     """
@@ -24,6 +53,7 @@ class Pad:
 
         :param pad_name:  name of the new pad
         """
+
         self.authors = []
         """:type: list[str]"""
 
@@ -41,6 +71,20 @@ class Pad:
 
         self.superparagraphs = []
         """:type: list[SuperParagraph]"""
+
+        self.author_operation= {}
+        self.author_timeStamp = {}
+        self.author_vectors = {}
+        self.author_text = {}
+        self.author_distance ={}
+        self.author_similarity = {}
+        self.start_time = float('inf')
+        self.window_operation = {}
+        self.distance={}
+        self.similarity = {}
+        self.window_operation_text={}
+        self.fitting_slope = -1000
+
 
     ###############################
     # Complete content of the Pad
@@ -692,6 +736,8 @@ class Pad:
             # From where we will change the paragraph indices
             # should be infinity but this is enough since we can't add more
             # than 2 paragraphs
+            if self.start_time > elem_op.timestamp:
+                self.start_time = elem_op.timestamp
             update_indices_from = len(self.paragraphs) + 3
 
             # If it is a new line, create a new paragraph and insert it at
@@ -794,13 +840,11 @@ class Pad:
                         elem_op.assign_paragraph_id(new_paragraph_id)
                         got_superpara_id, got_sidx = self.get_superparagraph_id(
                             para_idx + 1, return_idx=True)
-
                         update_indices_from = para_idx + 2
 
                 # or if it is at the start of a non-newline para:
                 elif (self.paragraphs[para_it_belongs_to].abs_position ==
                     elem_op.abs_position):
-
                     if para_it_belongs_to_absolute - 1 >= 0:
                         new_paragraph_id = Paragraph.compute_para_id("insert_between",
                             self.all_paragraphs[para_it_belongs_to_absolute - 1].paragraph_id,
@@ -944,7 +988,6 @@ class Pad:
                             not self.paragraphs[para_idx - 1].new_line and
                             para.new_line and
                             merge1 is None):
-
                             # Paragraph just before which will merge if there
                             # is a merge
                             merge1 = para_idx - 1
@@ -1233,7 +1276,6 @@ class Pad:
                     got_superpara_id, got_sidx = self.get_superparagraph_id(
                         para_it_belongs_to, return_idx=True)
 
-
                     # Add it
                     self.paragraphs[para_it_belongs_to].add_elem_op(elem_op)
                     # Update indices of the next paragraphs from here
@@ -1247,7 +1289,6 @@ class Pad:
                 # that their position might have changed
                 for para in self.paragraphs[update_indices_from:]:
                     para.update_indices(elem_op)
-
 
             # Assertions
             # TODO remove for production
@@ -2084,7 +2125,6 @@ class Pad:
         for idx, type_props in enumerate(norm_user.T):
             type_scores[types[idx]] = self.compute_entropy_prop(
                 type_props, len(users))
-
         if op_type is None:
             return type_scores
         else:
@@ -2190,7 +2230,6 @@ class Pad:
         else:
             return 0
 
-
     def pad_at_timestamp(self, timestamp_threshold):
         """
         Return the pad at a certain timestamp. It will contain all the
@@ -2201,33 +2240,17 @@ class Pad:
         :return: The new pad
         :rtype: Pad
         """
-
         new_pad = Pad(self.pad_name)
         elem_ops = []
-        # elem_ops_aux = []
-        # ignore_array = []
         for elem_op in self.get_elem_ops(True):
             if elem_op.timestamp <= timestamp_threshold:
                 if not elem_op.belong_to_operation in new_pad.operations:
                     new_pad.operations.append(elem_op.belong_to_operation)
                 elem_ops.append(elem_op)
-                # elem_ops_aux.append(elem_op)
-            # elif elem_op.belong_to_operation in new_pad.operations:
-            #     ignore_array.append(elem_op.belong_to_operation)
-
-        # for eo in elem_ops_aux:
-        #     if eo.belong_to_operation not in ignore_array:
-        #         elem_ops.append(eo)
-        #     else:
-        #         new_pad.operations.remove(eo.belong_to_operation)
-        #         break
-
-
         pads, _, elem_ops_treated = operation_builder.build_operations_from_elem_ops(
             {self.pad_name: elem_ops},
             config.maximum_time_between_elem_ops
         )
-
         return pads[self.pad_name], elem_ops_treated[self.pad_name]
 
     def to_print(self,
@@ -2268,3 +2291,415 @@ class Pad:
             return (np.min(times), np.max(times))
         else:
             return (None, None)
+
+    def get_text_by_author(self,author):
+        '''
+        recover the text wrote by author
+        :param author:
+        :return: author's text
+        '''
+        text = ''
+        author_operation = self.author_operation[author]
+        for op in author_operation:
+            if op.text != '\n':
+                text += op.text + ' '
+        return text
+
+
+    ###############################
+    # Managing WindowOperation
+    ###############################
+    def PreprocessOperationByAuthor(self,compute_vector=False,model=None):
+        '''
+        group operations by author and compute distance or similarity of different authors' text
+
+        :param compute_vector: whether to compute vector
+        :param model:  the pretrained model
+        :return: None
+        '''
+        for op in self.operations:
+            if op.author=="Etherpad_admin":
+                continue # ignore the Etherpad_admin edit
+            if op.author not in self.author_operation.keys():
+                self.author_operation[op.author] = [op]
+            else:
+                self.author_operation[op.author].append(op)
+
+            if op.author not in self.author_timeStamp.keys():
+                self.author_timeStamp[op.author] = [[op.timestamp_start, op.timestamp_end]]
+            else:
+                self.author_timeStamp[op.author].append([op.timestamp_start, op.timestamp_end])
+
+        pad_text =' '.join(cleanText(self.get_text())) # compute the sec2vec need to clean text at first
+        pad_vec = model.embed_sentence(pad_text)
+        self.author_vectors["pad"] = pad_vec
+        self.author_text["pad"] = pad_text
+        if compute_vector==True:
+            authorNum=0
+            for author in self.authors:
+                if author!="Etherpad_admin":
+                    authorNum+=1
+                    author_text = ' '.join(cleanText(self.get_text_by_author(author)))
+                    author_vec = model.embed_sentence(author_text)
+                    self.author_vectors[author] = author_vec
+                    self.author_text[authorNum] = author_text
+            AuthorList = list(self.author_vectors.keys())
+
+            for i in range(len(AuthorList)-1):
+                for j in range(i+1,len(AuthorList)):
+                    author1 = AuthorList[i]
+                    author2  = AuthorList[j]
+                    if AuthorList[i]=='pad':
+                        Author1 = 'pad' # pad is the total text
+                        Author2 = str(j)
+                    elif AuthorList[j]=='pad':
+                        Author2 = 'pad'
+                        Author1 = str(i)
+                    else:
+                        Author2 = str(j)
+                        Author1 = str(i)
+                    # compute the distance and similarity between different authors
+                    self.author_distance[Author1+' VS '+Author2] = np.linalg.norm(
+                     self.author_vectors[author1]- self.author_vectors[author2])
+
+                    self.author_similarity[Author1 + ' VS ' + Author2] = 1 - spatial.distance.cosine(self.author_vectors[author1],
+                                                              self.author_vectors[author2])
+
+    def PlotLengthOperationTime(self):
+        ## plot the different operations By different author on same time period .
+        timeLengActor = {}
+        for op in self.operations:
+            if op.author not in timeLengActor.keys():
+                timeLengActor[op.author]=[[],[]]
+
+            timeLengActor[op.author][0].append((op.timestamp_end+op.timestamp_start)/2)
+            for elem_op in op.elem_ops:
+                L = 0
+                if elem_op.operation_type=="add":
+                    L += len(elem_op.text_to_add)
+                else:
+                    L+=elem_op.length_to_delete
+            timeLengActor[op.author][1].append(L)
+
+        jet = plt.get_cmap('coolwarm')
+        for author in timeLengActor.keys():
+            plt.scatter(timeLengActor[author][0],timeLengActor[author][1],cmap=jet)
+        plt.show()
+
+    def RejectOutliers(self,data, m=2):
+        '''
+        this is used to remove outliers points
+        :param m: parameter to control outliers
+        :return: list after removing outliers and remained index
+        '''
+        data = np.array(data)
+        mean = np.mean(data)
+        std = np.std(data)
+        return data[abs(data - np.mean(data)) < m * np.std(data)], np.nonzero(abs(data - np.mean(data)) < m * np.std(data))
+
+    def PlotSimilarityDistribution(self,savefig):
+        '''
+        Plot windows' similarity distribution and compute fitting slope
+        :para savefig: bool, whether to save figures.
+        :return:
+        '''
+        def f_1(x, A, B):
+            return A * x + B
+
+        def f_2(x, A, B, C):
+            return A * x * x + B * x + C
+        k = 0
+        fig, ax = plt.subplots(nrows=1, ncols=1)
+        flag = False
+        for author_pair in self.similarity.keys():
+            # author_pair is each two authors
+            similarity_dict = self.similarity[author_pair]
+            if sum(list(similarity_dict.values()))==0:
+                # no similarity
+                continue
+            else:
+                ydata = list(similarity_dict.values())
+                if len(ydata)>=2:
+                    ydata, indexes = self.RejectOutliers(list(similarity_dict.values()))
+                    xdata = np.array(list(similarity_dict.keys()))[indexes]
+                    ax.plot(xdata,ydata,label='curve')
+                    ax.scatter(xdata,ydata)
+                    popt1, pcov1 = optimize.curve_fit(f_1, xdata, ydata)
+                    self.fitting_slope = round(popt1[0],3)
+                    ax.plot(xdata, f_1(xdata, *popt1), label='linear fit with ' + 'k='+str(round(popt1[0],3)))
+                    ax.set_ylim(0.0, 1.0)
+                    ax.legend()
+                # if xdata.size>=3:
+                #     popt2, pcov2 = optimize.curve_fit(f_2, xdata, ydata)
+                # #ax.plot(xdata,ydata,label = author_pair)
+                #     ax.plot(xdata, f_2(xdata, *popt2), label='fit degree 2' + author_pair)
+                #     ax.set_ylim(0.0, 1.0)
+                #     ax.legend()
+                flag = True
+        # plt.show()
+        if flag and savefig:
+            # if we have similarity then plot it.
+            fig.savefig('../similarity_dis_img/'+self.pad_name+'.png')
+            plt.close(fig)
+
+    def selectTimeInterval(self,
+        time_interval_list,
+        valid_window_threshold,
+        group_num_thresold):
+        '''
+        find the best time interval
+        :param time_interval_list:  list of time interval
+        :param valid_window_threshold: lower bound for number of words in a window
+        :param group_num_thresold: lower bound for number of window groups in a pad
+        :return: list of valid winndow percentage
+        '''
+        percentages = []
+        for time_interval in time_interval_list:
+            self.BuildWindowOperation(time_interval)
+            self.getTextByWin(False,None)
+            valid_num = 0
+
+            if len(self.window_operation.keys())<group_num_thresold:
+                percentages.append(0)
+                continue
+            for group_num in self.window_operation.keys():
+                flag = True
+                if len(self.window_operation[group_num])<2:
+                    continue
+                for winOp in self.window_operation[group_num]:
+                    if winOp.text_added_len <valid_window_threshold:
+                        flag = False
+                        break
+                if flag:
+                    valid_num +=1
+            percentages.append(valid_num*1.0/len(self.window_operation.keys()))
+        return percentages
+
+    def BuildWindowOperation(self,time_interval=100000):
+        '''
+        build windows of the whole pad
+        :param time_interval:  setting the time interval of
+        :return: None
+        '''
+        i = 1
+        self.window_operation={}
+        for op in self.operations:
+            if op.author=='Etherpad_admin':
+                continue
+            difference_time = op.timestamp_end-self.start_time
+            while(difference_time>time_interval*i):
+                ## last window is finished then we need to sort the operation
+                if self.window_operation.keys() and i in self.window_operation.keys():
+                    for win in self.window_operation[i]:
+                        win.generateElemOps()
+                    self.window_operation[i].sort(key=self.windowSort)
+                i +=1
+
+            tmp_window_operation = WindowOperation(i,op.author,[op],time_interval)
+            if i not in self.window_operation.keys(): ## the
+                self.window_operation[i] = [tmp_window_operation]
+
+            elif tmp_window_operation in self.window_operation[i]:
+                self.window_operation[i][self.window_operation[i].index(tmp_window_operation)].addOperation(op)
+            else:
+                self.window_operation[i].append(tmp_window_operation)
+
+    def getTextByWin(self,vector_flag,model):
+        '''
+        recover each window's text
+        :param model:  pretrained model
+        "param vector_flag: whether to compute vector
+        :return:
+        '''
+        for group_num in self.window_operation.keys():
+            for winOp in self.window_operation[group_num]:
+                winOp.createWindowText(vector_flag,model)
+
+    def computeDistance(self):
+        '''
+        compute the distance between different authors
+        :return: None
+        '''
+
+        for groupNum in self.window_operation.keys():
+
+            if len(self.window_operation[groupNum])<2:
+                continue
+            else:
+                index_list = [i for i in range(len(self.window_operation[groupNum]))]
+                tuples = list(combinations(index_list,2))
+                for ind,tuple in enumerate(tuples):
+                    index1 = tuple[0]
+                    index2 = tuple[1]
+                    win1 = self.window_operation[groupNum][index1]
+                    win2 = self.window_operation[groupNum][index2]
+                    text1 = win1.text
+                    text2 = win2.text
+                    author1 = win1.author
+                    author2 = win2.author
+                    dis = round(np.linalg.norm(win1.textVector - win2.textVector),3)
+                    similarity = 1-spatial.distance.cosine(win1.textVector, win2.textVector)
+                    # if dis<0.2:
+                    #     dis=0
+                    if math.isnan(similarity):
+                        similarity = 0
+                    authors = [author1,author2]
+                    authors.sort()
+                    key = '--VS--'.join(authors)
+                    if key not in self.distance.keys():
+                        self.distance[key]= {}
+                        self.distance[key][groupNum] = dis
+                        self.similarity[key]={}
+                        self.similarity[key][groupNum] = similarity
+                        self.window_operation_text[key] = {}
+                        self.window_operation_text[key][groupNum] = ["-----user1:-----" + text1,
+                                                           "-----user2-----" + text2]
+                    else:
+                        self.distance[key][groupNum] = dis
+                        self.similarity[key][groupNum] = similarity
+                        self.window_operation_text[key][groupNum] = ["-----user1:-----" + text1,
+                                                                   "-----user2-----" + text2]
+
+    def windowSort(self,win):
+        '''
+        sort function which is used to sort windows
+        :param win:
+        :return:  start time of window
+        '''
+        return win.start_time
+
+    def operationSort(self,op):
+        return op.timestamp_start
+
+    def text_by_ops(self):
+        text = ''
+        for op in self.operations:
+            op.getOpText()
+            leng = len(text)
+            text = text + op.text
+            # text = text[:op.position_start_of_op] + op.text + text[op.position_start_of_op:]
+        self.text = text
+
+    def merge(self,d1, d2, merge_fn=lambda x, y: y):
+        """
+        Merges two dictionaries, non-destructively, combining
+        values on duplicate keys as defined by the optional merge
+        function.  The default behavior replaces the values in d1
+        with corresponding values in d2.  (There is no other generally
+        applicable merge strategy, but often you'll have homogeneous
+        types in your dicts, so specifying a merge technique can be
+        valuable.)
+
+        Examples:
+
+        >>> d1
+        {'a': 1, 'c': 3, 'b': 2}
+        >>> merge(d1, d1)
+        {'a': 1, 'c': 3, 'b': 2}
+        >>> merge(d1, d1, lambda x,y: x+y)
+        {'a': 2, 'c': 6, 'b': 4}
+
+        """
+        result = dict(d1)
+        for k, v in d2.items():
+            if k in result:
+                result[k] = merge_fn(result[k], v)
+            else:
+                result[k] = v
+        return result
+
+    def SortDict(self,dict):
+        keys = list(dict.keys())
+        keys.sort()
+        values = [dict[key] for key in keys]
+        return keys,values
+
+    def PlotTextAdded(self):
+        '''
+        plot the length of added text according to author
+        :return: None
+        '''
+        author_text_length = {}
+        for group,wins in self.window_operation.items():
+            for win in wins:
+                if win.author not in author_text_length.keys():
+                    author_text_length[win.author] = {group:win.text_added_len}
+                else:
+                    author_text_length[win.author][group]=win.text_added_len
+
+        #Sum = {}
+        colors = iter(cm.rainbow(np.linspace(0, 1, len(author_text_length.keys())+1)))
+        for author in author_text_length.keys():
+            #Sum = self.merge(Sum,author_text_length[author], merge_fn=lambda x, y: x+y)
+            plt.scatter(author_text_length[author].keys(),author_text_length[author].values(),color=next(colors),label=author)
+        #sum_keys,sum_values = self.SortDict(Sum)
+        #plt.plot(sum_keys, sum_values, color=next(colors),label='Total added length')
+        plt.legend()
+        plt.show()
+
+
+
+class WindowOperation:
+    '''
+    create a new operation based on windows
+    '''
+    def __init__(self,groupNum,author,ops,time_interval=1000000):
+        '''
+
+        :param groupNum: the group that window belongs to
+        :param author: the author of this window
+        :param ops: the operations in the window
+        :param time_interval: time interval of the window
+        '''
+        self.groupNum = groupNum
+        self.author = author
+        self.operations = ops
+        self.elemOps = []
+        self.start_time =  float('inf')
+        self.time_interval = time_interval
+        self.text = ''
+        self.textVector=[]
+        self.endTime = 0.0
+        self.text_added_len = 0
+
+
+    def addOperation(self,op):
+        self.operations.append(op)
+
+    def generateElemOps(self):
+        '''
+        used to sort the elem_operation and define the end time of the window
+        :return: None
+        '''
+        for op in self.operations:
+            if self.endTime<op.timestamp_end:
+                self.endTime= op.timestamp_end
+            if self.start_time>op.timestamp_start:
+                self.start_time = op.timestamp_start
+            self.elemOps.extend(op.elem_ops)
+        self.elemOps = ElementaryOperation.sort_elem_ops(self.elemOps)
+
+
+    def __eq__(self, other):
+
+        return (self.author==other.author) and (self.groupNum==other.groupNum)
+
+
+    def createWindowText(self,vector_flag,model):
+        '''
+
+        :param vector_flag:  whether to compute vector
+        :param model:  pre-trained model
+        :return:
+        '''
+        text = ''
+        for op in self.operations:
+            op.getOpText()
+            if op.text != '\n':
+                text +=  op.text + ' '  # compute the length of text added
+        self.text =  text
+        #a = text.split()
+        self.text_added_len = len(text.split())
+        if vector_flag:
+            cleaned_text = cleanText(text)
+            self.textVector = model.embed_sentence(cleaned_text)

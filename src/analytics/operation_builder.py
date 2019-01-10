@@ -90,7 +90,8 @@ def build_operations_from_elem_ops(
                         # it will be an empty string)
                         last_elem_op_txt = elem_op.text_to_add[idx_newline + 1:]
 
-                    elif (elem_op.text_to_add[idx_newline:idx_next_newline] != "\n"):
+                    elif (elem_op.text_to_add[idx_newline:idx_next_newline] !=
+                        "\n"):
                         # if the text in between is also characters
                         elem_op_txts.append(elem_op.text_to_add[
                             idx_newline + 1:elem_op.text_to_add.find(
@@ -173,6 +174,7 @@ def build_operations_from_elem_ops(
 
         # Keep track of the the last operations to which we could maybe add
         # the next elementary operations
+        pad.operations.sort(key=pad.operationSort)
         pads[pad_name] = pad
         dic_author_current_operations_per_pad[pad_name] = dic_author_current_operations
 
@@ -215,14 +217,15 @@ def treat_op(elem_op,
         # Checking that the position of the elementary op is more or
         # less inside the Operation bounds
         part_of_current_op_in_position = (
-            current_op.position_start_of_op - abs(elem_op.get_length_of_op()) <=
+            current_op.position_start_of_op -
+            abs(elem_op.get_length_of_op()) <=
             new_position <=
-            current_op.position_start_of_op + abs(current_op.get_length_of_op()))
+            current_op.position_start_of_op +
+            abs(current_op.get_length_of_op()))
 
         if part_of_current_op_in_time and part_of_current_op_in_position:
             current_op.add_elem_op(elem_op)
             return dic_author_current_operations
-
         else:
             # If it shouldn't be added to the operation. We push the
             # operation and create a new operation

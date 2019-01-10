@@ -4,7 +4,7 @@ from analytics.Operations import ElementaryOperation
 import csv
 import ast
 from pymongo import MongoClient
-
+import MySQLdb
 MONGODB_PORT = None
 
 
@@ -506,6 +506,24 @@ def get_elem_ops_per_pad_from_db(
                     for key, value in evaled_line:
                         if key.startswith('pad:') and "revs" in key:
                             lines.append({"key":key, "value":value})
+        list_of_elem_ops_per_pad = extract_elem_ops_etherpad_(lines, editor)
+
+    elif editor == 'MySQL':
+        db = MySQLdb.connect(host="localhost",  # your host, usually localhost
+                             user="etherpaduser",  # your username
+                             passwd="PASSWORD",  # your password
+                             db="etherpad_lite_db")
+        cur = db.cursor()
+        cur.execute("SELECT * FROM store")
+        entries = cur.fetchall()
+        db.close()
+        index_from_lines = 0
+        lines = []
+        # For each entry, parse it in order to extract the elem_op
+        for entry in entries[index_from_lines:]:
+            if "pad:" in entry[0] and "revs" in entry[0]:
+                value = str(entry[1].replace("false", "False").replace("null", "None"))
+                lines.append({"key": entry[0], "value": value})
         list_of_elem_ops_per_pad = extract_elem_ops_etherpad_(lines, editor)
 
     else:

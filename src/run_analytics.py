@@ -146,8 +146,7 @@ def run(list_of_elem_ops_per_pad,
                         if not os.path.isdir(texts_save_location):
                             os.makedirs(texts_save_location)
                         with open("{}/{}.txt".format(texts_save_location, pad_name),
-                                  "w+",
-                                  encoding="utf-8") as f:
+                                  "w+", encoding="utf-8") as f:
                             f.write(to_print)
 
                 if show_visualization:

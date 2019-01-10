@@ -224,6 +224,7 @@ class Operation:
         # operation
         self.context = dict()
         #:type: dict('synchronous')
+        self.text = ''
 
     def add_elem_op(self, elem_op):
         """
@@ -486,6 +487,33 @@ class Operation:
             self.position_start_of_op -= elem_op.length_to_delete
             self.position_first_op -= elem_op.length_to_delete
 
+    def getOpText(self):
+        '''
+        obtain the text of each operation
+        :return:  None
+        '''
+        text = ''
+        for elem_id, elem_op in enumerate(self.elem_ops):
+            if elem_id ==0:
+                start_position = elem_op.abs_position
+            position = elem_op.abs_position - start_position
+            if elem_op.operation_type == 'add':
+                # We add to the end of the ext
+                if ('*' in elem_op.text_to_add or '*' in text or
+                        len(self.elem_ops) - 1 == elem_id):
+                    pass
+                if len(text) == position:
+                    text += elem_op.text_to_add
+                else:
+                    text = (text[:position] +
+                            elem_op.text_to_add +
+                            text[position:])
+            elif elem_op.operation_type == 'del' and position<len(text) and position>=0:
+                text = (text[:position] +
+                        text[position +
+                             elem_op.length_to_delete:])
+        self.text = text
+
     @classmethod
     def sort_ops(cls, ops_list):
         """
@@ -538,6 +566,7 @@ class Paragraph:
         self.paragraph_id = paragraph_id
         self.superparagraph_id = superparagraph_id
         self.is_deleted = False
+        self.paraText = {}
 
         if elem_op is not None:
             self.elem_ops = [elem_op]
@@ -695,13 +724,70 @@ class Paragraph:
     def copy(self):
         """
         Return a copy of the current paragraph
-
         :return: a copy of itself
         :rtype: Paragraph
         """
         return Paragraph(paragraph=self,
             paragraph_id=self.paragraph_id,
             superparagraph_id=self.superparagraph_id)
+
+
+    # def get_para_text(self,until_timestamp=None):
+    #     elem_ops_ordered = self.elem_ops
+    #     elem_ops_ordered = ElementaryOperation.sort_elem_ops(elem_ops_ordered)
+    #     text = ""
+    #     for elem_id, elem_op in enumerate(elem_ops_ordered):
+    #         if elem_id==0:
+    #             start_position = elem_op.abs_position
+    #         position = elem_op.abs_position-start_position
+    #         if until_timestamp is not None and elem_op.timestamp > until_timestamp:
+    #             return text
+    #         if elem_op.operation_type == 'add':
+    #             # We add to the end of the ext
+    #             if ('*' in elem_op.text_to_add or '*' in text or
+    #                     len(elem_ops_ordered) - 1 == elem_id):
+    #                 pass
+    #             if len(text) == position:
+    #                 text += elem_op.text_to_add
+    #             else:
+    #                 text = (text[:position] +
+    #                         elem_op.text_to_add +
+    #                         text[position:])
+    #         elif elem_op.operation_type == 'del':
+    #             text = (text[:position] +
+    #                     text[position +
+    #                          elem_op.length_to_delete:])
+    #         else:
+    #             raise AttributeError("Undefined elementary operation")
+    #     return text
+
+    # def create_para_text(self):
+    #     elem_ops_ordered = self.elem_ops
+    #     elem_ops_ordered = ElementaryOperation.sort_elem_ops(elem_ops_ordered)
+    #     text = ""
+    #     for elem_id, elem_op in enumerate(elem_ops_ordered):
+    #         if elem_id==0:
+    #             start_position = elem_op.abs_position
+    #         position = elem_op.abs_position-start_position
+    #         if elem_op.operation_type == 'add':
+    #             # We add to the end of the ext
+    #             if ('*' in elem_op.text_to_add or '*' in text or
+    #                     len(elem_ops_ordered) - 1 == elem_id):
+    #                 pass
+    #             if len(text) == position:
+    #                 text += elem_op.text_to_add
+    #             else:
+    #                 text = (text[:position] +
+    #                         elem_op.text_to_add +
+    #                         text[position:])
+    #         elif elem_op.operation_type == 'del':
+    #             text = (text[:position] +
+    #                     text[position +
+    #                          elem_op.length_to_delete:])
+    #         else:
+    #             raise AttributeError("Undefined elementary operation")
+    #         self.paraText[elem_op.timestamp] = text
+
 
     @classmethod
     def merge(cls, first_paragraph, last_paragraph, elem_op):

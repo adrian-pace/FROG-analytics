@@ -11,14 +11,25 @@ from sklearn.cluster import KMeans
 
 list_of_elem_ops_per_pad = dict()
 elemOpsCounter = 0
-root_of_dbs = "../belgian_experiment/"
+
+# root_of_dbs = "../belgian_experiment/"
+root_of_dbs = "data/"
+
+# file_extension = ".db"
+file_extension = ".sql"
+
 # Os walk among all the directories containing all the pads.
 for (dirpath, dirnames, filenames) in os.walk(root_of_dbs):
     for filename in filenames:
-        if ".db" in filename:
+        if file_extension in filename:
             path_to_db = os.path.join(dirpath, filename)
             # Fetching the new operations
-            list_of_elem_ops_per_main, _ = get_elem_ops_per_pad_from_db(path_to_db=path_to_db, editor='etherpadSQLite3')
+            # list_of_elem_ops_per_main, _ = get_elem_ops_per_pad_from_db(path_to_db=path_to_db, editor='etherpadSQLite3')
+            list_of_elem_ops_per_main = get_elem_ops_per_pad_from_db(
+                path_to_db=path_to_db,
+                editor='sql_dump'
+                # editor = 'etherpad'
+            )  # we got the ElementOperations of each pad at beginining
             # the pad extracted from each file always have the same name so we give them a new name based on their path
             pad_name = path_to_db[len(root_of_dbs):path_to_db.find("data") - 1]
             # We check that there is only one pad per file as there should be (one pad per session)
