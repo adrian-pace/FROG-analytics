@@ -32,7 +32,7 @@ wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-
+Concept_analysis.py
 
 # File ignore
 data/
@@ -40,6 +40,5 @@ ResponseClustering/
 pre_modle/
 *.csv
 similarity_dis_img/
-similarity_dis_img-backup/
 others/
 *.txt

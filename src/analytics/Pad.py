@@ -11,6 +11,8 @@ import numpy as np
 from scipy import optimize
 from scipy import spatial
 import spacy
+import regex as re
+from spacy.tokenizer import Tokenizer
 import warnings
 
 def get_colors():
@@ -28,6 +30,21 @@ def get_colors():
 Stoplist = set(stopwords.words('english'))
 nlp = spacy.load('en_core_web_md')
 
+prefix_re = re.compile(r'''^[\[\("']''')
+suffix_re = re.compile(r'''[\]\)"']$''')
+infix_re = re.compile(r'''[-~]''')
+simple_url_re = re.compile(r'''^https?://''')
+
+def custom_tokenizer(nlp):
+    '''
+    this is used to improve spacy nlp function to have a better performance on url recognization.
+    :param nlp:
+    :return:
+    '''
+    return Tokenizer(nlp.vocab, prefix_search=prefix_re.search,
+                                suffix_search=suffix_re.search,
+                                infix_finditer=infix_re.finditer,
+                                token_match=simple_url_re.match)
 def cleanText(text):
     '''
     :param text: the text that needs to be cleaned
@@ -38,7 +55,7 @@ def cleanText(text):
     for word in doc:
         if not word.is_punct:
             if (word.text.lower() not in Stoplist and
-                not word.like_num and not word.like_url):
+                not word.like_num and not word.like_url and '\n' not in word.string):
                 cleaned_text.append(word.lemma_) ## add the prototype of the word
     return ' '.join(cleaned_text)
 
@@ -50,7 +67,6 @@ class Pad:
     def __init__(self, pad_name):
         """
         Create a pad
-
         :param pad_name:  name of the new pad
         """
 
@@ -83,7 +99,7 @@ class Pad:
         self.distance={}
         self.similarity = {}
         self.window_operation_text={}
-        self.fitting_slope = -1000
+        self.fitting_slope = 0
 
 
     ###############################
@@ -92,7 +108,6 @@ class Pad:
     def add_operation(self, operation):
         """
         Add an Operation to the list of ops
-
         :param operation: Operation to add
         """
         # Skip if the operation is already added
@@ -103,7 +118,6 @@ class Pad:
     def add_operations(self, operations):
         """
         Add a list of Operation to the list of ops
-
         :param operations: list of Operation to add
         """
         for op in operations:
@@ -115,9 +129,7 @@ class Pad:
         The result is ordered by timestamp. Good for building a representation
         of the text. Note that each ElementaryOperation knows the Operation it
         belongs to.
-
         :param sorted_: boolean saying if the operations should be sorted
-
         :return: list of ElementaryOperation
         :rtype: list[ElementaryOperation]
         """
@@ -136,9 +148,7 @@ class Pad:
         It is useful to keep track of all paragraphs that have been added or
         removed in time.
         Returns -1 if the paragraph is not found in 'all_paragraphs'.
-
         :param paragraph_index: index of the paragraph in self.paragraphs
-
         :return: absolute index
         :rtype: int
         """
@@ -158,7 +168,6 @@ class Pad:
         It also updates the indices of the superparagraphs in
         self.superparagraphs depending on "action" (reason why the paragraph is
         deleted).
-
         :param idx: index of the paragraph in self.paragraphs
         :param abs_idx: index of the paragraph in self.all_paragraphs
         :param action: "just_delete" (delete the paragraph)
@@ -439,7 +448,6 @@ class Pad:
         Insert paragraph "para" in position "idx" of self.paragraphs
         and in the corresponding index of self.all_paragraphs.
         Also update indices of superparagraphs in self.superparagraphs.
-
         :param idx: index of the paragraph in self.paragraphs
         :param para: paragraph to be inserted.
         """
@@ -688,7 +696,6 @@ class Pad:
         """
         Get the id of the superparagraph that contains the paragraph in
         position "idx" of self.paragraphs.
-
         :param idx: index of the paragraph in self.paragraphs
         :param return_idx: boolean whether to return the superpara's index
         """
@@ -709,7 +716,6 @@ class Pad:
         """
         Build the paragraphs for the pad based on the existing paragraphs
         and the new elementary operations
-
         :param new_elem_ops_sorted: list of elementary operation for the
             pad that we want to add to the paragraphs to
         """
@@ -1323,7 +1329,6 @@ class Pad:
         """
         Classify all the operations types from the pad.
         The different types are Write, Edit, Delete, Copy/Paste or Jump.
-
         :param length_edit: Threshold in length to differentiate a Write type
             from an Edit or an Edit from a Deletion.
         :param length_delete:  Threshold in length to consider the op as a deletion
@@ -1355,7 +1360,6 @@ class Pad:
         The context is a dictionary containing whether a pad is synchronous
         wih an other author in the pad or in the paragraph and it contains
         list of authors accordingly.
-
         :param delay_sync: delay of synchronization between two authors
         :param time_to_reset_day: Number of milliseconds between two ops to
             indicate the first op of the day, by default 8h
@@ -1450,7 +1454,6 @@ class Pad:
     def get_text(self, until_timestamp=None):
         """
         Return a string with the whole text
-
         :param until_timestamp:
         :return: the text written so far on the pad
         :rtype: str
@@ -1532,7 +1535,6 @@ class Pad:
         """
         Create one list for all the letters representing the text and one list
         with the color of each letter according to its author.
-
         :return: list of letters representing the text and list of colors
             representing authors
         :rtype: list[str], list[str]
@@ -1575,7 +1577,6 @@ class Pad:
         """
         Display the text the same way as get_text but with
         different colors according to authors.
-
         :return: None
         """
         letters, colors = self.get_letters_and_colors_from_authors()
@@ -1593,7 +1594,6 @@ class Pad:
         """
         Print all operations' descriptors in csv format, with one line per
         operation.
-
         :param separator_char: separation between columns
         :param string_delimiter: string delimiter
         :param pad_id: pad id to be used. If none, the available one is used
@@ -1619,7 +1619,6 @@ class Pad:
     def display_paragraphs(self, verbose=0):
         """
         Print all the paragraphs contained in the pad
-
         :param verbose: print detailed info if verbose is 1
         :return:
         """
@@ -1632,12 +1631,10 @@ class Pad:
         Returns an array containing one string for each of the paragraphs in
         the pad. If splitter is specified, it is used for splitting the
         paragraphs (e.g. '\n', '\n\n', '\n\n\n'...).
-
         If no splitter is specified, the function tries to split by double
         new lines. If with this splitting the average length of the paragraphs
         obtained is longer than config.max_length_paragraph, paragraphs are
         split by single new lines instead.
-
         :param splitter: characters that separate paragraphs (e.g. '\n')
         :return: dictionary with text split by paragraphs
         """
@@ -1676,7 +1673,6 @@ class Pad:
     def compute_metrics(self, start_time=0):
         """
         Computes all pad metrics and returns them in a dictionary.
-
         :param start_time: start time from which to consider operations
         :return: dictionary with metrics
         """
@@ -1751,7 +1747,6 @@ class Pad:
     def get_metrics_text(self, metrics_dict=None, start_time=0):
         """
         Returns the metrics dictionary as a text string.
-
         :param metrics_dict: metrics_dict can be passed for efficiency,
             otherwise it is computed.
         :param start_time: start time from which to consider operations
@@ -1825,7 +1820,6 @@ class Pad:
     def author_proportions(self, considerate_admin=True):
         """
         Compute the proportion of each author for the entire pad.
-
         :param considerate_admin: Boolean to determine if we include the
             admin or not in our computations
         :return: the list of authors to consider and the resulting
@@ -1879,7 +1873,6 @@ class Pad:
     def prop_score(self, considerate_admin=False):
         """
         Compute the proportion score using the entropy.
-
         :return: proportion score between 0 and 1
         :rtype: float
         """
@@ -1890,7 +1883,6 @@ class Pad:
     def sync_score(self, start_time=0):
         """
         Compute the synchronous and asynchronous scores.
-
         :return: synchronous and asynchronous scores, floats between 0 and 1.
         :rtype: (float,float)
         """
@@ -1911,7 +1903,6 @@ class Pad:
     def prop_paragraphs(self):
         """
         Compute the proportion of each paragraph.
-
         :return: list with the paragraphs names, list with the proportions for
             each author for each paragraph.
         :rtype: list[str], list[dict(str: float)]
@@ -1943,7 +1934,6 @@ class Pad:
         Compute the alternating score that is the number of main author
         alternations between paragraphs divided by the total number of
         alternations of paragraphs.
-
         :return: the alternating score which is a float between 0 and 1.
             Return 0 if there is less than 2 paragraph
         """
@@ -1970,7 +1960,6 @@ class Pad:
     def user_participation_paragraph_score(self):
         """
         Compute the score of user participation per paragraph.
-
         :return: Score between 0 and 1 being the weighted average
             (paragraph lengths) of the proportion entropy of users
         """
@@ -2003,11 +1992,9 @@ class Pad:
         """
         Compute the breaking score, i.e. the score that tells whether a pad is
         written only in one time or with multiple accesses.
-
         :param break_type: string that is either 'short' for short breaks or
             'day' for daily ones.
         :param start_time: start time from which to consider operations
-
         :return: The score is the number of breaks over the whole pad divided
             by the time spent on the pad. Between 0 and 1.
         """
@@ -2038,11 +2025,9 @@ class Pad:
         """
         Compute proportion of one type: write, delete, edit or paste over
         the whole pad.
-
         :param op_type: the operation type 'write', 'delete', 'edit' or 'paste'
             If None, returns all in a dictionary
         :param start_time: start time from which to consider operations
-
         :return: the proportion of the operation type
         """
         if op_type is None:
@@ -2082,11 +2067,9 @@ class Pad:
         counting the number of different operations per user. It normalizes
         the counts according to the rows and then normalize the proportions
         according to the columns to compute a valid entropy for each entropy.
-
         :param op_type: the operation type 'write', 'delete', 'edit' or 'paste'
             If None, returns all in a dictionary
         :param start_time: start time from which to consider operations
-
         :return:the entropy score for one type over all users.
         """
         types = ['write', 'edit', 'delete', 'paste']
@@ -2157,11 +2140,9 @@ class Pad:
     def count_chars(self, op_type=None, start_time=0):
         """
         Count the number of characters added and/or deleted.
-
         :param op_type: the operation type 'add' or 'del'
             If None, returns both in a dictionary
         :param start_time: start time from which to consider operations
-
         :return:total number of chars added or deleted.
         """
         counted_chars = {"add": 0, "del": 0}
@@ -2181,7 +2162,6 @@ class Pad:
     def paragraph_average_length(self):
         """
         Compute the average length (number of characters) per paragraph.
-
         :return: average paragraph length.
         :rtype: float
         """
@@ -2197,7 +2177,6 @@ class Pad:
     def superparagraph_average_length(self):
         """
         Compute the average length (number of characters) per superparagraph.
-
         :return: average superparagraph length.
         :rtype: float
         """
@@ -2217,7 +2196,6 @@ class Pad:
     def average_paragraphs_per_superparagraph(self):
         """
         Compute the average number of lines (paragraphs) per superparagraph.
-
         :return: average paragraphs per superparagraph.
         :rtype: float
         """
@@ -2234,7 +2212,6 @@ class Pad:
         """
         Return the pad at a certain timestamp. It will contain all the
         operations that started before the timestamp
-
         :param timestamp_threshold: timestamp until which we take the operations
         :type timestamp_threshold: int
         :return: The new pad
@@ -2312,7 +2289,6 @@ class Pad:
     def PreprocessOperationByAuthor(self,compute_vector=False,model=None):
         '''
         group operations by author and compute distance or similarity of different authors' text
-
         :param compute_vector: whether to compute vector
         :param model:  the pretrained model
         :return: None
@@ -2419,15 +2395,19 @@ class Pad:
                 continue
             else:
                 ydata = list(similarity_dict.values())
-                if len(ydata)>=2:
-                    ydata, indexes = self.RejectOutliers(list(similarity_dict.values()))
-                    xdata = np.array(list(similarity_dict.keys()))[indexes]
+                if len(ydata)>=5:
+                    #ydata, indexes = self.RejectOutliers(list(similarity_dict.values()))
+                    #xdata = np.array(list(similarity_dict.keys()))[indexes]
+                    ydata = np.nan_to_num(np.array(ydata))
+                    xdata = np.array(list(similarity_dict.keys()))
                     ax.plot(xdata,ydata,label='curve')
                     ax.scatter(xdata,ydata)
                     popt1, pcov1 = optimize.curve_fit(f_1, xdata, ydata)
                     self.fitting_slope = round(popt1[0],3)
                     ax.plot(xdata, f_1(xdata, *popt1), label='linear fit with ' + 'k='+str(round(popt1[0],3)))
                     ax.set_ylim(0.0, 1.0)
+                    ax.set_xlabel('WindowOperation group')
+                    ax.set_ylabel('Similarity')
                     ax.legend()
                 # if xdata.size>=3:
                 #     popt2, pcov2 = optimize.curve_fit(f_2, xdata, ydata)
@@ -2435,7 +2415,7 @@ class Pad:
                 #     ax.plot(xdata, f_2(xdata, *popt2), label='fit degree 2' + author_pair)
                 #     ax.set_ylim(0.0, 1.0)
                 #     ax.legend()
-                flag = True
+                    flag = True
         # plt.show()
         if flag and savefig:
             # if we have similarity then plot it.
@@ -2443,9 +2423,9 @@ class Pad:
             plt.close(fig)
 
     def selectTimeInterval(self,
-        time_interval_list,
-        valid_window_threshold,
-        group_num_thresold):
+	time_interval_list,
+	valid_window_threshold,
+	group_num_thresold):
         '''
         find the best time interval
         :param time_interval_list:  list of time interval
@@ -2453,15 +2433,12 @@ class Pad:
         :param group_num_thresold: lower bound for number of window groups in a pad
         :return: list of valid winndow percentage
         '''
-        percentages = []
+        label = []
         for time_interval in time_interval_list:
             self.BuildWindowOperation(time_interval)
             self.getTextByWin(False,None)
             valid_num = 0
 
-            if len(self.window_operation.keys())<group_num_thresold:
-                percentages.append(0)
-                continue
             for group_num in self.window_operation.keys():
                 flag = True
                 if len(self.window_operation[group_num])<2:
@@ -2472,8 +2449,12 @@ class Pad:
                         break
                 if flag:
                     valid_num +=1
-            percentages.append(valid_num*1.0/len(self.window_operation.keys()))
-        return percentages
+            if valid_num<group_num_thresold:
+                label.append(0)
+            else:
+                label.append(1)
+        return label
+
 
     def BuildWindowOperation(self,time_interval=100000):
         '''
@@ -2589,16 +2570,13 @@ class Pad:
         applicable merge strategy, but often you'll have homogeneous
         types in your dicts, so specifying a merge technique can be
         valuable.)
-
         Examples:
-
         >>> d1
         {'a': 1, 'c': 3, 'b': 2}
         >>> merge(d1, d1)
         {'a': 1, 'c': 3, 'b': 2}
         >>> merge(d1, d1, lambda x,y: x+y)
         {'a': 2, 'c': 6, 'b': 4}
-
         """
         result = dict(d1)
         for k, v in d2.items():
@@ -2645,7 +2623,6 @@ class WindowOperation:
     '''
     def __init__(self,groupNum,author,ops,time_interval=1000000):
         '''
-
         :param groupNum: the group that window belongs to
         :param author: the author of this window
         :param ops: the operations in the window
@@ -2687,7 +2664,6 @@ class WindowOperation:
 
     def createWindowText(self,vector_flag,model):
         '''
-
         :param vector_flag:  whether to compute vector
         :param model:  pre-trained model
         :return:
